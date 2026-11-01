@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -116,6 +117,46 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ImportTimerCsv()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "选择计时器导出的 CSV",
+            Filter = "CSV / 文本|*.csv;*.txt|所有文件|*.*"
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            string text = File.ReadAllText(dialog.FileName);
+            var parsed = TimerCsvParser.Parse(text);
+
+            if (parsed.Claims.Count == 0)
+            {
+                Status = parsed.Warnings.Count > 0
+                    ? string.Join(" ", parsed.Warnings)
+                    : "没有解析出任何记录。";
+                return;
+            }
+
+            string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+            var (_, inserted, duplicate) = _store.SaveTimerImport(Path.GetFileName(dialog.FileName), hash, parsed.Claims);
+
+            Status = duplicate
+                ? "这份文件已经导入过了。"
+                : $"已导入 {inserted} 条计时器记录。";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Status = $"读取失败：{ex.Message}";
+        }
+    }
+
+    [RelayCommand]
     private void ExportCsv()
     {
         var date = DateOnly.FromDateTime(DateTime.Now);
@@ -129,7 +170,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
 
         var builder = new StringBuilder();
-        builder.AppendLine("start_local,end_local,duration_min,app,state,weight,weight_low,weight_high,confidence,rule");
+        builder.AppendLine("start_local,end_local,duration_min,app,state,weight,rule");
 
         foreach (var segment in segments)
         {
@@ -137,8 +178,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             var to = DateTimeOffset.FromUnixTimeMilliseconds(segment.EndUtcMs).ToLocalTime();
             builder.AppendLine(
                 $"{from:yyyy-MM-dd HH:mm:ss},{to:yyyy-MM-dd HH:mm:ss},{segment.DurationSeconds / 60:F1}," +
-                $"{Csv(segment.App)},{segment.State},{segment.Weight:F2},{segment.WeightLow:F2},{segment.WeightHigh:F2}," +
-                $"{segment.Confidence},{segment.RuleId}");
+                $"{Csv(segment.App)},{segment.State},{segment.Weight:F2},{segment.RuleId}");
         }
 
         try

@@ -70,7 +70,7 @@
                 <Grid>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="进行中" Style="{StaticResource Caption}" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding Label}" FontSize="14" FontWeight="SemiBold" Margin="10,0,0,0" />
+                        <TextBlock Text="{Binding ActiveLabel}" FontSize="14" FontWeight="SemiBold" Margin="10,0,0,0" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

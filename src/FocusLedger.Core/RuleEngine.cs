@@ -114,6 +114,19 @@ public static class BuiltinRules
         void Add(RuleMatchType type, string pattern, ContextLevel ctx, AppClass cls, int priority, string label)
             => rules.Add(new Rule(id++, type, pattern, ctx, cls, priority, true, true, label));
 
+        // ---- 学习关键词（优先级 8，高于所有应用级规则）----
+        // B站、小红书、知乎默认算分心；但标题里带这些词时是学习内容（网课、考研课），
+        // 必须压过「应用=分心」那条规则，否则看网课会被判成刷视频。
+        foreach (var k in new[]
+                 {
+                     "考研", "考公", "课程", "教程", "公开课", "网课", "讲座", "复习", "精读",
+                     "高数", "线代", "概率论", "统计学", "论文", "文献", "答辩", "实验", "编程",
+                     "算法", "建模", "数据分析", "笔记", "lecture", "course", "tutorial", "study"
+                 })
+        {
+            Add(RuleMatchType.TitleContains, k, ContextLevel.Task, AppClass.Reading, 8, "学习关键词");
+        }
+
         // ---- 任务类：打字型（优先级 10） ----
         foreach (var p in new[]
                  {

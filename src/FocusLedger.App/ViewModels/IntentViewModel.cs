@@ -46,6 +46,9 @@ public sealed partial class IntentViewModel : ObservableObject
     [ObservableProperty]
     private string resultText = string.Empty;
 
+    [ObservableProperty]
+    private string activeLabel = string.Empty;
+
     public IReadOnlyList<int> Durations { get; } = new[] { 25, 50, 90 };
 
     public IntentViewModel(FocusLedgerStore store, RuleService rules)
@@ -127,6 +130,7 @@ public sealed partial class IntentViewModel : ObservableObject
         }
 
         IsActive = true;
+        ActiveLabel = _active.Label;
         long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         long remainingMs = _active.PlannedEndUtcMs - now;
 

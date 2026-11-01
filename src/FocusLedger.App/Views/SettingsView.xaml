@@ -69,7 +69,9 @@
                                TextWrapping="Wrap" />
 
                     <StackPanel Orientation="Horizontal">
-                        <Button Content="导出今日 CSV" Style="{StaticResource GhostButton}"
+                        <Button Content="导入计时器 CSV" Style="{StaticResource GhostButton}"
+                                Command="{Binding ImportTimerCsvCommand}" />
+                        <Button Content="导出今日 CSV" Style="{StaticResource GhostButton}" Margin="10,0,0,0"
                                 Command="{Binding ExportCsvCommand}" />
                         <Button Content="删除全部数据" Style="{StaticResource GhostButton}" Margin="10,0,0,0"
                                 Foreground="{StaticResource Danger}" Command="{Binding DeleteAllCommand}" />

@@ -17,9 +17,6 @@ public sealed class SegmentBuilder
         _machine = machine ?? new StateMachine();
     }
 
-    /// <summary>
-    /// 构建判定段。<paramref name="finalize"/> 为 true 时执行第二遍（返回修正 + 合并）。
-    /// </summary>
     public IReadOnlyList<Segment> Build(IEnumerable<Sample> samples, bool finalize = true)
     {
         ArgumentNullException.ThrowIfNull(samples);
@@ -70,7 +67,6 @@ public sealed class SegmentBuilder
             classification.Weight,
             classification.WeightLow,
             classification.WeightHigh,
-            classification.Confidence,
             classification.RuleId);
     }
 }

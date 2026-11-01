@@ -2,16 +2,13 @@ namespace FocusLedger.Core;
 
 public sealed record AppUsage(string App, double Seconds);
 
-/// <summary>一天的对账结果。</summary>
+/// <summary>一天的账。</summary>
 public sealed record DailySummary(
     DateOnly Date,
     double ActiveSeconds,
-    double PassiveSeconds,
     double SilentSeconds,
     double OffTaskSeconds,
-    double IdleSeconds,
-    double LockedSeconds,
-    double AmbiguousSeconds,
+    double AwaySeconds,
     double EffectiveSeconds,
     double EffectiveLowSeconds,
     double EffectiveHighSeconds,
@@ -20,26 +17,19 @@ public sealed record DailySummary(
     int AppSwitches,
     IReadOnlyList<AppUsage> TopDistractions)
 {
-    /// <summary>有效专注的小时数（点估计）。</summary>
     public double EffectiveHours => EffectiveSeconds / 3600.0;
-
-    public double EffectiveLowHours => EffectiveLowSeconds / 3600.0;
-
-    public double EffectiveHighHours => EffectiveHighSeconds / 3600.0;
-
     public double ActiveHours => ActiveSeconds / 3600.0;
-
-    public double PassiveHours => PassiveSeconds / 3600.0;
-
     public double SilentHours => SilentSeconds / 3600.0;
-
     public double OffTaskHours => OffTaskSeconds / 3600.0;
+    public double AwayHours => AwaySeconds / 3600.0;
 
-    public double IdleHours => IdleSeconds / 3600.0;
+    public double AccountedSeconds => ActiveSeconds + SilentSeconds + OffTaskSeconds + AwaySeconds;
 
-    public double LockedHours => LockedSeconds / 3600.0;
+    /// <summary>实证率：有效专注占已统计时长的比例。</summary>
+    public double EffectiveRatio => AccountedSeconds > 0 ? EffectiveSeconds / AccountedSeconds : 0;
 
-    public double AmbiguousHours => AmbiguousSeconds / 3600.0;
+    public static DailySummary Empty(DateOnly date) =>
+        new(date, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Array.Empty<AppUsage>());
 }
 
 public static class DailyAggregator
@@ -58,8 +48,7 @@ public static class DailyAggregator
         long dayStart = StartOfDayUtc(date, tz);
         long dayEnd = StartOfDayUtc(date.AddDays(1), tz);
 
-        double active = 0, passive = 0, silent = 0, offTask = 0;
-        double idle = 0, locked = 0, ambiguous = 0;
+        double active = 0, silent = 0, offTask = 0, away = 0;
         double effective = 0, low = 0, high = 0;
         int switches = 0;
         int focusBlocks = 0;
@@ -84,9 +73,6 @@ public static class DailyAggregator
                 case ActivityState.ActiveFocus:
                     active += duration;
                     break;
-                case ActivityState.PassiveFocus:
-                    passive += duration;
-                    break;
                 case ActivityState.SilentFocus:
                     silent += duration;
                     break;
@@ -95,15 +81,8 @@ public static class DailyAggregator
                     distractions.TryGetValue(segment.App, out double previous);
                     distractions[segment.App] = previous + duration;
                     break;
-                case ActivityState.IdleAway:
-                    idle += duration;
-                    break;
-                case ActivityState.Locked:
-                    locked += duration;
-                    break;
-                case ActivityState.Ambiguous:
-                case ActivityState.UnknownGap:
-                    ambiguous += duration;
+                default:
+                    away += duration;
                     break;
             }
 
@@ -148,21 +127,9 @@ public static class DailyAggregator
             .ToList();
 
         return new DailySummary(
-            date,
-            active,
-            passive,
-            silent,
-            offTask,
-            idle,
-            locked,
-            ambiguous,
-            effective,
-            low,
-            high,
-            focusBlocks,
-            longestBlock,
-            switches,
-            top);
+            date, active, silent, offTask, away,
+            effective, low, high,
+            focusBlocks, longestBlock, switches, top);
     }
 
     /// <summary>某一天在 UTC 上覆盖的区间 [start, end)。</summary>

@@ -24,13 +24,11 @@ public sealed record IntentOutcome(
     double WindowSeconds,
     double EffectiveSeconds,
     double ActiveSeconds,
-    double PassiveSeconds,
     double SilentSeconds,
     double OffTaskSeconds,
-    double IdleSeconds,
+    double AwaySeconds,
     double TrackedSeconds)
 {
-    /// <summary>遵守率：窗口内有效专注占窗口长度的比例。</summary>
     public double Adherence =>
         WindowSeconds <= 0 ? 0 : Math.Clamp(EffectiveSeconds / WindowSeconds, 0, 1);
 
@@ -60,11 +58,11 @@ public static class IntentEvaluator
 
         if (to <= from)
         {
-            return new IntentOutcome(0, 0, 0, 0, 0, 0, 0, 0);
+            return new IntentOutcome(0, 0, 0, 0, 0, 0, 0);
         }
 
         double window = (to - from) / 1000.0;
-        double effective = 0, active = 0, passive = 0, silent = 0, offTask = 0, idle = 0, tracked = 0;
+        double effective = 0, active = 0, silent = 0, offTask = 0, away = 0, tracked = 0;
 
         foreach (var segment in segments)
         {
@@ -84,22 +82,19 @@ public static class IntentEvaluator
                 case ActivityState.ActiveFocus:
                     active += seconds;
                     break;
-                case ActivityState.PassiveFocus:
-                    passive += seconds;
-                    break;
                 case ActivityState.SilentFocus:
                     silent += seconds;
                     break;
                 case ActivityState.OffTask:
                     offTask += seconds;
                     break;
-                case ActivityState.IdleAway:
-                    idle += seconds;
+                default:
+                    away += seconds;
                     break;
             }
         }
 
         return new IntentOutcome(
-            window, effective, active, passive, silent, offTask, idle, Math.Min(tracked, window));
+            window, effective, active, silent, offTask, away, Math.Min(tracked, window));
     }
 }

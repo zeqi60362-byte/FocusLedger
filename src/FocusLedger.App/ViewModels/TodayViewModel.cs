@@ -96,10 +96,8 @@ public sealed partial class TodayViewModel : ObservableObject
 
         Headline = Fmt.Duration(summary.EffectiveSeconds);
         Band = $"区间 {Fmt.Duration(summary.EffectiveLowSeconds)} – {Fmt.Duration(summary.EffectiveHighSeconds)}";
-        Breakdown =
-            $"深度 {Fmt.Duration(summary.ActiveSeconds)}     被动 {Fmt.Duration(summary.PassiveSeconds)}     静默 {Fmt.Duration(summary.SilentSeconds)}";
-        Secondary =
-            $"分心 {Fmt.Duration(summary.OffTaskSeconds)}     离席 {Fmt.Duration(summary.IdleSeconds)}     锁屏 {Fmt.Duration(summary.LockedSeconds)}     存疑 {Fmt.Duration(summary.AmbiguousSeconds)}";
+        Breakdown = $"深度 {Fmt.Duration(summary.ActiveSeconds)}     静默 {Fmt.Duration(summary.SilentSeconds)}";
+        Secondary = $"分心 {Fmt.Duration(summary.OffTaskSeconds)}     离席 {Fmt.Duration(summary.AwaySeconds)}";
 
         string top = summary.TopDistractions.Count > 0
             ? "  ·  " + string.Join(" / ", summary.TopDistractions.Select(d => $"{d.App} {Fmt.Duration(d.Seconds)}"))
@@ -130,19 +128,11 @@ public sealed partial class TodayViewModel : ObservableObject
 
     public void ShowDetail(Segment segment)
     {
-        string reasons = segment.CorrectedBy switch
-        {
-            "return" => "（日终按「返回修正」重判：短时离开后又回到同一应用）",
-            _ => string.Empty
-        };
-
         Detail =
             $"{Fmt.Clock(segment.StartUtcMs)} – {Fmt.Clock(segment.EndUtcMs)}    " +
             $"{TimelineControl.StateName(segment.State)}    {Fmt.Duration(segment.DurationSeconds)}\n" +
-            $"应用：{segment.App}    分类：{segment.AppClass}\n" +
-            $"标题：{Trim(segment.Title, 90)}\n" +
-            $"权重：{segment.Weight:F2}（区间 {segment.WeightLow:F2} – {segment.WeightHigh:F2}）    " +
-            $"置信：{segment.Confidence}    规则：{segment.RuleId}{reasons}";
+            $"应用：{segment.App}\n" +
+            $"标题：{Trim(segment.Title, 90)}";
     }
 
     private void ApplyZoom(string mode)

@@ -1,19 +1,24 @@
 namespace FocusLedger.Core;
 
-/// <summary>七状态 + 两个技术性状态（数据缺口）。见 docs/02-state-machine.md。</summary>
+/// <summary>
+/// 四种状态。刻意保持精简：用户能一眼看懂，且每一种都能对应到明确的行为。
+/// 锁屏并入离席，存疑与「被动专注」取消。
+/// </summary>
 public enum ActivityState
 {
+    /// <summary>深度专注：有键鼠输入，且前台是工作类应用。</summary>
     ActiveFocus,
-    PassiveFocus,
+
+    /// <summary>静默专注：手基本不动，但在看/听学习内容（网课、教程、长文）。</summary>
     SilentFocus,
+
+    /// <summary>分心：娱乐、社交、购物类。</summary>
     OffTask,
-    IdleAway,
-    Locked,
-    Ambiguous,
-    UnknownGap
+
+    /// <summary>离席：人不在电脑前，或锁屏、睡眠。</summary>
+    Away
 }
 
-/// <summary>应用类型，决定空闲阈值与静默专注权重。</summary>
 public enum AppClass
 {
     Reading,
@@ -88,9 +93,7 @@ public sealed record Segment(
     double Weight,
     double WeightLow,
     double WeightHigh,
-    string Confidence,
-    string RuleId,
-    string? CorrectedBy = null)
+    string RuleId)
 {
     public double DurationSeconds => (EndUtcMs - StartUtcMs) / 1000.0;
 
@@ -103,5 +106,15 @@ public sealed record Classification(
     double Weight,
     double WeightLow,
     double WeightHigh,
-    string Confidence,
     string RuleId);
+
+public static class StateNames
+{
+    public static string Chinese(ActivityState state) => state switch
+    {
+        ActivityState.ActiveFocus => "深度专注",
+        ActivityState.SilentFocus => "静默专注",
+        ActivityState.OffTask => "分心",
+        _ => "离席"
+    };
+}

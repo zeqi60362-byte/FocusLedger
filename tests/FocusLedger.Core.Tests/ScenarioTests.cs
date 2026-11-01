@@ -4,93 +4,90 @@ using static FocusLedger.Core.Tests.TestSamples;
 namespace FocusLedger.Core.Tests;
 
 /// <summary>
-/// docs/02-state-machine.md §6 的 8 个验收场景。
-/// 这些测试是产品的契约：任何一条变红都说明判定逻辑跑偏了。
+/// 四状态判定模型的验收场景。
+/// 核心原则：没有正面证据就算离席 —— 宁可少算，也不要把「人不在」算成「在思考」。
 /// </summary>
 public sealed class ScenarioTests
 {
     private static readonly SegmentBuilder Builder = new();
 
-    // S1 番茄钟在跑，人已离开 30 分钟，屏幕静止 → 不能算学习
     [Fact]
-    public void S1_TimerRunningButUserAway_IsIdleAway()
+    public void S1_TimerRunningButUserAway_IsAway()
     {
         var samples = Run(0, 12, "winword.exe", "论文.docx",
             ContextLevel.Task, AppClass.Typing, idleSeconds: 1800);
 
-        var segments = Builder.Build(samples);
+        var segment = Assert.Single(Builder.Build(samples));
 
-        var seg = Assert.Single(segments);
-        Assert.Equal(ActivityState.IdleAway, seg.State);
-        Assert.Equal(0, seg.Weight);
-        Assert.Equal(0, seg.EffectiveSeconds);
+        Assert.Equal(ActivityState.Away, segment.State);
+        Assert.Equal(0, segment.EffectiveSeconds);
     }
 
-    // S2 看 45 分钟网课，全程无键鼠 → 必须算被动专注，不能判离席
     [Fact]
-    public void S2_WatchingLectureWithoutInput_IsPassiveFocus()
+    public void S2_WatchingStudyVideoWithoutInput_IsSilentFocus()
     {
-        var samples = Run(0, 12, "chrome.exe", "MIT 6.824 Lecture 12",
-            ContextLevel.Neutral, AppClass.Reading,
+        // B 站标题带「考研」→ 学习关键词，压过分心规则
+        var samples = Run(0, 12, "chrome.exe", "【考研数学】高数基础班 第 12 讲",
+            ContextLevel.Task, AppClass.Reading,
             idleSeconds: 1200,
             audioPeak: 0.30,
             media: MediaPlaybackState.Playing);
 
-        var seg = Assert.Single(Builder.Build(samples));
-        Assert.Equal(ActivityState.PassiveFocus, seg.State);
-        Assert.Equal(0.85, seg.Weight, 3);
+        var segment = Assert.Single(Builder.Build(samples));
+
+        Assert.Equal(ActivityState.SilentFocus, segment.State);
+        Assert.Equal(0.85, segment.Weight, 3);
     }
 
-    // S3 读 PDF 20 分钟只滚动 3 次 → 无输入的窗口应判静默专注 0.70
     [Fact]
-    public void S3_ReadingPdfWithoutScrolling_IsSilentFocusAtReadingWeight()
+    public void S3_ScrollingLongDocument_IsSilentFocus()
     {
         var samples = Run(0, 12, "sumatrapdf.exe", "Attention Is All You Need.pdf",
-            ContextLevel.Task, AppClass.Reading, idleSeconds: 240);
+            ContextLevel.Task, AppClass.Reading, visualDelta: 11);
 
-        var seg = Assert.Single(Builder.Build(samples));
-        Assert.Equal(ActivityState.SilentFocus, seg.State);
-        Assert.Equal(0.70, seg.Weight, 3);
+        var segment = Assert.Single(Builder.Build(samples));
+
+        Assert.Equal(ActivityState.SilentFocus, segment.State);
+        Assert.Equal(0.70, segment.Weight, 3);
     }
 
-    // S4 前台 Word，切到微信聊 8 分钟 → 这段时间算分心
     [Fact]
-    public void S4_SwitchingToWechat_IsOffTask()
+    public void S4_NoInputNoVisualNoMedia_IsAwayNotSilent()
+    {
+        // 这正是用户反馈里判错的那一类：Word 开着、人走了、屏幕不动
+        var samples = Run(0, 12, "winword.exe", "论文.docx",
+            ContextLevel.Task, AppClass.Typing, idleSeconds: 400);
+
+        var segment = Assert.Single(Builder.Build(samples));
+
+        Assert.Equal(ActivityState.Away, segment.State);
+        Assert.Equal(0, segment.EffectiveSeconds);
+    }
+
+    [Fact]
+    public void S5_TypingInWord_IsActiveFocus()
+    {
+        var samples = Run(0, 12, "winword.exe", "论文.docx",
+            ContextLevel.Task, AppClass.Typing, keys: 12, mouse: 2);
+
+        var segment = Assert.Single(Builder.Build(samples));
+
+        Assert.Equal(ActivityState.ActiveFocus, segment.State);
+        Assert.Equal(1.00, segment.Weight, 3);
+    }
+
+    [Fact]
+    public void S6_SocialCalls_IsOffTask()
     {
         var samples = Run(0, 12, "wechat.exe", "微信",
-            ContextLevel.Distraction, AppClass.Other,
-            keys: 20, mouse: 10);
+            ContextLevel.Distraction, AppClass.Other, keys: 20, mouse: 10);
 
-        var seg = Assert.Single(Builder.Build(samples));
-        Assert.Equal(ActivityState.OffTask, seg.State);
-        Assert.Equal(0, seg.Weight);
+        var segment = Assert.Single(Builder.Build(samples));
+        Assert.Equal(ActivityState.OffTask, segment.State);
     }
 
-    // S5 前台 Word，思考 6 分钟无输入后回来 → 实时判离席，日终修正为静默专注
     [Fact]
-    public void S5_ShortGapThenReturn_IsReclassifiedAsSilentFocus()
-    {
-        var samples = new List<Sample>();
-        samples.AddRange(Run(0, 12, "winword.exe", "论文.docx",
-            ContextLevel.Task, AppClass.Typing, keys: 10));
-        samples.AddRange(Run(60_000, 12, "winword.exe", "论文.docx",
-            ContextLevel.Task, AppClass.Typing, idleSeconds: 400));
-        samples.AddRange(Run(120_000, 12, "winword.exe", "论文.docx",
-            ContextLevel.Task, AppClass.Typing, keys: 10));
-
-        var provisional = Builder.Build(samples, finalize: false);
-        var gap = provisional[1];
-        Assert.Equal(ActivityState.IdleAway, gap.State);
-
-        var final = Builder.Build(samples);
-        var healed = final.Single(s => s.CorrectedBy == "return");
-        Assert.Equal(ActivityState.SilentFocus, healed.State);
-        Assert.Equal(0.40, healed.Weight, 3);
-    }
-
-    // S6 深夜用 VLC 看电影 → 分心，不能因为"屏幕在动"就算学习
-    [Fact]
-    public void S6_WatchingMovieInVlc_IsOffTask()
+    public void S7_WatchingMovieInVlc_IsOffTask()
     {
         var samples = Run(0, 12, "vlc.exe", "Some Movie (2019)",
             ContextLevel.Distraction, AppClass.Media,
@@ -98,25 +95,22 @@ public sealed class ScenarioTests
             media: MediaPlaybackState.Playing,
             visualDelta: 30);
 
-        var seg = Assert.Single(Builder.Build(samples));
-        Assert.Equal(ActivityState.OffTask, seg.State);
-        Assert.Equal(0, seg.Weight);
+        var segment = Assert.Single(Builder.Build(samples));
+        Assert.Equal(ActivityState.OffTask, segment.State);
     }
 
-    // S7 锁屏 2 小时 → 完全不产生时长
     [Fact]
-    public void S7_LockedScreen_ProducesNoTime()
+    public void S8_LockedScreen_IsAway()
     {
         var samples = Run(0, 12, "LockApp.exe", "", ContextLevel.Neutral, AppClass.Other, locked: true);
 
-        var seg = Assert.Single(Builder.Build(samples));
-        Assert.Equal(ActivityState.Locked, seg.State);
-        Assert.Equal(0, seg.EffectiveSeconds);
+        var segment = Assert.Single(Builder.Build(samples));
+        Assert.Equal(ActivityState.Away, segment.State);
+        Assert.Equal(0, segment.EffectiveSeconds);
     }
 
-    // S8 边界情况：空输入、单样本、重复时间戳都不得抛异常
     [Fact]
-    public void S8_EdgeInputs_DoNotThrow()
+    public void S9_EdgeInputs_DoNotThrow()
     {
         Assert.Empty(Builder.Build(Array.Empty<Sample>()));
 

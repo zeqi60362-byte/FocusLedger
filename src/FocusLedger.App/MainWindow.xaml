@@ -7,6 +7,8 @@
         Height="740" Width="1120"
         MinHeight="620" MinWidth="920"
         Background="{StaticResource Bg}"
+        FontFamily="{StaticResource UiFont}"
+        TextOptions.TextFormattingMode="Display"
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
@@ -19,8 +21,8 @@
         <DataTemplate DataType="{x:Type vm:RulesViewModel}">
             <views:RulesView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:ReconcileViewModel}">
-            <views:ReconcileView />
+        <DataTemplate DataType="{x:Type vm:CalendarViewModel}">
+            <views:CalendarView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <views:SettingsView />

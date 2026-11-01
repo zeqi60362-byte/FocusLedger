@@ -113,7 +113,7 @@ public sealed class TimelineControl : FrameworkElement
             double barWidth = Math.Max(1.2, x2 - x1);
             var brush = BrushFor(segment.State);
 
-            dc.PushOpacity(segment.Confidence == "low" ? 0.45 : 0.92);
+            dc.PushOpacity(0.92);
             dc.DrawRoundedRectangle(brush, null, new Rect(x1, topPad, barWidth, plotHeight), 2, 2);
             dc.Pop();
         }
@@ -244,28 +244,15 @@ public sealed class TimelineControl : FrameworkElement
     private Brush BrushFor(ActivityState state) => state switch
     {
         ActivityState.ActiveFocus => Res("StateActive", Color.FromRgb(0x4A, 0xDE, 0x80)),
-        ActivityState.PassiveFocus => Res("StatePassive", Color.FromRgb(0x60, 0xA5, 0xFA)),
-        ActivityState.SilentFocus => Res("StateSilent", Color.FromRgb(0xFB, 0xBF, 0x24)),
+        ActivityState.SilentFocus => Res("StateSilent", Color.FromRgb(0x60, 0xA5, 0xFA)),
         ActivityState.OffTask => Res("StateOffTask", Color.FromRgb(0xF8, 0x71, 0x71)),
-        ActivityState.IdleAway => Res("StateIdle", Color.FromRgb(0x5B, 0x5B, 0x66)),
-        ActivityState.Locked => Res("StateLocked", Color.FromRgb(0x2F, 0x2F, 0x38)),
-        _ => Res("StateAmbiguous", Color.FromRgb(0xA7, 0x8B, 0xFA))
+        _ => Res("StateIdle", Color.FromRgb(0x5B, 0x5B, 0x66))
     };
 
     private Brush Res(string key, Color fallback) =>
         TryFindResource(key) as Brush ?? new SolidColorBrush(fallback);
 
-    public static string StateName(ActivityState state) => state switch
-    {
-        ActivityState.ActiveFocus => "深度专注",
-        ActivityState.PassiveFocus => "被动专注",
-        ActivityState.SilentFocus => "静默专注",
-        ActivityState.OffTask => "分心",
-        ActivityState.IdleAway => "离席",
-        ActivityState.Locked => "锁屏",
-        ActivityState.Ambiguous => "存疑",
-        _ => "数据缺口"
-    };
+    public static string StateName(ActivityState state) => StateNames.Chinese(state);
 
     protected override void OnMouseMove(MouseEventArgs e)
     {

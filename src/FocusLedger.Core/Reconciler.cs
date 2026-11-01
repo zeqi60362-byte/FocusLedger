@@ -5,31 +5,27 @@ public sealed record ReconcileResult(
     double ClaimedSeconds,
     double VerifiedSeconds,
     double ActiveSeconds,
-    double PassiveSeconds,
     double SilentSeconds,
     double OffTaskSeconds,
-    double IdleSeconds,
-    double AmbiguousSeconds,
+    double AwaySeconds,
     double UntrackedSeconds,
     int ClaimCount)
 {
-    /// <summary>声称减去实证，即"不真实的时长"。</summary>
     public double GapSeconds => Math.Max(0, ClaimedSeconds - VerifiedSeconds);
 
     /// <summary>
-    /// 权重折损：确实在学习，但因为是被动/静默，只能按折扣计入。
-    /// 这不是"假时间"，而是"打折时间"，必须与离席、分心分开说。
+    /// 权重折损：确实在学习，但因为是被动观看或静默，只能按折扣计入。
+    /// 不是「假时间」，是「打折时间」，必须与离席、分心分开说。
     /// </summary>
     public double WeightLossSeconds =>
-        Math.Max(0, ActiveSeconds + PassiveSeconds + SilentSeconds - VerifiedSeconds);
+        Math.Max(0, ActiveSeconds + SilentSeconds - VerifiedSeconds);
 
-    /// <summary>差额分解，各项之和应等于 <see cref="GapSeconds"/>。</summary>
     public double AttributedGapSeconds =>
-        OffTaskSeconds + IdleSeconds + AmbiguousSeconds + UntrackedSeconds + WeightLossSeconds;
+        OffTaskSeconds + AwaySeconds + UntrackedSeconds + WeightLossSeconds;
 
     public double VerifiedRatio => ClaimedSeconds > 0 ? VerifiedSeconds / ClaimedSeconds : 0;
 
-    public static ReconcileResult Empty { get; } = new(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    public static ReconcileResult Empty { get; } = new(0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 /// <summary>
@@ -51,8 +47,7 @@ public static class Reconciler
         }
 
         double claimed = claims.Sum(c => c.ClaimedSeconds);
-        double verified = 0, active = 0, passive = 0, silent = 0;
-        double offTask = 0, idle = 0, ambiguous = 0, overlapped = 0;
+        double verified = 0, active = 0, silent = 0, offTask = 0, away = 0, overlapped = 0;
 
         foreach (var claim in claims)
         {
@@ -74,39 +69,27 @@ public static class Reconciler
                     case ActivityState.ActiveFocus:
                         active += seconds;
                         break;
-                    case ActivityState.PassiveFocus:
-                        passive += seconds;
-                        break;
                     case ActivityState.SilentFocus:
                         silent += seconds;
                         break;
                     case ActivityState.OffTask:
                         offTask += seconds;
                         break;
-                    case ActivityState.IdleAway:
-                        idle += seconds;
-                        break;
-                    case ActivityState.Locked:
-                        break;
                     default:
-                        ambiguous += seconds;
+                        away += seconds;
                         break;
                 }
             }
         }
 
-        double untracked = Math.Max(0, claimed - overlapped);
-
         return new ReconcileResult(
             claimed,
             verified,
             active,
-            passive,
             silent,
             offTask,
-            idle,
-            ambiguous,
-            untracked,
+            away,
+            Math.Max(0, claimed - overlapped),
             claims.Count);
     }
 }

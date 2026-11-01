@@ -163,8 +163,8 @@ internal static class Program
         Console.WriteLine();
         Console.WriteLine($"{date:yyyy-MM-dd}   有效专注 {Dur(summary.EffectiveSeconds)} [{Dur(summary.EffectiveLowSeconds)}–{Dur(summary.EffectiveHighSeconds)}]");
         Console.WriteLine();
-        Console.WriteLine($"  深度 {Dur(summary.ActiveSeconds)}  |  被动 {Dur(summary.PassiveSeconds)}  |  静默 {Dur(summary.SilentSeconds)}");
-        Console.WriteLine($"  分心 {Dur(summary.OffTaskSeconds)}  |  离席 {Dur(summary.IdleSeconds)}  |  锁屏 {Dur(summary.LockedSeconds)}  |  存疑 {Dur(summary.AmbiguousSeconds)}");
+        Console.WriteLine($"  深度 {Dur(summary.ActiveSeconds)}  |  静默 {Dur(summary.SilentSeconds)}");
+        Console.WriteLine($"  分心 {Dur(summary.OffTaskSeconds)}  |  离席 {Dur(summary.AwaySeconds)}");
         Console.WriteLine();
         Console.WriteLine($"  深度工作块 {summary.FocusBlocks} 次，最长 {summary.LongestFocusBlockSeconds / 60:F0} 分钟");
         Console.WriteLine($"  应用切换 {summary.AppSwitches} 次");
@@ -258,9 +258,8 @@ internal static class Program
             $"  声称 {Dur(result.ClaimedSeconds)}    实证 {Dur(result.VerifiedSeconds)}    " +
             $"差额 {Dur(result.GapSeconds)}（{1 - result.VerifiedRatio:P0}）");
         Console.WriteLine();
-        Console.WriteLine($"  离席   {Dur(result.IdleSeconds)}");
+        Console.WriteLine($"  离席   {Dur(result.AwaySeconds)}");
         Console.WriteLine($"  分心   {Dur(result.OffTaskSeconds)}");
-        Console.WriteLine($"  存疑   {Dur(result.AmbiguousSeconds)}");
         Console.WriteLine($"  未采集 {Dur(result.UntrackedSeconds)}");
         Console.WriteLine($"  打折   {Dur(result.WeightLossSeconds)}  ← 确实在学，但属被动/静默，按权重折算");
         Console.WriteLine($"  ------------------------------------");

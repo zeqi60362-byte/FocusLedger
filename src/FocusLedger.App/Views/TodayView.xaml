@@ -58,16 +58,12 @@
                         <TextBlock Text="时间轴" Style="{StaticResource H2}" FontSize="13.5" VerticalAlignment="Center" />
                         <Rectangle Width="10" Height="10" RadiusX="2" RadiusY="2" Fill="{StaticResource StateActive}" Margin="16,0,5,0" VerticalAlignment="Center" />
                         <TextBlock Text="深度" Style="{StaticResource Caption}" VerticalAlignment="Center" />
-                        <Rectangle Width="10" Height="10" RadiusX="2" RadiusY="2" Fill="{StaticResource StatePassive}" Margin="10,0,5,0" VerticalAlignment="Center" />
-                        <TextBlock Text="被动" Style="{StaticResource Caption}" VerticalAlignment="Center" />
                         <Rectangle Width="10" Height="10" RadiusX="2" RadiusY="2" Fill="{StaticResource StateSilent}" Margin="10,0,5,0" VerticalAlignment="Center" />
                         <TextBlock Text="静默" Style="{StaticResource Caption}" VerticalAlignment="Center" />
                         <Rectangle Width="10" Height="10" RadiusX="2" RadiusY="2" Fill="{StaticResource StateOffTask}" Margin="10,0,5,0" VerticalAlignment="Center" />
                         <TextBlock Text="分心" Style="{StaticResource Caption}" VerticalAlignment="Center" />
                         <Rectangle Width="10" Height="10" RadiusX="2" RadiusY="2" Fill="{StaticResource StateIdle}" Margin="10,0,5,0" VerticalAlignment="Center" />
                         <TextBlock Text="离席" Style="{StaticResource Caption}" VerticalAlignment="Center" />
-                        <Rectangle Width="10" Height="10" RadiusX="2" RadiusY="2" Fill="{StaticResource StateLocked}" Margin="10,0,5,0" VerticalAlignment="Center" />
-                        <TextBlock Text="锁屏" Style="{StaticResource Caption}" VerticalAlignment="Center" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

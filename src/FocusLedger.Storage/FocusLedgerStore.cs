@@ -501,6 +501,99 @@ public sealed class FocusLedgerStore : IDisposable
         public double? adherence { get; set; }
     }
 
+    // ---------- 计划与节假日 ----------
+
+    public long CountSamplesInRange(long startUtcMs, long endUtcMs)
+        => _connection.ExecuteScalar<long>(
+            "SELECT COUNT(1) FROM samples WHERE ts_utc >= @start AND ts_utc < @end;",
+            new { start = startUtcMs, end = endUtcMs });
+
+    public IReadOnlyList<PlanRow> LoadPlans(DateOnly date)
+        => _connection.Query<PlanRow>(
+                """
+                SELECT id, date_local, hour, title, done
+                FROM plans WHERE date_local = @d ORDER BY hour, id;
+                """,
+                new { d = date.ToString("yyyy-MM-dd") })
+            .ToList();
+
+    public IReadOnlyList<PlanRow> LoadPlansInRange(DateOnly from, DateOnly to)
+        => _connection.Query<PlanRow>(
+                """
+                SELECT id, date_local, hour, title, done
+                FROM plans WHERE date_local >= @a AND date_local <= @b
+                ORDER BY date_local, hour, id;
+                """,
+                new { a = from.ToString("yyyy-MM-dd"), b = to.ToString("yyyy-MM-dd") })
+            .ToList();
+
+    public long AddPlan(DateOnly date, int hour, string title)
+        => _connection.ExecuteScalar<long>(
+            """
+            INSERT INTO plans (date_local, hour, title, done, created_utc)
+            VALUES (@d, @h, @t, 0, @now);
+            SELECT last_insert_rowid();
+            """,
+            new
+            {
+                d = date.ToString("yyyy-MM-dd"),
+                h = hour,
+                t = title,
+                now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            });
+
+    public void UpdatePlanTitle(long id, string title)
+        => _connection.Execute("UPDATE plans SET title = @t WHERE id = @id;", new { id, t = title });
+
+    public void SetPlanDone(long id, bool done)
+        => _connection.Execute("UPDATE plans SET done = @d WHERE id = @id;", new { id, d = done ? 1 : 0 });
+
+    public void DeletePlan(long id)
+        => _connection.Execute("DELETE FROM plans WHERE id = @id;", new { id });
+
+    public IReadOnlyDictionary<string, string> LoadHolidays(string region)
+        => _connection.Query<HolidayRow>(
+                "SELECT date_local, name FROM holidays WHERE region = @r;",
+                new { r = region })
+            .ToDictionary(h => h.date_local, h => h.name, StringComparer.Ordinal);
+
+    public int CountHolidays(string region)
+        => (int)_connection.ExecuteScalar<long>(
+            "SELECT COUNT(1) FROM holidays WHERE region = @r;", new { r = region });
+
+    public int ReplaceHolidays(string region, IEnumerable<(string Date, string Name)> items)
+    {
+        var list = items.ToList();
+        using var transaction = _connection.BeginTransaction();
+        _connection.Execute("DELETE FROM holidays WHERE region = @r;", new { r = region }, transaction);
+
+        foreach (var (date, name) in list)
+        {
+            _connection.Execute(
+                "INSERT OR REPLACE INTO holidays (date_local, region, name) VALUES (@d, @r, @n);",
+                new { d = date, r = region, n = name },
+                transaction);
+        }
+
+        transaction.Commit();
+        return list.Count;
+    }
+
+    public sealed class PlanRow
+    {
+        public long id { get; set; }
+        public string? date_local { get; set; }
+        public int hour { get; set; }
+        public string? title { get; set; }
+        public long done { get; set; }
+    }
+
+    internal sealed class HolidayRow
+    {
+        public string? date_local { get; set; }
+        public string? name { get; set; }
+    }
+
     private static T ParseEnum<T>(string? value, T fallback)
         where T : struct, Enum
         => Enum.TryParse<T>(value, ignoreCase: true, out var parsed) ? parsed : fallback;
@@ -655,5 +748,22 @@ public sealed class FocusLedgerStore : IDisposable
             created_utc     INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_intents_start ON intents(start_utc);
+
+        CREATE TABLE IF NOT EXISTS plans (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            date_local  TEXT    NOT NULL,
+            hour        INTEGER NOT NULL,
+            title       TEXT    NOT NULL,
+            done        INTEGER NOT NULL DEFAULT 0,
+            created_utc INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_plans_date ON plans(date_local);
+
+        CREATE TABLE IF NOT EXISTS holidays (
+            date_local TEXT NOT NULL,
+            region     TEXT NOT NULL DEFAULT 'HK',
+            name       TEXT NOT NULL,
+            PRIMARY KEY (date_local, region)
+        );
         """;
 }

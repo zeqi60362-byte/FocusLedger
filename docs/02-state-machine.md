@@ -1,5 +1,9 @@
 # 02 · 状态判定模型
 
+> **⚠️ 本文档描述的是 v0.1 的七状态模型，已被 v0.2 的四状态模型取代。**
+> 现行实现见 `src/FocusLedger.Core/StateMachine.cs`，变更说明见 [CHANGELOG.md](CHANGELOG.md)。
+> 本文保留作为设计过程的记录，不再作为实现依据。
+
 本文定义 FocusLedger 的核心算法。实现必须逐条对应，并有单元测试覆盖。
 
 ---
