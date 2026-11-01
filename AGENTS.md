@@ -29,14 +29,20 @@
 
 ## 2. 环境
 
+**本机有两个 dotnet 根目录**，`C:\Program Files\dotnet` 抢先且没有 SDK。
+**禁止直接使用裸 `dotnet` 命令**，一律通过统一入口：
+
 ```powershell
-dotnet --list-sdks        # 需要 8.0.x；没有则先装
-dotnet build FocusLedger.sln
-dotnet test
-dotnet run --project src/FocusLedger.App
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 build
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 test
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 run
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 probe
 ```
 
-- 目标框架：`net8.0`（Core / Storage）、`net8.0-windows10.0.19041.0`（Collector / App / Cli on Windows）
+`tools/dev.ps1` 内部优先使用 `%USERPROFILE%\.dotnet\dotnet.exe`（SDK 8.0.427）。
+若必须直接调用，用绝对路径 `"$env:USERPROFILE\.dotnet\dotnet.exe"`。
+
+- 目标框架：`net8.0`（Core / Storage）、`net8.0-windows10.0.19041.0`（Collector / App / Cli）
 - 语言版本：`latest`，启用 `Nullable`、`TreatWarningsAsErrors`（Core 项目强制）
 
 ---

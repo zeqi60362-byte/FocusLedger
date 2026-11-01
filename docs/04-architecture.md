@@ -148,18 +148,38 @@ UI 主题：`WPF-UI`（Fluent 风格）或纯手写样式。禁止引入重量�
 
 ---
 
-## 8. 环境准备（M0 前置）
+## 8. 环境准备（已完成，2026-11-01）
+
+本机实测状态：
+
+| 组件 | 状态 |
+|---|---|
+| .NET SDK | ✅ 8.0.427 @ `C:\Users\L\.dotnet`（用户级安装，无需管理员） |
+| .NET 运行时 | ✅ 8.0.8 @ `C:\Program Files\dotnet`（系统自带） |
+| WebView2 | ✅ 156.0.4314.58 |
+| Rust / MSVC | ❌ 未安装（不再需要） |
+
+**两个 dotnet 根目录的坑**：
+
+```
+C:\Program Files\dotnet   → 只有运行时，无 SDK，且在 PATH 中抢先
+C:\Users\L\.dotnet        → SDK 8.0.427
+```
+
+`dotnet` 命令会命中前者，`dotnet build` 失败；`DOTNET_ROOT` 对 SDK 解析无效（已实测）。
+因此**所有构建必须走 `tools/dev.ps1`**：
 
 ```powershell
-# 安装 .NET 8 SDK（用户级，无需管理员）
-winget install Microsoft.DotNet.SDK.8
-# 或：
-# Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile $env:TEMP\dotnet-install.ps1
-# & $env:TEMP\dotnet-install.ps1 -Channel 8.0
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 build
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 test
+```
 
-dotnet --list-sdks      # 应看到 8.0.x
-dotnet build FocusLedger.sln
-dotnet test
+首次安装 SDK 的原始命令（留档）：
+
+```powershell
+Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile $env:TEMP\dotnet-install.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+& $env:TEMP\dotnet-install.ps1 -Channel 8.0 -NoPath
 ```
 
 ---

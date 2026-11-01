@@ -14,8 +14,8 @@
 | 窗口标题（中文） | ✅ 可用 | `0_2026-10-19_城市影像与空间智能岗位雷达.docx - WPS Office`，无乱码 |
 | 系统空闲秒数 | ✅ 可用 | 194 → 205 单调递增，1 秒精度 |
 | 画面变化 dHash | ✅ 可用 | 静止文档 delta = 0–1，91% 采样完全静止 |
-| 媒体播放（SMTC） | ⏳ 未验证 | PowerShell 5.1 调 WinRT 成本过高，留待 .NET 版探针 |
-| 锁屏 / 休眠事件 | ⏳ 未验证 | 同上（需 WTS + PowerModeChanged） |
+| 媒体播放（SMTC） | ✅ API 可用 | 会话管理器获取成功；本次运行期间无媒体在播，未观测到 `Playing` |
+| 锁屏状态 | ✅ API 可用 | `OpenInputDesktop` 正常返回句柄（未锁屏）；`locked` 分支待实际锁屏验证 |
 
 **开销**：平均 CPU **0.27%**（16 核），远低于 1% 预算。
 
@@ -93,8 +93,59 @@
 
 ---
 
-## 5. 下一步
+## 5. M0.2 · .NET 探针结果
 
-1. 安装 .NET 8 SDK（用户级，约 220 MB）。
-2. 写 C# 版探针，补齐 SMTC 媒体状态与 WTS 锁屏事件，确认场景 S2 / S7 的输入可用。
-3. 进入 M1：采集器 + Core 判定引擎 + CLI 日报。
+`tools/Probe`（`net8.0-windows10.0.19041.0`，控制台程序）已验证：
+
+```
+[SMTC] 会话管理器已获取 —— 媒体信号可用
+
+  t     app         idle  locked  media
+  0.0s  wps.exe       0s  no      no-session
+
+平均 CPU 占用   : 0.01%  (16 核)
+工作集内存      : 44.6 MB
+```
+
+| 项 | 结果 |
+|---|---|
+| WinRT SMTC 会话管理器 | ✅ 获取成功，无异常 |
+| 媒体会话枚举 | ✅ 返回空集合（当时确实没有媒体在播），逻辑路径走通 |
+| `TryGetMediaPropertiesAsync` | ⏳ 无会话可测，需播放媒体后复验 |
+| `OpenInputDesktop` 锁屏检测 | ✅ 未锁屏时正常返回句柄 |
+| 运行开销 | CPU **0.01%**，内存 **44.6 MB** —— 远优于 PowerShell 版（107 MB） |
+
+**关键结论**：.NET 8 直接调用 WinRT 媒体接口零成本，不需要任何桥接层。
+这印证了 ADR-002 的选择——同样的能力在 Electron 里要绕 PowerShell 子进程。
+
+**复验方法**（播放任意视频/音乐后运行）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 probe
+```
+
+期望看到 `media` 列出现 `xxx=Playing "标题"`。
+
+---
+
+## 6. 本机环境坑：两个 dotnet 根目录
+
+```
+C:\Program Files\dotnet      → 只有运行时 8.0.8，无 SDK，且在 PATH 中抢先
+C:\Users\L\.dotnet           → 用户级安装的 SDK 8.0.427
+```
+
+`dotnet` 命令默认命中前者，因此 `dotnet build` 会失败。
+`DOTNET_ROOT` 对 SDK 解析**无效**（已实测），机器级 PATH 需要管理员权限才能改。
+
+**约定**：本仓库所有构建一律通过 `tools/dev.ps1`，它内部锁定用户级 SDK。
+禁止在文档或脚本里直接写裸 `dotnet` 命令。
+
+---
+
+## 7. 下一步
+
+1. 进入 M1：`FocusLedger.Core` 判定引擎 + 采集器 + CLI 日报。
+2. 媒体播放与锁屏的 `Playing` / `locked` 分支，在 M1 采集器里随真实使用自然覆盖，
+   并补两个集成测试（构造假的 SMTC 会话与锁屏事件）。
+3. 用真实使用数据标定 dHash 归一化分母（见 §3.2）。
