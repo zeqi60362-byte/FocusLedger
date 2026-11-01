@@ -3,7 +3,8 @@
 > 一个本地优先的注意力审计工具：自动记录你在电脑上的每一分钟，用多源证据判断你是否真的在投入，
 > 并每天给你一份「声称 vs 实证」的对账报告。
 
-**当前状态**：规格定稿，等待 M0 开工。代码尚未开始。
+**当前状态**：**M1 完成** —— 判定引擎、Windows 采集器、SQLite 存储、命令行日报已跑通，
+24 个测试全绿，8 个验收场景全部达标。桌面界面（M2）尚未开始。
 
 ---
 
@@ -92,7 +93,37 @@ FocusLedger 不信任任何一个单一信号：
 | [docs/05-roadmap.md](docs/05-roadmap.md) | M0–M4 里程碑与验收方式 |
 | [docs/06-decisions.md](docs/06-decisions.md) | 决策记录（ADR） |
 | [docs/07-privacy.md](docs/07-privacy.md) | 隐私红线、合规、安全设计 |
+| [docs/m0-findings.md](docs/m0-findings.md) | M0 信号探针实测记录 |
+| [docs/m1-report.md](docs/m1-report.md) | M1 完成报告与已知缺口 |
 | [AGENTS.md](AGENTS.md) | 给实现型 AI 的工作契约（怎么干） |
+
+---
+
+## 快速开始
+
+```powershell
+# 构建并跑测试
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 build
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 test
+
+# 采集 1 小时（写入 %LOCALAPPDATA%\FocusLedger\data.db）
+.\src\FocusLedger.Cli\bin\Debug\net8.0-windows10.0.19041.0\focusledger.exe capture --minutes 60
+
+# 出报告
+.\src\FocusLedger.Cli\bin\Debug\net8.0-windows10.0.19041.0\focusledger.exe report
+```
+
+样例输出：
+
+```
+2026-11-01   有效专注 4.2h [3.8–4.6]
+
+  深度 3.1h  |  被动 1.1h  |  静默 0.6h
+  分心 0.9h  |  离席 1.4h  |  锁屏 2.1h  |  存疑 0.0h
+
+  深度工作块 5 次，最长 52 分钟
+  应用切换 87 次
+```
 
 ---
 

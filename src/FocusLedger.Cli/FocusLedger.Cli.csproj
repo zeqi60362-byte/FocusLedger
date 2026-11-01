@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>FocusLedger.Cli</RootNamespace>
+    <AssemblyName>focusledger</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FocusLedger.Core\FocusLedger.Core.csproj" />
+    <ProjectReference Include="..\FocusLedger.Storage\FocusLedger.Storage.csproj" />
+    <ProjectReference Include="..\FocusLedger.Collector.Windows\FocusLedger.Collector.Windows.csproj" />
+  </ItemGroup>
+
+</Project>
