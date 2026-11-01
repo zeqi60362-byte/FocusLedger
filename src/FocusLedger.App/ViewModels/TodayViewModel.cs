@@ -52,10 +52,13 @@ public sealed partial class TodayViewModel : ObservableObject
     [ObservableProperty]
     private string recordButtonText = "开始记录";
 
-    public TodayViewModel(RecordingService recording, RuleService rules)
+    public IntentViewModel Intent { get; }
+
+    public TodayViewModel(RecordingService recording, RuleService rules, IntentViewModel intent)
     {
         _recording = recording;
         _rules = rules;
+        Intent = intent;
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _timer.Tick += (_, _) => Refresh();
@@ -109,6 +112,8 @@ public sealed partial class TodayViewModel : ObservableObject
         Current = currentSample is null
             ? "等待采样…"
             : $"{currentSample.App}  ·  {Trim(currentSample.Title, 60)}";
+
+        Intent.Refresh();
 
         if (Zoom is "hour" or "six")
         {

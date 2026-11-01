@@ -42,7 +42,8 @@ public partial class App : System.Windows.Application
         _recording = new RecordingService(_store, _settings, _rules);
         await _recording.InitializeAsync();
 
-        var today = new TodayViewModel(_recording, _rules);
+        var intent = new IntentViewModel(_store, _rules);
+        var today = new TodayViewModel(_recording, _rules, intent);
         var report = new ReportViewModel(_store, _rules);
         var reconcile = new ReconcileViewModel(_store, _rules);
         var rulesView = new RulesViewModel(_rules, _recording);

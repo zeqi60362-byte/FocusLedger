@@ -421,6 +421,86 @@ public sealed class FocusLedgerStore : IDisposable
         public double claimed_s { get; set; }
     }
 
+    // ---------- 意图声明 ----------
+
+    public long CreateIntent(long startUtcMs, long plannedEndUtcMs, string label)
+        => _connection.ExecuteScalar<long>(
+            """
+            INSERT INTO intents (start_utc, planned_end_utc, label, status, created_utc)
+            VALUES (@start, @end, @label, 'running', @created);
+            SELECT last_insert_rowid();
+            """,
+            new
+            {
+                start = startUtcMs,
+                end = plannedEndUtcMs,
+                label,
+                created = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            });
+
+    public FocusIntent? LoadRunningIntent()
+        => MapIntent(_connection.QueryFirstOrDefault<IntentRow>(
+            """
+            SELECT id, start_utc, planned_end_utc, label, status, adherence
+            FROM intents WHERE status = 'running'
+            ORDER BY start_utc DESC LIMIT 1;
+            """));
+
+    public FocusIntent? LoadLastIntent()
+        => MapIntent(_connection.QueryFirstOrDefault<IntentRow>(
+            """
+            SELECT id, start_utc, planned_end_utc, label, status, adherence
+            FROM intents ORDER BY start_utc DESC LIMIT 1;
+            """));
+
+    public IReadOnlyList<FocusIntent> LoadIntents(long startUtcMs, long endUtcMs)
+        => _connection.Query<IntentRow>(
+                """
+                SELECT id, start_utc, planned_end_utc, label, status, adherence
+                FROM intents WHERE start_utc >= @start AND start_utc < @end
+                ORDER BY start_utc;
+                """,
+                new { start = startUtcMs, end = endUtcMs })
+            .Select(MapIntent)
+            .Where(i => i is not null)
+            .Select(i => i!)
+            .ToList();
+
+    public void FinishIntent(int id, IntentStatus status, double adherence)
+        => _connection.Execute(
+            "UPDATE intents SET status = @status, adherence = @adherence WHERE id = @id;",
+            new { id, status = status.ToString(), adherence });
+
+    private static FocusIntent? MapIntent(IntentRow? row)
+    {
+        if (row is null)
+        {
+            return null;
+        }
+
+        var status = Enum.TryParse<IntentStatus>(row.status, ignoreCase: true, out var parsed)
+            ? parsed
+            : IntentStatus.Completed;
+
+        return new FocusIntent(
+            (int)row.id,
+            row.start_utc,
+            row.planned_end_utc,
+            row.label ?? string.Empty,
+            status,
+            row.adherence);
+    }
+
+    internal sealed class IntentRow
+    {
+        public long id { get; set; }
+        public long start_utc { get; set; }
+        public long planned_end_utc { get; set; }
+        public string? label { get; set; }
+        public string? status { get; set; }
+        public double? adherence { get; set; }
+    }
+
     private static T ParseEnum<T>(string? value, T fallback)
         where T : struct, Enum
         => Enum.TryParse<T>(value, ignoreCase: true, out var parsed) ? parsed : fallback;
@@ -564,5 +644,16 @@ public sealed class FocusLedgerStore : IDisposable
             claimed_s REAL    NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_claims_start ON timer_claims(start_utc);
+
+        CREATE TABLE IF NOT EXISTS intents (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            start_utc       INTEGER NOT NULL,
+            planned_end_utc INTEGER NOT NULL,
+            label           TEXT    NOT NULL DEFAULT '',
+            status          TEXT    NOT NULL DEFAULT 'running',
+            adherence       REAL,
+            created_utc     INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_intents_start ON intents(start_utc);
         """;
 }
