@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.Storage;
 
@@ -115,6 +116,8 @@ public sealed partial class CalendarViewModel : ObservableObject
 
     public ObservableCollection<HourSlot> Hours { get; } = new();
 
+    public ObservableCollection<string> Weekdays { get; } = new();
+
     public CalendarViewModel(FocusLedgerStore store)
     {
         _store = store;
@@ -127,25 +130,21 @@ public sealed partial class CalendarViewModel : ObservableObject
 
         _holidays = new Dictionary<string, string>(store.LoadHolidays(Holidays.DefaultRegion), StringComparer.Ordinal);
 
-        HolidaySourceText = _holidays.Count == 0
-            ? "未导入节假日"
-            : $"节假日：香港 {_holidays.Count} 天";
-
-        Rebuild();
+        Reload();
     }
 
     [RelayCommand]
     private void PreviousMonth()
     {
         _month = _month.AddMonths(-1);
-        Rebuild();
+        Reload();
     }
 
     [RelayCommand]
     private void NextMonth()
     {
         _month = _month.AddMonths(1);
-        Rebuild();
+        Reload();
     }
 
     [RelayCommand]
@@ -154,7 +153,7 @@ public sealed partial class CalendarViewModel : ObservableObject
         var today = DateOnly.FromDateTime(DateTime.Now);
         _month = new DateOnly(today.Year, today.Month, 1);
         _selected = today;
-        Rebuild();
+        Reload();
     }
 
     [RelayCommand]
@@ -171,13 +170,19 @@ public sealed partial class CalendarViewModel : ObservableObject
         }
 
         _selected = day.Date;
-        Rebuild();
+        Reload();
     }
 
-    private void Rebuild()
+    public void Reload()
     {
-        MonthTitle = _month.ToString("yyyy 年 M 月");
-        SelectedDateText = _selected.ToString("M 月 d 日 dddd");
+        var localization = Localization.Localization.Instance;
+        var culture = localization.Culture;
+        bool english = localization.IsEnglish;
+
+        MonthTitle = _month.ToString(english ? "MMMM yyyy" : "yyyy 年 M 月", culture);
+        SelectedDateText = _selected.ToString(english ? "ddd, MMM d" : "M 月 d 日 dddd", culture);
+
+        RebuildWeekdays(english);
 
         var today = DateOnly.FromDateTime(DateTime.Now);
         int offset = ((int)_month.DayOfWeek + 6) % 7;   // 周一为一周之始
@@ -211,10 +216,26 @@ public sealed partial class CalendarViewModel : ObservableObject
         }
 
         HolidayText = _holidays.TryGetValue(_selected.ToString("yyyy-MM-dd"), out string? holiday)
-            ? $"节假日：{holiday}"
+            ? Loc.T("Plan_Holiday", holiday)
             : string.Empty;
 
+        HolidaySourceText = _holidays.Count == 0
+            ? Loc.T("Plan_NoHoliday")
+            : Loc.T("Plan_HolidaySource", _holidays.Count);
+
         LoadHours();
+    }
+
+    private void RebuildWeekdays(bool english)
+    {
+        Weekdays.Clear();
+        string[] zh = { "一", "二", "三", "四", "五", "六", "日" };
+        string[] en = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+
+        foreach (var name in english ? en : zh)
+        {
+            Weekdays.Add(name);
+        }
     }
 
     private void LoadHours()
@@ -233,7 +254,7 @@ public sealed partial class CalendarViewModel : ObservableObject
         }
 
         _syncing = false;
-        PlanCountText = $"{plans.Count} 项计划";
+        PlanCountText = Loc.T("Plan_Count", plans.Count);
     }
 
     private void SaveSlot(HourSlot slot)
@@ -262,6 +283,6 @@ public sealed partial class CalendarViewModel : ObservableObject
             slot.PlanId = _store.AddPlan(_selected, slot.Hour, text);
         }
 
-        PlanCountText = $"{_store.LoadPlans(_selected).Count} 项计划";
+        PlanCountText = Loc.T("Plan_Count", _store.LoadPlans(_selected).Count);
     }
 }

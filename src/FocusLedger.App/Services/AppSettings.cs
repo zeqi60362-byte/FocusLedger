@@ -17,6 +17,9 @@ public sealed class AppSettings
 
     public bool StartPaused { get; set; }
 
+    /// <summary>界面语言：zh / en。</summary>
+    public string Language { get; set; } = "zh";
+
     public int RetentionDays { get; set; } = 14;
 
     public bool ApplyRetentionOnStartup { get; set; } = true;

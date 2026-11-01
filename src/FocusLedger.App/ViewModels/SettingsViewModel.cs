@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.Core;
 using FocusLedger.Storage;
@@ -33,6 +34,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string storageInfo = string.Empty;
 
+    [ObservableProperty]
+    private bool isEnglish;
+
+    public event EventHandler? LanguageChanged;
+
     public ObservableCollection<string> Exclusions { get; } = new();
 
     public SettingsViewModel(AppSettings settings, FocusLedgerStore store, RecordingService recording, RuleService rules)
@@ -44,6 +50,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         StartWithWindows = AutoStart.IsEnabled();
         RetentionDays = settings.RetentionDays;
+        IsEnglish = string.Equals(settings.Language, "en", StringComparison.OrdinalIgnoreCase);
 
         foreach (var app in settings.ExcludedApps)
         {
@@ -64,7 +71,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         AutoStart.Set(value);
         _settings.AutoStart = value;
         _settings.Save();
-        Status = value ? "已设置为开机自启。" : "已取消开机自启。";
+        Status = Loc.T(value ? "Settings_AutoStartOn" : "Settings_AutoStartOff");
     }
 
     partial void OnRetentionDaysChanged(int value)
@@ -82,6 +89,21 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         _settings.RetentionDays = value;
         _settings.Save();
+    }
+
+    partial void OnIsEnglishChanged(bool value)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        Localization.Localization.Instance.SetLanguage(value ? AppLanguage.English : AppLanguage.Chinese);
+        _settings.Language = value ? "en" : "zh";
+        _settings.Save();
+
+        RefreshStorageInfo();
+        LanguageChanged?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
@@ -121,8 +143,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "选择计时器导出的 CSV",
-            Filter = "CSV / 文本|*.csv;*.txt|所有文件|*.*"
+            Title = "CSV",
+            Filter = "CSV / TXT|*.csv;*.txt|All files|*.*"
         };
 
         if (dialog.ShowDialog() != true)
@@ -137,22 +159,18 @@ public sealed partial class SettingsViewModel : ObservableObject
 
             if (parsed.Claims.Count == 0)
             {
-                Status = parsed.Warnings.Count > 0
-                    ? string.Join(" ", parsed.Warnings)
-                    : "没有解析出任何记录。";
+                Status = parsed.Warnings.Count > 0 ? string.Join(" ", parsed.Warnings) : "—";
                 return;
             }
 
             string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
             var (_, inserted, duplicate) = _store.SaveTimerImport(Path.GetFileName(dialog.FileName), hash, parsed.Claims);
 
-            Status = duplicate
-                ? "这份文件已经导入过了。"
-                : $"已导入 {inserted} 条计时器记录。";
+            Status = duplicate ? Loc.T("Settings_ImportDuplicate") : Loc.T("Settings_Imported", inserted);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Status = $"读取失败：{ex.Message}";
+            Status = Loc.T("Settings_ExportFailed", ex.Message);
         }
     }
 
@@ -165,7 +183,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         if (segments.Count == 0)
         {
-            Status = "今天还没有数据可以导出。";
+            Status = Loc.T("Settings_ExportEmpty");
             return;
         }
 
@@ -186,11 +204,11 @@ public sealed partial class SettingsViewModel : ObservableObject
             string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
             string path = Path.Combine(desktop, $"FocusLedger-{date:yyyyMMdd}.csv");
             File.WriteAllText(path, builder.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-            Status = $"已导出到 {path}";
+            Status = Loc.T("Settings_Exported", path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Status = $"导出失败：{ex.Message}";
+            Status = Loc.T("Settings_ExportFailed", ex.Message);
         }
     }
 
@@ -198,7 +216,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private void DeleteAll()
     {
         var result = System.Windows.MessageBox.Show(
-            "将删除全部采集数据（样本、判定段、标注），且无法恢复。\n\n确定继续吗？",
+            Loc.T("Settings_DeleteConfirm"),
             "FocusLedger",
             System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Warning,
@@ -212,20 +230,20 @@ public sealed partial class SettingsViewModel : ObservableObject
         _store.DeleteAll();
         _recording.ReloadToday();
         RefreshStorageInfo();
-        Status = "已删除全部数据。";
+        Status = Loc.T("Settings_Deleted");
     }
 
     public void RefreshStorageInfo()
     {
         long count = _store.CountSamples();
-        StorageInfo = $"数据库：{FocusLedgerStore.DefaultDatabasePath}\n样本总数：{count:N0} 条";
+        StorageInfo = Loc.T("Settings_Storage", FocusLedgerStore.DefaultDatabasePath, count);
     }
 
     private void PersistExclusions()
     {
         _settings.ExcludedApps = Exclusions.ToList();
         _settings.Save();
-        Status = $"排除列表已更新（{Exclusions.Count} 项）。";
+        Status = Loc.T("Settings_ExcludedUpdated", Exclusions.Count);
     }
 
     private static string Csv(string value) =>

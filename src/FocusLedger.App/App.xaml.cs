@@ -1,4 +1,5 @@
 using System.Windows;
+using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.App.ViewModels;
 using FocusLedger.Storage;
@@ -35,6 +36,11 @@ public partial class App : System.Windows.Application
 
         _settings = AppSettings.Load();
 
+        Localization.Localization.Instance.SetLanguage(
+            string.Equals(_settings.Language, "en", StringComparison.OrdinalIgnoreCase)
+                ? AppLanguage.English
+                : AppLanguage.Chinese);
+
         _store = new FocusLedgerStore(FocusLedgerStore.DefaultDatabasePath);
         _store.Initialize();
 
@@ -49,6 +55,8 @@ public partial class App : System.Windows.Application
         var calendar = new CalendarViewModel(_store);
         var settingsView = new SettingsViewModel(_settings, _store, _recording, _rules);
         _main = new MainViewModel(today, report, rulesView, calendar, settingsView, _recording);
+
+        settingsView.LanguageChanged += (_, _) => _main?.RebuildForLanguage();
 
         // 规则一变，所有页面重算。用 BeginInvoke 避免在绑定更新中途重建列表。
         _rules.Changed += (_, _) => Dispatcher.BeginInvoke(

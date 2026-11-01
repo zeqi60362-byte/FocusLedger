@@ -1,23 +1,24 @@
 <UserControl x:Class="FocusLedger.App.Views.ReportView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:FocusLedger.App.Controls">
+             xmlns:controls="clr-namespace:FocusLedger.App.Controls"
+             xmlns:loc="clr-namespace:FocusLedger.App.Localization">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <!-- 顶栏 -->
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="日报" Style="{StaticResource H2}" />
+                    <TextBlock Text="{loc:T Report_Title}" Style="{StaticResource H2}" />
                     <TextBlock Text="{Binding DateText}" Style="{StaticResource Caption}" Margin="10,2,0,0" VerticalAlignment="Bottom" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="前一天" Style="{StaticResource GhostButton}" Padding="10,5" Margin="0,0,6,0"
+                    <Button Content="{loc:T Report_Prev}" Style="{StaticResource GhostButton}" Padding="10,5" Margin="0,0,6,0"
                             Command="{Binding PreviousDayCommand}" />
-                    <Button Content="今天" Style="{StaticResource GhostButton}" Padding="10,5" Margin="0,0,6,0"
+                    <Button Content="{loc:T Report_Today}" Style="{StaticResource GhostButton}" Padding="10,5" Margin="0,0,6,0"
                             Command="{Binding TodayCommand}" />
-                    <Button Content="后一天" Style="{StaticResource GhostButton}" Padding="10,5"
+                    <Button Content="{loc:T Report_Next}" Style="{StaticResource GhostButton}" Padding="10,5"
                             Command="{Binding NextDayCommand}" />
                 </StackPanel>
             </Grid>
@@ -26,7 +27,7 @@
             <Border Style="{StaticResource Card}" Margin="0,16,0,0">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="有效专注" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="0,0,8,7" />
+                        <TextBlock Text="{loc:T Today_Effective}" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="0,0,8,7" />
                         <TextBlock Text="{Binding Effective}" Style="{StaticResource H1}" />
                         <TextBlock Text="{Binding Band}" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="10,0,0,8" />
                     </StackPanel>
@@ -41,7 +42,7 @@
             <!-- 分心归因 -->
             <Border Style="{StaticResource Card}" Margin="0,14,0,0">
                 <StackPanel>
-                    <TextBlock Text="分心去了哪" Style="{StaticResource H2}" FontSize="13.5" />
+                    <TextBlock Text="{loc:T Report_DistractionTitle}" Style="{StaticResource H2}" FontSize="13.5" />
                     <ItemsControl ItemsSource="{Binding Distractions}" Margin="0,10,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -66,16 +67,16 @@
                 <StackPanel>
                     <Grid>
                         <StackPanel>
-                            <TextBlock Text="统计" Style="{StaticResource H2}" FontSize="13.5" />
+                            <TextBlock Text="{loc:T Report_Stats}" Style="{StaticResource H2}" FontSize="13.5" />
                             <TextBlock Text="{Binding StatsSummary}" Style="{StaticResource Caption}" Margin="0,3,0,0" />
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                            <Button Content="逐周" Style="{StaticResource GhostButton}" Padding="10,4" Margin="0,0,6,0"
+                            <Button Content="{loc:T Report_Week}" Style="{StaticResource GhostButton}" Padding="10,4" Margin="0,0,6,0"
                                     Command="{Binding SetPeriodCommand}" CommandParameter="week" />
-                            <Button Content="逐月" Style="{StaticResource GhostButton}" Padding="10,4" Margin="0,0,6,0"
+                            <Button Content="{loc:T Report_Month}" Style="{StaticResource GhostButton}" Padding="10,4" Margin="0,0,6,0"
                                     Command="{Binding SetPeriodCommand}" CommandParameter="month" />
-                            <Button Content="逐年" Style="{StaticResource GhostButton}" Padding="10,4"
+                            <Button Content="{loc:T Report_Year}" Style="{StaticResource GhostButton}" Padding="10,4"
                                     Command="{Binding SetPeriodCommand}" CommandParameter="year" />
                         </StackPanel>
                     </Grid>

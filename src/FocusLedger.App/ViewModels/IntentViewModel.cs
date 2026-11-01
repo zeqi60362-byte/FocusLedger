@@ -2,6 +2,7 @@ using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FocusLedger.App.Controls;
+using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.Core;
 using FocusLedger.Storage;
@@ -10,7 +11,6 @@ namespace FocusLedger.App.ViewModels;
 
 /// <summary>
 /// 意图声明：开始前承诺"接下来 N 分钟做某事"，结束时给回执。
-/// 它和对账是同一个「声称 vs 实证」框架，只是把时间点从事后提前到事前。
 /// </summary>
 public sealed partial class IntentViewModel : ObservableObject
 {
@@ -70,7 +70,7 @@ public sealed partial class IntentViewModel : ObservableObject
         IsEditing = true;
         if (string.IsNullOrWhiteSpace(Label))
         {
-            Label = "写论文";
+            Label = Loc.T("Intent_DefaultLabel");
         }
     }
 
@@ -85,7 +85,7 @@ public sealed partial class IntentViewModel : ObservableObject
     {
         long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         long end = now + PlannedMinutes * 60_000L;
-        string text = string.IsNullOrWhiteSpace(Label) ? "专注" : Label.Trim();
+        string text = string.IsNullOrWhiteSpace(Label) ? Loc.T("Intent_DefaultLabel") : Label.Trim();
 
         long id = _store.CreateIntent(now, end, text);
 
@@ -111,7 +111,7 @@ public sealed partial class IntentViewModel : ObservableObject
 
         _store.FinishIntent(_active.Id, IntentStatus.Abandoned, 0);
         HasResult = true;
-        ResultText = $"{_active.Label} · 已放弃";
+        ResultText = Loc.T("Intent_Abandoned", _active.Label);
         ClearActive();
     }
 
@@ -135,15 +135,15 @@ public sealed partial class IntentViewModel : ObservableObject
         long remainingMs = _active.PlannedEndUtcMs - now;
 
         Remaining = remainingMs <= 0
-            ? "时间到"
-            : $"还剩 {TimeSpan.FromMilliseconds(remainingMs):mm\\:ss}";
+            ? Loc.T("Intent_TimeUp")
+            : Loc.T("Intent_Remaining", TimeSpan.FromMilliseconds(remainingMs).ToString(@"mm\:ss"));
 
         long until = Math.Min(now, _active.PlannedEndUtcMs);
         var segments = new SegmentBuilder(_rules.Current)
             .Build(_store.LoadSamples(_active.StartUtcMs, until));
 
         var outcome = IntentEvaluator.Evaluate(_active, segments, until);
-        AdherenceText = $"已遵守 {outcome.Adherence:P0}";
+        AdherenceText = Loc.T("Intent_Adherence", outcome.Adherence.ToString("P0"));
         ProgressSlices = new[]
         {
             new BarSlice(Math.Max(0.0001, outcome.Adherence), Res("StateActive")),
@@ -169,13 +169,16 @@ public sealed partial class IntentViewModel : ObservableObject
         var outcome = IntentEvaluator.Evaluate(_active, segments, _active.PlannedEndUtcMs);
         _store.FinishIntent(_active.Id, IntentStatus.Completed, outcome.Adherence);
 
-        string suffix = automatic ? "· 到时" : "· 提前结束";
-        string caution = outcome.UntrackedRatio > 0.3
-            ? "（其中相当一部分没有采集数据，这个数字不太可信）"
-            : string.Empty;
+        string suffix = automatic ? Loc.T("Intent_OnTime") : Loc.T("Intent_Early");
+        string caution = outcome.UntrackedRatio > 0.3 ? Loc.T("Intent_Untracked") : string.Empty;
 
-        ResultText =
-            $"{_active.Label} · {_active.PlannedSeconds / 60:F0} 分钟，遵守 {outcome.Adherence:P0} {suffix}{caution}";
+        ResultText = Loc.T(
+            "Intent_Result",
+            _active.Label,
+            (_active.PlannedSeconds / 60).ToString("F0"),
+            outcome.Adherence.ToString("P0"),
+            suffix,
+            caution);
 
         HasResult = true;
         ClearActive();

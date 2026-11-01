@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:FocusLedger.App.ViewModels"
         xmlns:views="clr-namespace:FocusLedger.App.Views"
-        Title="FocusLedger · 专注账本"
+        xmlns:loc="clr-namespace:FocusLedger.App.Localization"
+        Title="FocusLedger"
         Height="740" Width="1120"
         MinHeight="620" MinWidth="920"
         Background="{StaticResource Bg}"
@@ -49,7 +50,7 @@
 
                 <StackPanel Grid.Row="0" Margin="8,0,0,20">
                     <TextBlock Text="FocusLedger" FontSize="16" FontWeight="SemiBold" />
-                    <TextBlock Text="专注账本 · 本地优先" Style="{StaticResource Caption}" Margin="0,3,0,0" />
+                    <TextBlock Text="{loc:T App_Tagline}" Style="{StaticResource Caption}" Margin="0,3,0,0" />
                 </StackPanel>
 
                 <ListBox Grid.Row="1"
@@ -68,7 +69,7 @@
 
                 <StackPanel Grid.Row="2" Margin="8,12,0,0">
                     <TextBlock Text="{Binding StatusText}" FontSize="12" />
-                    <TextBlock Text="数据仅存本机" Style="{StaticResource Caption}" FontSize="10.5" Margin="0,3,0,0" />
+                    <TextBlock Text="{loc:T App_LocalOnly}" Style="{StaticResource Caption}" FontSize="10.5" Margin="0,3,0,0" />
                 </StackPanel>
             </Grid>
         </Border>

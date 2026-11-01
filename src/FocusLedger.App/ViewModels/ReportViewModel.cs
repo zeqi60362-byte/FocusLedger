@@ -3,6 +3,7 @@ using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FocusLedger.App.Controls;
+using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.Core;
 using FocusLedger.Storage;
@@ -96,7 +97,9 @@ public sealed partial class ReportViewModel : ObservableObject
 
     public void Load()
     {
-        DateText = _date.ToString("yyyy 年 M 月 d 日");
+        DateText = _date.ToString(
+            Localization.Localization.Instance.IsEnglish ? "MMM d, yyyy" : "yyyy 年 M 月 d 日",
+            Localization.Localization.Instance.Culture);
 
         var summary = Summarize(_date);
         Distractions.Clear();
@@ -109,7 +112,7 @@ public sealed partial class ReportViewModel : ObservableObject
             PrimaryRow = string.Empty;
             SecondaryRow = string.Empty;
             StatsRow = string.Empty;
-            EmptyHint = "这一天还没有数据。";
+            EmptyHint = Loc.T("Report_Empty");
         }
         else
         {
@@ -117,14 +120,19 @@ public sealed partial class ReportViewModel : ObservableObject
             EmptyHint = string.Empty;
 
             Effective = Fmt.Duration(summary.EffectiveSeconds);
-            Band = $"区间 {Fmt.Duration(summary.EffectiveLowSeconds)} – {Fmt.Duration(summary.EffectiveHighSeconds)}";
-            PrimaryRow =
-                $"深度 {Fmt.Duration(summary.ActiveSeconds)}     静默 {Fmt.Duration(summary.SilentSeconds)}";
-            SecondaryRow =
-                $"分心 {Fmt.Duration(summary.OffTaskSeconds)}     离席 {Fmt.Duration(summary.AwaySeconds)}";
-            StatsRow =
-                $"深度工作块 {summary.FocusBlocks} 次（最长 {summary.LongestFocusBlockSeconds / 60:F0} 分钟）    " +
-                $"应用切换 {summary.AppSwitches} 次";
+            Band = Loc.T("Today_Band",
+                Fmt.Duration(summary.EffectiveLowSeconds),
+                Fmt.Duration(summary.EffectiveHighSeconds));
+            PrimaryRow = Loc.T("Today_Breakdown",
+                Fmt.Duration(summary.ActiveSeconds),
+                Fmt.Duration(summary.SilentSeconds));
+            SecondaryRow = Loc.T("Today_Secondary",
+                Fmt.Duration(summary.OffTaskSeconds),
+                Fmt.Duration(summary.AwaySeconds));
+            StatsRow = Loc.T("Report_StatLine",
+                summary.FocusBlocks,
+                (summary.LongestFocusBlockSeconds / 60).ToString("F0"),
+                summary.AppSwitches);
 
             double totalOffTask = summary.OffTaskSeconds;
             foreach (var usage in summary.TopDistractions)
@@ -153,7 +161,7 @@ public sealed partial class ReportViewModel : ObservableObject
                 {
                     var anchor = today.AddMonths(-i);
                     var from = new DateOnly(anchor.Year, anchor.Month, 1);
-                    buckets.Add((anchor.ToString("M 月"), from, from.AddMonths(1).AddDays(-1)));
+                    buckets.Add((MonthLabel(anchor), from, from.AddMonths(1).AddDays(-1)));
                 }
 
                 break;
@@ -163,7 +171,7 @@ public sealed partial class ReportViewModel : ObservableObject
                 {
                     var anchor = today.AddYears(-i);
                     var from = new DateOnly(anchor.Year, 1, 1);
-                    buckets.Add((anchor.ToString("yyyy 年"), from, from.AddYears(1).AddDays(-1)));
+                    buckets.Add((YearLabel(anchor), from, from.AddYears(1).AddDays(-1)));
                 }
 
                 break;
@@ -172,14 +180,14 @@ public sealed partial class ReportViewModel : ObservableObject
                 for (int i = 6; i >= 0; i--)
                 {
                     var day = today.AddDays(-i);
-                    buckets.Add((day.ToString("M/d"), day, day));
+                    buckets.Add((DayLabel(day), day, day));
                 }
 
                 break;
         }
 
         var values = buckets
-            .Select(b => (b.Label, Summary: SumRange(b.From, min(b.To, today))))
+            .Select(b => (b.Label, Summary: SumRange(b.From, Min(b.To, today))))
             .ToList();
 
         double max = values.Count == 0 ? 0 : values.Max(v => v.Summary.EffectiveSeconds);
@@ -192,14 +200,13 @@ public sealed partial class ReportViewModel : ObservableObject
 
         foreach (var (label, summary) in values)
         {
-            string detail =
-                $"深度 {Fmt.Duration(summary.ActiveSeconds)}   静默 {Fmt.Duration(summary.SilentSeconds)}   " +
-                $"分心 {Fmt.Duration(summary.OffTaskSeconds)}";
-
             Stats.Add(new StatRow(
                 label,
                 summary.EffectiveSeconds > 0 ? Fmt.Duration(summary.EffectiveSeconds) : "—",
-                detail,
+                Loc.T("Report_StatDetail",
+                    Fmt.Duration(summary.ActiveSeconds),
+                    Fmt.Duration(summary.SilentSeconds),
+                    Fmt.Duration(summary.OffTaskSeconds)),
                 new[]
                 {
                     new BarSlice(Math.Max(0.001, summary.EffectiveSeconds), Brush("StateActive")),
@@ -207,7 +214,7 @@ public sealed partial class ReportViewModel : ObservableObject
                 }));
         }
 
-        StatsSummary = $"{PeriodName()}合计有效 {Fmt.Duration(total)}";
+        StatsSummary = Loc.T("Report_StatsTotal", PeriodName(), Fmt.Duration(total));
     }
 
     private DailySummary SumRange(DateOnly from, DateOnly to)
@@ -247,14 +254,26 @@ public sealed partial class ReportViewModel : ObservableObject
         return DailyAggregator.Aggregate(segments, date, TimeZoneInfo.Local);
     }
 
+    private static string DayLabel(DateOnly day) =>
+        day.ToString(Localization.Localization.Instance.IsEnglish ? "MMM d" : "M/d",
+            Localization.Localization.Instance.Culture);
+
+    private static string MonthLabel(DateOnly day) =>
+        day.ToString(Localization.Localization.Instance.IsEnglish ? "MMM" : "M 月",
+            Localization.Localization.Instance.Culture);
+
+    private static string YearLabel(DateOnly day) =>
+        day.ToString(Localization.Localization.Instance.IsEnglish ? "yyyy" : "yyyy 年",
+            Localization.Localization.Instance.Culture);
+
     private string PeriodName() => StatsPeriod switch
     {
-        "month" => "近 6 个月",
-        "year" => "近 5 年",
-        _ => "近 7 天"
+        "month" => Loc.T("Report_PeriodMonth"),
+        "year" => Loc.T("Report_PeriodYear"),
+        _ => Loc.T("Report_PeriodWeek")
     };
 
-    private static DateOnly min(DateOnly a, DateOnly b) => a < b ? a : b;
+    private static DateOnly Min(DateOnly a, DateOnly b) => a < b ? a : b;
 
     private static Brush Brush(string key) =>
         System.Windows.Application.Current?.TryFindResource(key) as Brush

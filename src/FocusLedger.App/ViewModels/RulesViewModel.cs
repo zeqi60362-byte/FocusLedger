@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.Core;
 
@@ -27,12 +28,12 @@ public sealed partial class RuleRow : ObservableObject
 
         MatchText = rule.MatchType switch
         {
-            RuleMatchType.Process => $"进程  {rule.Pattern}",
-            RuleMatchType.TitleContains => $"标题含  {rule.Pattern}",
-            _ => $"正则  {rule.Pattern}"
+            RuleMatchType.Process => Loc.T("Rules_Process", rule.Pattern),
+            RuleMatchType.TitleContains => Loc.T("Rules_Contains", rule.Pattern),
+            _ => Loc.T("Rules_Regex", rule.Pattern)
         };
 
-        SourceText = rule.IsBuiltin ? "内置" : "自定义";
+        SourceText = rule.IsBuiltin ? Loc.T("Rules_Builtin") : Loc.T("Rules_Custom");
         LabelText = string.IsNullOrWhiteSpace(rule.Label) ? "—" : rule.Label;
         PriorityText = rule.Priority.ToString();
 
@@ -57,9 +58,9 @@ public sealed partial class RuleRow : ObservableObject
 
     public string CategoryText => Category switch
     {
-        ContextLevel.Task => "任务",
-        ContextLevel.Neutral => "中性",
-        _ => "分心"
+        ContextLevel.Task => Loc.T("Cat_Task"),
+        ContextLevel.Neutral => Loc.T("Cat_Neutral"),
+        _ => Loc.T("Cat_Distraction")
     };
 
     public Brush CategoryBrush => Category switch
@@ -107,7 +108,7 @@ public sealed partial class RulesViewModel : ObservableObject
     private string status = string.Empty;
 
     [ObservableProperty]
-    private string currentApp = "等待采样…";
+    private string currentApp = string.Empty;
 
     public ObservableCollection<RuleRow> Rows { get; } = new();
 
@@ -115,7 +116,6 @@ public sealed partial class RulesViewModel : ObservableObject
     {
         _rules = rules;
         _recording = recording;
-
         Reload();
     }
 
@@ -130,7 +130,7 @@ public sealed partial class RulesViewModel : ObservableObject
 
         var current = _recording.Current;
         CurrentApp = current is null
-            ? "等待采样…"
+            ? Loc.T("Today_Waiting")
             : $"{current.App}  ·  {Trim(current.Title, 50)}";
     }
 
@@ -140,14 +140,14 @@ public sealed partial class RulesViewModel : ObservableObject
         var current = _recording.Current;
         if (current is null || string.IsNullOrEmpty(current.App))
         {
-            Status = "还没采到当前应用，等几秒再试。";
+            Status = Loc.T("Rules_NoSample");
             return;
         }
 
         var existing = _rules.FindProcessRule(current.App);
         if (existing is { IsBuiltin: false })
         {
-            Status = $"已经有一条针对 {current.App} 的自定义规则了，直接改它的类别即可。";
+            Status = Loc.T("Rules_Exists", current.App);
             return;
         }
 
@@ -157,9 +157,9 @@ public sealed partial class RulesViewModel : ObservableObject
             ContextLevel.Task,
             AppClass.Typing,
             priority: 5,
-            label: $"自定义 · {current.App}");
+            label: current.App);
 
-        Status = $"已为 {current.App} 新建规则：任务（优先级 5，高于所有内置规则）。";
+        Status = Loc.T("Rules_Created", current.App);
         Reload();
     }
 
@@ -173,7 +173,7 @@ public sealed partial class RulesViewModel : ObservableObject
 
         if (row.IsBuiltin)
         {
-            Status = "内置规则不能直接改类别。点「用当前窗口新建规则」，新规则的优先级更高，会盖过内置规则。";
+            Status = Loc.T("Rules_BuiltinReadonly");
             return;
         }
 
@@ -185,7 +185,7 @@ public sealed partial class RulesViewModel : ObservableObject
         };
 
         _rules.SetCategory(row.Rule, next);
-        Status = $"{row.Rule.Pattern} → {next}";
+        Status = Loc.T("Rules_CategoryChanged", row.Rule.Pattern, CategoryName(next));
     }
 
     [RelayCommand]
@@ -197,14 +197,17 @@ public sealed partial class RulesViewModel : ObservableObject
         }
 
         _rules.Delete(row.Rule);
-        Status = $"已删除规则：{row.Rule.Pattern}";
+        Status = Loc.T("Rules_Deleted", row.Rule.Pattern);
         Reload();
     }
 
     private void OnEnabledChanged(RuleRow row)
     {
         _rules.SetEnabled(row.Rule, row.Enabled);
-        Status = $"{(row.Enabled ? "已启用" : "已停用")}：{row.Rule.Pattern}";
+        Status = Loc.T(
+            "Rules_Toggled",
+            row.Rule.Pattern,
+            Loc.T(row.Enabled ? "Rules_On" : "Rules_Off"));
     }
 
     private void OnCategoryChanged(RuleRow row)
@@ -217,8 +220,15 @@ public sealed partial class RulesViewModel : ObservableObject
         _rules.SetCategory(row.Rule, row.Category);
     }
 
+    private static string CategoryName(ContextLevel level) => level switch
+    {
+        ContextLevel.Task => Loc.T("Cat_Task"),
+        ContextLevel.Neutral => Loc.T("Cat_Neutral"),
+        _ => Loc.T("Cat_Distraction")
+    };
+
     private static string Trim(string value, int max) =>
-        string.IsNullOrEmpty(value) ? "(无标题)"
+        string.IsNullOrEmpty(value) ? Loc.T("Today_NoTitle")
         : value.Length <= max ? value
         : value[..(max - 1)] + "…";
 }

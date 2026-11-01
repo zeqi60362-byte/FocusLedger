@@ -1,6 +1,7 @@
-using System.Windows;
+using System.Collections.ObjectModel;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 
 namespace FocusLedger.App.ViewModels;
@@ -15,6 +16,12 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly RecordingService _recording;
     private readonly DispatcherTimer _statusTimer;
 
+    private readonly TodayViewModel _today;
+    private readonly ReportViewModel _report;
+    private readonly RulesViewModel _rules;
+    private readonly CalendarViewModel _calendar;
+    private readonly SettingsViewModel _settings;
+
     [ObservableProperty]
     private NavEntry? selected;
 
@@ -24,7 +31,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string statusText = string.Empty;
 
-    public System.Collections.ObjectModel.ObservableCollection<NavEntry> Entries { get; } = new();
+    public ObservableCollection<NavEntry> Entries { get; } = new();
 
     public MainViewModel(
         TodayViewModel today,
@@ -35,14 +42,13 @@ public sealed partial class MainViewModel : ObservableObject
         RecordingService recording)
     {
         _recording = recording;
+        _today = today;
+        _report = report;
+        _rules = rules;
+        _calendar = calendar;
+        _settings = settings;
 
-        Entries.Add(new NavEntry("今日", "时间轴 · 当前状态", today));
-        Entries.Add(new NavEntry("日报", "分心归因 · 统计", report));
-        Entries.Add(new NavEntry("规则", "什么算工作", rules));
-        Entries.Add(new NavEntry("计划", "月历 · 每日安排", calendar));
-        Entries.Add(new NavEntry("设置", "启动 · 排除 · 数据", settings));
-
-        Selected = Entries[0];
+        BuildEntries(0);
 
         _statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _statusTimer.Tick += (_, _) => UpdateStatus();
@@ -50,11 +56,30 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateStatus();
     }
 
+    private void BuildEntries(int selectedIndex)
+    {
+        Entries.Clear();
+        Entries.Add(new NavEntry(Loc.T("Nav_Today"), Loc.T("Nav_TodayHint"), _today));
+        Entries.Add(new NavEntry(Loc.T("Nav_Report"), Loc.T("Nav_ReportHint"), _report));
+        Entries.Add(new NavEntry(Loc.T("Nav_Rules"), Loc.T("Nav_RulesHint"), _rules));
+        Entries.Add(new NavEntry(Loc.T("Nav_Plan"), Loc.T("Nav_PlanHint"), _calendar));
+        Entries.Add(new NavEntry(Loc.T("Nav_Settings"), Loc.T("Nav_SettingsHint"), _settings));
+
+        Selected = Entries[Math.Clamp(selectedIndex, 0, Entries.Count - 1)];
+    }
+
+    /// <summary>切换语言后重建导航并刷新所有页面文案。</summary>
+    public void RebuildForLanguage()
+    {
+        int index = Selected is null ? 0 : Entries.IndexOf(Selected);
+        BuildEntries(index < 0 ? 0 : index);
+        RefreshAll();
+    }
+
     partial void OnSelectedChanged(NavEntry? value)
     {
         Current = value?.ViewModel;
 
-        // 切过来时重新取数，否则会一直显示启动那一刻的快照
         if (value?.ViewModel is ReportViewModel report)
         {
             report.Load();
@@ -69,32 +94,16 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void UpdateStatus()
     {
-        StatusText = _recording.IsRecording
-            ? "● 记录中"
-            : "○ 已暂停";
+        StatusText = _recording.IsRecording ? Loc.T("Status_Recording") : Loc.T("Status_Paused");
     }
 
     public void RefreshAll()
     {
         UpdateStatus();
-
-        foreach (var entry in Entries)
-        {
-            switch (entry.ViewModel)
-            {
-                case TodayViewModel today:
-                    today.Refresh();
-                    break;
-                case ReportViewModel report:
-                    report.Load();
-                    break;
-                case RulesViewModel rules:
-                    rules.Reload();
-                    break;
-                case SettingsViewModel settings:
-                    settings.RefreshStorageInfo();
-                    break;
-            }
-        }
+        _today.Refresh();
+        _report.Load();
+        _rules.Reload();
+        _calendar.Reload();
+        _settings.RefreshStorageInfo();
     }
 }
