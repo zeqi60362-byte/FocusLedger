@@ -3,8 +3,10 @@
 > 一个本地优先的注意力审计工具：自动记录你在电脑上的每一分钟，用多源证据判断你是否真的在投入，
 > 并每天给你一份「声称 vs 实证」的对账报告。
 
-**当前状态**：**M1 完成** —— 判定引擎、Windows 采集器、SQLite 存储、命令行日报已跑通，
-24 个测试全绿，8 个验收场景全部达标。桌面界面（M2）尚未开始。
+**当前状态**：**M2 完成** —— 判定引擎、采集器、存储、命令行日报、桌面界面（托盘 / 时间轴 / 日报 / 设置）
+均已跑通。规则编辑页与「番茄钟对账」待后续里程碑。
+
+![今日](docs/images/today.png)
 
 ---
 
@@ -95,6 +97,7 @@ FocusLedger 不信任任何一个单一信号：
 | [docs/07-privacy.md](docs/07-privacy.md) | 隐私红线、合规、安全设计 |
 | [docs/m0-findings.md](docs/m0-findings.md) | M0 信号探针实测记录 |
 | [docs/m1-report.md](docs/m1-report.md) | M1 完成报告与已知缺口 |
+| [docs/m2-report.md](docs/m2-report.md) | M2 界面完成报告与已知缺口 |
 | [AGENTS.md](AGENTS.md) | 给实现型 AI 的工作契约（怎么干） |
 
 ---

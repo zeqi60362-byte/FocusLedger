@@ -42,14 +42,15 @@ public sealed class CollectorService : IDisposable
     }
 
     public async IAsyncEnumerable<Sample> CollectAsync(
-        TimeSpan duration,
+        TimeSpan? duration,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
         ulong? previousHash = null;
         var tick = TimeSpan.FromSeconds(_parameters.TickSeconds);
 
-        while (stopwatch.Elapsed < duration && !cancellationToken.IsCancellationRequested)
+        while ((duration is null || stopwatch.Elapsed < duration)
+               && !cancellationToken.IsCancellationRequested)
         {
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 

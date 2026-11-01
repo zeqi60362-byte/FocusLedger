@@ -143,6 +143,16 @@ public sealed class FocusLedgerStore : IDisposable
     public long CountSamples()
         => _connection.ExecuteScalar<long>("SELECT COUNT(1) FROM samples;");
 
+    /// <summary>删除全部数据（FR-C4）。不可恢复，调用方必须先二次确认。</summary>
+    public void DeleteAll()
+    {
+        _connection.Execute("DELETE FROM samples;");
+        _connection.Execute("DELETE FROM segments;");
+        _connection.Execute("DELETE FROM labels;");
+        _connection.Execute("DELETE FROM daily;");
+        _connection.Execute("VACUUM;");
+    }
+
     public int PruneSamples(long olderThanUtcMs)
         => _connection.Execute(
             """
