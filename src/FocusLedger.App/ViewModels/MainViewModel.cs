@@ -29,6 +29,7 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(
         TodayViewModel today,
         ReportViewModel report,
+        ReconcileViewModel reconcile,
         RulesViewModel rules,
         SettingsViewModel settings,
         RecordingService recording)
@@ -36,7 +37,8 @@ public sealed partial class MainViewModel : ObservableObject
         _recording = recording;
 
         Entries.Add(new NavEntry("今日", "时间轴 · 当前状态", today));
-        Entries.Add(new NavEntry("日报", "对账 · 分心归因", report));
+        Entries.Add(new NavEntry("日报", "分心归因 · 深度块", report));
+        Entries.Add(new NavEntry("对账", "声称 vs 实证", reconcile));
         Entries.Add(new NavEntry("规则", "什么算工作", rules));
         Entries.Add(new NavEntry("设置", "启动 · 排除 · 数据", settings));
 
@@ -52,10 +54,15 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Current = value?.ViewModel;
 
-        // 报表页在切换过来时重新取数，否则会一直显示启动那一刻的快照
-        if (value?.ViewModel is ReportViewModel report)
+        // 切过来时重新取数，否则会一直显示启动那一刻的快照
+        switch (value?.ViewModel)
         {
-            report.Load();
+            case ReportViewModel report:
+                report.Load();
+                break;
+            case ReconcileViewModel reconcile:
+                reconcile.Load();
+                break;
         }
     }
 
@@ -63,7 +70,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void ShowReport() => Selected = Entries[1];
 
-    public void ShowRules() => Selected = Entries[2];
+    public void ShowRules() => Selected = Entries[3];
 
     public void UpdateStatus()
     {
@@ -85,6 +92,9 @@ public sealed partial class MainViewModel : ObservableObject
                     break;
                 case ReportViewModel report:
                     report.Load();
+                    break;
+                case ReconcileViewModel reconcile:
+                    reconcile.Load();
                     break;
                 case RulesViewModel rules:
                     rules.Reload();

@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using FocusLedger.Collector.Windows;
 using FocusLedger.Core;
 using FocusLedger.Storage;
@@ -23,6 +25,8 @@ internal static class Program
                 "probe" => await ProbeAsync(OptionInt(args, "--seconds", 20)),
                 "capture" => await CaptureAsync(databasePath, OptionInt(args, "--minutes", 10)),
                 "report" => Report(databasePath, OptionDate(args, "--date"), args.Contains("--verbose")),
+                "import" => ImportCsv(databasePath, Option(args, "--file")),
+                "reconcile" => Reconcile(databasePath, OptionDate(args, "--date")),
                 "prune" => Prune(databasePath, OptionInt(args, "--days", 14)),
                 _ => Help()
             };
@@ -44,6 +48,8 @@ internal static class Program
               focusledger probe   [--seconds N]          实时打印信号，不写数据库
               focusledger capture [--minutes N] [--db P] 采集一段时间并立刻出报告
               focusledger report  [--date YYYY-MM-DD]    生成某天的对账报告
+              focusledger import  --file X.csv           导入外部计时器记录
+              focusledger reconcile [--date YYYY-MM-DD]  声称 vs 实证对账
               focusledger prune   [--days N]             清理 N 天前的原始样本
 
             数据库默认位置:
@@ -183,6 +189,83 @@ internal static class Program
         int deleted = store.PruneSamples(cutoff);
 
         Console.WriteLine($"已删除 {deleted} 条早于 {days} 天的样本。");
+        return 0;
+    }
+
+    // ---------- import / reconcile ----------
+
+    private static int ImportCsv(string databasePath, string? file)
+    {
+        if (string.IsNullOrWhiteSpace(file) || !File.Exists(file))
+        {
+            Console.WriteLine("用法：focusledger import --file X.csv");
+            return 1;
+        }
+
+        string text = File.ReadAllText(file);
+        var parsed = TimerCsvParser.Parse(text);
+
+        foreach (string warning in parsed.Warnings)
+        {
+            Console.WriteLine($"  提示：{warning}");
+        }
+
+        if (parsed.Claims.Count == 0)
+        {
+            Console.WriteLine("没有可导入的记录。");
+            return 1;
+        }
+
+        string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+
+        using var store = new FocusLedgerStore(databasePath);
+        store.Initialize();
+
+        var (_, inserted, duplicate) = store.SaveTimerImport(Path.GetFileName(file), hash, parsed.Claims);
+
+        if (duplicate)
+        {
+            Console.WriteLine("这份文件已经导入过了（按内容哈希判重）。");
+            return 0;
+        }
+
+        Console.WriteLine($"已导入 {inserted} 条声明，合计 {Dur(parsed.TotalClaimedSeconds)}。");
+        return 0;
+    }
+
+    private static int Reconcile(string databasePath, DateOnly date)
+    {
+        using var store = new FocusLedgerStore(databasePath);
+        store.Initialize();
+
+        var (start, end) = DailyAggregator.DayRangeUtc(date, TimeZoneInfo.Local);
+        var claims = store.LoadTimerClaims(start, end);
+
+        if (claims.Count == 0)
+        {
+            Console.WriteLine($"{date:yyyy-MM-dd} 还没有导入过计时器记录。");
+            Console.WriteLine("先运行：focusledger import --file 你的导出.csv");
+            return 0;
+        }
+
+        var segments = new SegmentBuilder().Build(store.LoadSamples(start, end));
+        var result = Reconciler.Compute(claims, segments);
+
+        Console.WriteLine();
+        Console.WriteLine($"{date:yyyy-MM-dd}  对账");
+        Console.WriteLine();
+        Console.WriteLine(
+            $"  声称 {Dur(result.ClaimedSeconds)}    实证 {Dur(result.VerifiedSeconds)}    " +
+            $"差额 {Dur(result.GapSeconds)}（{1 - result.VerifiedRatio:P0}）");
+        Console.WriteLine();
+        Console.WriteLine($"  离席   {Dur(result.IdleSeconds)}");
+        Console.WriteLine($"  分心   {Dur(result.OffTaskSeconds)}");
+        Console.WriteLine($"  存疑   {Dur(result.AmbiguousSeconds)}");
+        Console.WriteLine($"  未采集 {Dur(result.UntrackedSeconds)}");
+        Console.WriteLine($"  打折   {Dur(result.WeightLossSeconds)}  ← 确实在学，但属被动/静默，按权重折算");
+        Console.WriteLine($"  ------------------------------------");
+        Console.WriteLine($"  合计   {Dur(result.AttributedGapSeconds)}");
+        Console.WriteLine();
         return 0;
     }
 

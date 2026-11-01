@@ -335,6 +335,92 @@ public sealed class FocusLedgerStore : IDisposable
 
     public void Dispose() => _connection.Dispose();
 
+    // ---------- 外部计时器对账 ----------
+
+    /// <summary>保存一次导入。同一份文件（按内容哈希）只导入一次。</summary>
+    public (long ImportId, int Inserted, bool Duplicate) SaveTimerImport(
+        string source,
+        string fileHash,
+        IReadOnlyList<TimerClaim> claims)
+    {
+        ArgumentNullException.ThrowIfNull(claims);
+
+        long? existing = _connection.ExecuteScalar<long?>(
+            "SELECT id FROM timer_imports WHERE file_hash = @hash;",
+            new { hash = fileHash });
+
+        if (existing.HasValue)
+        {
+            return (existing.Value, 0, true);
+        }
+
+        using var transaction = _connection.BeginTransaction();
+
+        long importId = _connection.ExecuteScalar<long>(
+            """
+            INSERT INTO timer_imports (source, imported_utc, file_hash, row_count)
+            VALUES (@source, @imported, @hash, @rows);
+            SELECT last_insert_rowid();
+            """,
+            new { source, imported = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), hash = fileHash, rows = claims.Count },
+            transaction);
+
+        foreach (var claim in claims)
+        {
+            _connection.Execute(
+                """
+                INSERT INTO timer_claims (import_id, start_utc, end_utc, label, claimed_s)
+                VALUES (@importId, @start, @end, @label, @seconds);
+                """,
+                new
+                {
+                    importId,
+                    start = claim.StartUtcMs,
+                    end = claim.EndUtcMs,
+                    label = claim.Label,
+                    seconds = claim.ClaimedSeconds
+                },
+                transaction);
+        }
+
+        transaction.Commit();
+        return (importId, claims.Count, false);
+    }
+
+    public IReadOnlyList<TimerClaim> LoadTimerClaims(long startUtcMs, long endUtcMs)
+    {
+        var rows = _connection.Query<TimerClaimRow>(
+            """
+            SELECT start_utc, end_utc, label, claimed_s
+            FROM timer_claims
+            WHERE end_utc > @start AND start_utc < @end
+            ORDER BY start_utc;
+            """,
+            new { start = startUtcMs, end = endUtcMs });
+
+        return rows
+            .Select(r => new TimerClaim(r.start_utc, r.end_utc, r.label, r.claimed_s))
+            .ToList();
+    }
+
+    public int CountTimerClaims()
+        => (int)_connection.ExecuteScalar<long>("SELECT COUNT(1) FROM timer_claims;");
+
+    public int ClearTimerClaims()
+    {
+        int removed = _connection.Execute("DELETE FROM timer_claims;");
+        _connection.Execute("DELETE FROM timer_imports;");
+        return removed;
+    }
+
+    internal sealed class TimerClaimRow
+    {
+        public long start_utc { get; set; }
+        public long end_utc { get; set; }
+        public string? label { get; set; }
+        public double claimed_s { get; set; }
+    }
+
     private static T ParseEnum<T>(string? value, T fallback)
         where T : struct, Enum
         => Enum.TryParse<T>(value, ignoreCase: true, out var parsed) ? parsed : fallback;
@@ -460,5 +546,23 @@ public sealed class FocusLedgerStore : IDisposable
             app_switches   INTEGER NOT NULL DEFAULT 0,
             computed_utc   INTEGER NOT NULL DEFAULT 0
         );
+
+        CREATE TABLE IF NOT EXISTS timer_imports (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            source       TEXT    NOT NULL,
+            imported_utc INTEGER NOT NULL,
+            file_hash    TEXT    NOT NULL UNIQUE,
+            row_count    INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS timer_claims (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            import_id INTEGER NOT NULL REFERENCES timer_imports(id) ON DELETE CASCADE,
+            start_utc INTEGER NOT NULL,
+            end_utc   INTEGER NOT NULL,
+            label     TEXT,
+            claimed_s REAL    NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_claims_start ON timer_claims(start_utc);
         """;
 }

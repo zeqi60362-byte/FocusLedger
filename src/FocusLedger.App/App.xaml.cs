@@ -44,9 +44,10 @@ public partial class App : System.Windows.Application
 
         var today = new TodayViewModel(_recording, _rules);
         var report = new ReportViewModel(_store, _rules);
+        var reconcile = new ReconcileViewModel(_store, _rules);
         var rulesView = new RulesViewModel(_rules, _recording);
         var settingsView = new SettingsViewModel(_settings, _store, _recording, _rules);
-        _main = new MainViewModel(today, report, rulesView, settingsView, _recording);
+        _main = new MainViewModel(today, report, reconcile, rulesView, settingsView, _recording);
 
         // 规则一变，所有页面重算。用 BeginInvoke 避免在绑定更新中途重建列表。
         _rules.Changed += (_, _) => Dispatcher.BeginInvoke(
