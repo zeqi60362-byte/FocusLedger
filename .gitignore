@@ -1,0 +1,15 @@
+﻿bin/
+obj/
+dist/
+artifacts/
+.vs/
+*.user
+*.suo
+TestResults/
+coverage*/
+*.db
+*.db-wal
+*.db-shm
+*.log
+logs/
+*.tmp
