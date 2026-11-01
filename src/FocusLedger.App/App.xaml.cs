@@ -9,7 +9,11 @@ namespace FocusLedger.App;
 
 public partial class App : System.Windows.Application
 {
+    private const string InstanceMutexName = "FocusLedger.SingleInstance";
+    private const string ShowSignalName = "FocusLedger.ShowWindow";
+
     private Mutex? _mutex;
+    private EventWaitHandle? _showSignal;
     private WinForms.NotifyIcon? _tray;
     private WinForms.ToolStripMenuItem? _pauseItem;
     private FocusLedgerStore? _store;
@@ -24,13 +28,26 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
-        _mutex = new Mutex(true, "FocusLedger.SingleInstance", out bool createdNew);
+        _mutex = new Mutex(true, InstanceMutexName, out bool createdNew);
         if (!createdNew)
         {
-            System.Windows.MessageBox.Show("FocusLedger 已经在运行了。", "FocusLedger");
+            // 已有实例：通知它把窗口叫到前面，然后本进程静默退出。
+            // 不要用 MessageBox——那会留下一个没人点的模态框，进程一直挂着。
+            try
+            {
+                using var signal = EventWaitHandle.OpenExisting(ShowSignalName);
+                signal.Set();
+            }
+            catch (Exception ex) when (ex is WaitHandleCannotBeOpenedException or UnauthorizedAccessException)
+            {
+                // 打开失败就算了，直接退出
+            }
+
             Shutdown();
             return;
         }
+
+        StartShowSignalListener();
 
         this.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
 
@@ -72,6 +89,30 @@ public partial class App : System.Windows.Application
         {
             _window.Show();
         }
+    }
+
+    private void StartShowSignalListener()
+    {
+        _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, ShowSignalName);
+
+        var thread = new Thread(() =>
+        {
+            while (true)
+            {
+                if (!_showSignal.WaitOne())
+                {
+                    return;
+                }
+
+                Dispatcher.BeginInvoke(new Action(ShowWindow));
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "FocusLedger.ShowSignal"
+        };
+
+        thread.Start();
     }
 
     private void OnWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -229,6 +270,7 @@ public partial class App : System.Windows.Application
     {
         _tray?.Dispose();
         _store?.Dispose();
+        _showSignal?.Dispose();
         _mutex?.Dispose();
         base.OnExit(e);
     }
