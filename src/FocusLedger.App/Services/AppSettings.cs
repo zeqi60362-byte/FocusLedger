@@ -20,6 +20,12 @@ public sealed class AppSettings
     /// <summary>界面语言：zh / en。</summary>
     public string Language { get; set; } = "zh";
 
+    /// <summary>皮肤：Dark / Light / Midnight。</summary>
+    public string Theme { get; set; } = "Dark";
+
+    /// <summary>自定义强调色（#RRGGBB），空表示用皮肤自带的。</summary>
+    public string Accent { get; set; } = string.Empty;
+
     public int RetentionDays { get; set; } = 14;
 
     public bool ApplyRetentionOnStartup { get; set; } = true;

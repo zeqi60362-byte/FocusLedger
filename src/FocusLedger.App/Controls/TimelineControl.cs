@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -66,7 +66,7 @@ public sealed class TimelineControl : FrameworkElement
             return;
         }
 
-        var background = new SolidColorBrush(Color.FromRgb(0x14, 0x14, 0x17));
+        var background = Res("TimelineBg", Color.FromRgb(0x14, 0x14, 0x17));
         dc.DrawRoundedRectangle(background, null, new Rect(0, 0, width, height), 10, 10);
 
         long start = WindowStart;
@@ -153,9 +153,9 @@ public sealed class TimelineControl : FrameworkElement
             _ => 3
         };
 
-        var tickBrush = new SolidColorBrush(Color.FromArgb(0x28, 0xFF, 0xFF, 0xFF));
+        var tickBrush = Res("TimelineGrid", Color.FromArgb(0x28, 0xFF, 0xFF, 0xFF));
         var pen = new Pen(tickBrush, 1);
-        var labelBrush = new SolidColorBrush(Color.FromRgb(0x7A, 0x7A, 0x84));
+        var labelBrush = Res("TimelineLabel", Color.FromRgb(0x7A, 0x7A, 0x84));
         var typeface = new Typeface(new FontFamily("Microsoft YaHei UI, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
@@ -200,7 +200,7 @@ public sealed class TimelineControl : FrameworkElement
         }
 
         double x = leftPad + (now - start) / (double)(end - start) * plotWidth;
-        var pen = new Pen(new SolidColorBrush(Color.FromArgb(0xB0, 0xFF, 0xFF, 0xFF)), 1) { DashStyle = DashStyles.Dot };
+        var pen = new Pen(Res("TimelineLabel", Color.FromArgb(0xB0, 0xFF, 0xFF, 0xFF)), 1) { DashStyle = DashStyles.Dot };
         dc.DrawLine(pen, new Point(x, topPad - 6), new Point(x, topPad + plotHeight));
     }
 
@@ -219,11 +219,11 @@ public sealed class TimelineControl : FrameworkElement
 
         var formatted = new FormattedText(
             text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-            typeface, 11.5, new SolidColorBrush(Color.FromRgb(0xD8, 0xD8, 0xDE)), dpi);
+            typeface, 11.5, Res("OverlayText", Color.FromRgb(0xD8, 0xD8, 0xDE)), dpi);
 
         double boxWidth = Math.Min(formatted.Width + 16, width - 20);
         var boxRect = new Rect(10, 6, boxWidth, 20);
-        dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(0xEE, 0x22, 0x22, 0x28)), null, boxRect, 4, 4);
+        dc.DrawRoundedRectangle(Res("OverlayBg", Color.FromArgb(0xEE, 0x22, 0x22, 0x28)), null, boxRect, 4, 4);
 
         dc.PushClip(new RectangleGeometry(boxRect));
         dc.DrawText(formatted, new Point(18, 8));
@@ -236,7 +236,7 @@ public sealed class TimelineControl : FrameworkElement
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         var text = new FormattedText(
             message, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-            typeface, 13, new SolidColorBrush(Color.FromRgb(0x7A, 0x7A, 0x84)), dpi);
+            typeface, 13, Res("TimelineLabel", Color.FromRgb(0x7A, 0x7A, 0x84)), dpi);
 
         dc.DrawText(text, new Point((width - text.Width) / 2, (height - text.Height) / 2));
     }

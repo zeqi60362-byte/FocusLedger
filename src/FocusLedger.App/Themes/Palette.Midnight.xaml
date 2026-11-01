@@ -1,0 +1,32 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <FontFamily x:Key="UiFont">Microsoft YaHei UI</FontFamily>
+
+    <SolidColorBrush x:Key="Bg" Color="#0A1020" />
+    <SolidColorBrush x:Key="Surface" Color="#0F1A2E" />
+    <SolidColorBrush x:Key="SurfaceAlt" Color="#16243C" />
+    <SolidColorBrush x:Key="Border" Color="#23344F" />
+    <SolidColorBrush x:Key="Text" Color="#E4ECF7" />
+    <SolidColorBrush x:Key="TextDim" Color="#8AA0BE" />
+    <SolidColorBrush x:Key="Accent" Color="#4ADE80" />
+    <SolidColorBrush x:Key="Danger" Color="#F87171" />
+
+    <SolidColorBrush x:Key="StateActive" Color="#4ADE80" />
+    <SolidColorBrush x:Key="StateSilent" Color="#5EA8FF" />
+    <SolidColorBrush x:Key="StateOffTask" Color="#F87171" />
+    <SolidColorBrush x:Key="StateIdle" Color="#4A5C77" />
+    <SolidColorBrush x:Key="StatePassive" Color="#5EA8FF" />
+    <SolidColorBrush x:Key="StateLocked" Color="#2A3A55" />
+    <SolidColorBrush x:Key="StateAmbiguous" Color="#A78BFA" />
+
+    <SolidColorBrush x:Key="TrackBg" Color="#1B2B45" />
+    <SolidColorBrush x:Key="ScrollThumb" Color="#35507A" />
+    <SolidColorBrush x:Key="TimelineBg" Color="#0C1526" />
+    <SolidColorBrush x:Key="TimelineGrid" Color="#22FFFFFF" />
+    <SolidColorBrush x:Key="TimelineLabel" Color="#6E86A8" />
+    <SolidColorBrush x:Key="HolidayBg" Color="#2A1A2A" />
+    <SolidColorBrush x:Key="OverlayBg" Color="#EE16243C" />
+    <SolidColorBrush x:Key="OverlayText" Color="#DCE7F5" />
+
+</ResourceDictionary>

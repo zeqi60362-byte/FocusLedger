@@ -29,16 +29,16 @@ public sealed class Localization : INotifyPropertyChanged
         ["Status_Paused"] = ("○ 已暂停", "○ Paused"),
 
         // 导航
-        ["Nav_Today"] = ("今日", "Today"),
-        ["Nav_TodayHint"] = ("时间轴 · 当前状态", "Timeline · now"),
-        ["Nav_Report"] = ("日报", "Report"),
-        ["Nav_ReportHint"] = ("分心归因 · 统计", "Distractions · stats"),
-        ["Nav_Rules"] = ("规则", "Rules"),
-        ["Nav_RulesHint"] = ("什么算工作", "What counts as work"),
-        ["Nav_Plan"] = ("计划", "Plan"),
-        ["Nav_PlanHint"] = ("月历 · 每日安排", "Calendar · daily plan"),
-        ["Nav_Settings"] = ("设置", "Settings"),
-        ["Nav_SettingsHint"] = ("启动 · 排除 · 数据", "Startup · exclude · data"),
+        ["Nav_Today"] = ("今日专注", "Today"),
+        ["Nav_TodayHint"] = ("", ""),
+        ["Nav_Report"] = ("专注统计", "Statistics"),
+        ["Nav_ReportHint"] = ("", ""),
+        ["Nav_Rules"] = ("规则安排", "Rules"),
+        ["Nav_RulesHint"] = ("", ""),
+        ["Nav_Plan"] = ("预期计划", "Planner"),
+        ["Nav_PlanHint"] = ("", ""),
+        ["Nav_Settings"] = ("系统设置", "Settings"),
+        ["Nav_SettingsHint"] = ("", ""),
 
         // 状态名
         ["State_Active"] = ("深度", "Deep"),
@@ -99,11 +99,11 @@ public sealed class Localization : INotifyPropertyChanged
         ["Intent_Abandoned"] = ("{0} · 已放弃", "{0} · abandoned"),
 
         // 日报
-        ["Report_Title"] = ("日报", "Report"),
+        ["Report_Title"] = ("专注统计", "Statistics"),
         ["Report_Prev"] = ("前一天", "Previous"),
         ["Report_Today"] = ("今天", "Today"),
         ["Report_Next"] = ("后一天", "Next"),
-        ["Report_DistractionTitle"] = ("分心去了哪", "Where the distractions went"),
+        ["Report_DistractionTitle"] = ("分心点", "Distractions"),
         ["Report_Stats"] = ("统计", "Stats"),
         ["Report_Week"] = ("逐周", "Weekly"),
         ["Report_Month"] = ("逐月", "Monthly"),
@@ -119,7 +119,7 @@ public sealed class Localization : INotifyPropertyChanged
             "Deep {0}   Silent {1}   Distracted {2}"),
 
         // 规则
-        ["Rules_Title"] = ("规则", "Rules"),
+        ["Rules_Title"] = ("规则安排", "Rules"),
         ["Rules_Desc"] = ("决定每个应用算「任务 / 中性 / 分心」。改完立即生效，历史数据也会一起重算。",
             "Decides whether an app counts as work, neutral, or distraction. Changes apply retroactively."),
         ["Rules_LastWindow"] = ("刚才在用的窗口", "Last window"),
@@ -153,7 +153,7 @@ public sealed class Localization : INotifyPropertyChanged
         ["Cat_Distraction"] = ("分心", "Distraction"),
 
         // 设置
-        ["Settings_Title"] = ("设置", "Settings"),
+        ["Settings_Title"] = ("系统设置", "Settings"),
         ["Settings_Desc"] = ("所有设置在本地生效，不会上传任何内容。", "Everything is applied locally. Nothing is uploaded."),
         ["Settings_Startup"] = ("启动", "Startup"),
         ["Settings_AutoStart"] = ("开机时自动启动 FocusLedger", "Start FocusLedger when Windows starts"),
@@ -184,9 +184,16 @@ public sealed class Localization : INotifyPropertyChanged
         ["Settings_Storage"] = ("数据库：{0}\n样本总数：{1:N0} 条", "Database: {0}\nSamples: {1:N0}"),
         ["Settings_Language"] = ("语言", "Language"),
         ["Settings_LanguageDesc"] = ("切换界面语言，立即生效。", "Switch the interface language. Applies immediately."),
+        ["Settings_Theme"] = ("皮肤", "Theme"),
+        ["Settings_ThemeDesc"] = ("三套预设，另可选一个强调色。", "Three presets, plus an optional accent colour."),
+        ["Theme_Dark"] = ("深色", "Dark"),
+        ["Theme_Light"] = ("浅色", "Light"),
+        ["Theme_Midnight"] = ("夜蓝", "Midnight"),
+        ["Settings_Accent"] = ("强调色", "Accent"),
+        ["Settings_AccentDefault"] = ("跟随皮肤", "Follow theme"),
 
         // 计划
-        ["Plan_Title"] = ("计划", "Plan"),
+        ["Plan_Title"] = ("预期计划", "Planner"),
         ["Plan_Prev"] = ("上月", "Prev"),
         ["Plan_Today"] = ("今天", "Today"),
         ["Plan_Next"] = ("下月", "Next"),

@@ -51,6 +51,9 @@ public sealed partial class ReportViewModel : ObservableObject
     [ObservableProperty]
     private string statsSummary = string.Empty;
 
+    [ObservableProperty]
+    private IReadOnlyList<StateChip> chips = Array.Empty<StateChip>();
+
     public ObservableCollection<DistractionRow> Distractions { get; } = new();
 
     public ObservableCollection<StatRow> Stats { get; } = new();
@@ -129,6 +132,13 @@ public sealed partial class ReportViewModel : ObservableObject
             SecondaryRow = Loc.T("Today_Secondary",
                 Fmt.Duration(summary.OffTaskSeconds),
                 Fmt.Duration(summary.AwaySeconds));
+            Chips = new[]
+            {
+                new StateChip(Loc.T("State_ActiveFull"), Fmt.Duration(summary.ActiveSeconds)),
+                new StateChip(Loc.T("State_OffTaskFull"), Fmt.Duration(summary.OffTaskSeconds)),
+                new StateChip(Loc.T("State_AwayFull"), Fmt.Duration(summary.AwaySeconds)),
+                new StateChip(Loc.T("State_SilentFull"), Fmt.Duration(summary.SilentSeconds))
+            };
             StatsRow = Loc.T("Report_StatLine",
                 summary.FocusBlocks,
                 (summary.LongestFocusBlockSeconds / 60).ToString("F0"),
@@ -138,7 +148,10 @@ public sealed partial class ReportViewModel : ObservableObject
             foreach (var usage in summary.TopDistractions)
             {
                 string share = totalOffTask > 0 ? $"{usage.Seconds / totalOffTask:P0}" : "—";
-                Distractions.Add(new DistractionRow(usage.App, Fmt.Duration(usage.Seconds), share));
+                Distractions.Add(new DistractionRow(
+                    Fmt.AppName(usage.App),
+                    Fmt.MinutesShort(usage.Seconds),
+                    share));
             }
         }
 
@@ -157,7 +170,8 @@ public sealed partial class ReportViewModel : ObservableObject
         switch (StatsPeriod)
         {
             case "month":
-                for (int i = 5; i >= 0; i--)
+                // 倒序：最近的月份在最上面
+                for (int i = 0; i < 6; i++)
                 {
                     var anchor = today.AddMonths(-i);
                     var from = new DateOnly(anchor.Year, anchor.Month, 1);
@@ -167,7 +181,7 @@ public sealed partial class ReportViewModel : ObservableObject
                 break;
 
             case "year":
-                for (int i = 4; i >= 0; i--)
+                for (int i = 0; i < 5; i++)
                 {
                     var anchor = today.AddYears(-i);
                     var from = new DateOnly(anchor.Year, 1, 1);
@@ -177,7 +191,7 @@ public sealed partial class ReportViewModel : ObservableObject
                 break;
 
             default:
-                for (int i = 6; i >= 0; i--)
+                for (int i = 0; i < 7; i++)
                 {
                     var day = today.AddDays(-i);
                     buckets.Add((DayLabel(day), day, day));

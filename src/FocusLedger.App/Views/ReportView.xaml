@@ -32,10 +32,25 @@
                         <TextBlock Text="{Binding Band}" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="10,0,0,8" />
                     </StackPanel>
 
-                    <TextBlock Text="{Binding PrimaryRow}" Margin="0,12,0,0" FontSize="12.5" />
-                    <TextBlock Text="{Binding SecondaryRow}" Style="{StaticResource Caption}" Margin="0,6,0,0" />
-                    <TextBlock Text="{Binding StatsRow}" Style="{StaticResource Caption}" Margin="0,6,0,0" Opacity="0.8" />
-                    <TextBlock Text="{Binding EmptyHint}" Style="{StaticResource Caption}" Margin="0,10,0,0" Foreground="{StaticResource Accent}" />
+                    <ItemsControl ItemsSource="{Binding Chips}" Margin="0,12,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Margin="0,0,24,0" FontSize="13">
+                                    <Run Text="{Binding Label, Mode=OneWay}" FontWeight="Bold" />
+                                    <Run Text="  " />
+                                    <Run Text="{Binding Value, Mode=OneWay}" />
+                                </TextBlock>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{Binding StatsRow}" Style="{StaticResource Caption}" Margin="0,8,0,0" Opacity="0.8" />
+                    <TextBlock Text="{Binding EmptyHint}" Style="{StaticResource Caption}" Margin="0,10,0,0" Foreground="{DynamicResource Accent}" />
                 </StackPanel>
             </Border>
 

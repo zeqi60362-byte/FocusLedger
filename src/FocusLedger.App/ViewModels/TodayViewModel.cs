@@ -8,6 +8,8 @@ using FocusLedger.Core;
 
 namespace FocusLedger.App.ViewModels;
 
+public sealed record StateChip(string Label, string Value);
+
 public sealed partial class TodayViewModel : ObservableObject
 {
     private readonly RecordingService _recording;
@@ -34,6 +36,9 @@ public sealed partial class TodayViewModel : ObservableObject
 
     [ObservableProperty]
     private string secondary = string.Empty;
+
+    [ObservableProperty]
+    private IReadOnlyList<StateChip> chips = Array.Empty<StateChip>();
 
     [ObservableProperty]
     private string current = string.Empty;
@@ -109,12 +114,15 @@ public sealed partial class TodayViewModel : ObservableObject
         Band = Loc.T("Today_Band",
             Fmt.Duration(summary.EffectiveLowSeconds),
             Fmt.Duration(summary.EffectiveHighSeconds));
-        Breakdown = Loc.T("Today_Breakdown",
-            Fmt.Duration(summary.ActiveSeconds),
-            Fmt.Duration(summary.SilentSeconds));
-        Secondary = Loc.T("Today_Secondary",
-            Fmt.Duration(summary.OffTaskSeconds),
-            Fmt.Duration(summary.AwaySeconds));
+        Chips = new[]
+        {
+            new StateChip(Loc.T("State_ActiveFull"), Fmt.Duration(summary.ActiveSeconds)),
+            new StateChip(Loc.T("State_OffTaskFull"), Fmt.Duration(summary.OffTaskSeconds)),
+            new StateChip(Loc.T("State_AwayFull"), Fmt.Duration(summary.AwaySeconds)),
+            new StateChip(Loc.T("State_SilentFull"), Fmt.Duration(summary.SilentSeconds))
+        };
+        Breakdown = string.Empty;
+        Secondary = string.Empty;
 
         string top = summary.TopDistractions.Count > 0
             ? "  ·  " + string.Join(" / ", summary.TopDistractions.Select(d => $"{d.App} {Fmt.Duration(d.Seconds)}"))

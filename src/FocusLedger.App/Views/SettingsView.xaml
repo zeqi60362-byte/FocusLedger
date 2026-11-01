@@ -8,6 +8,48 @@
             <TextBlock Text="{loc:T Settings_Title}" Style="{StaticResource H2}" />
             <TextBlock Text="{loc:T Settings_Desc}" Style="{StaticResource Caption}" Margin="0,4,0,16" />
 
+            <!-- 皮肤 -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                <StackPanel>
+                    <TextBlock Text="{loc:T Settings_Theme}" Style="{StaticResource H2}" FontSize="13.5" />
+                    <TextBlock Text="{loc:T Settings_ThemeDesc}" Style="{StaticResource Caption}" Margin="0,4,0,10" />
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <Button Content="{loc:T Theme_Dark}" Style="{StaticResource GhostButton}" Padding="14,5" Margin="0,0,8,0"
+                                Command="{Binding SetThemeCommand}" CommandParameter="Dark" />
+                        <Button Content="{loc:T Theme_Light}" Style="{StaticResource GhostButton}" Padding="14,5" Margin="0,0,8,0"
+                                Command="{Binding SetThemeCommand}" CommandParameter="Light" />
+                        <Button Content="{loc:T Theme_Midnight}" Style="{StaticResource GhostButton}" Padding="14,5"
+                                Command="{Binding SetThemeCommand}" CommandParameter="Midnight" />
+                    </StackPanel>
+
+                    <TextBlock Text="{loc:T Settings_Accent}" Style="{StaticResource Caption}" Margin="0,0,0,8" />
+
+                    <ItemsControl ItemsSource="{Binding Accents}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Width="26" Height="26" Margin="0,0,8,0" Cursor="Hand"
+                                        ToolTip="{Binding Name}"
+                                        Command="{Binding DataContext.SetAccentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding Hex}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{Binding Fill}" CornerRadius="13"
+                                                    BorderThickness="1" BorderBrush="{DynamicResource Border}" />
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
             <!-- 语言 -->
             <Border Style="{StaticResource Card}" Margin="0,0,0,14">
                 <StackPanel>
@@ -85,11 +127,11 @@
                         <Button Content="{loc:T Settings_Export}" Style="{StaticResource GhostButton}" Margin="10,0,0,0"
                                 Command="{Binding ExportCsvCommand}" />
                         <Button Content="{loc:T Settings_DeleteAll}" Style="{StaticResource GhostButton}" Margin="10,0,0,0"
-                                Foreground="{StaticResource Danger}" Command="{Binding DeleteAllCommand}" />
+                                Foreground="{DynamicResource Danger}" Command="{Binding DeleteAllCommand}" />
                     </StackPanel>
 
                     <TextBlock Text="{Binding Status}" Style="{StaticResource Caption}" Margin="0,12,0,0"
-                               TextWrapping="Wrap" Foreground="{StaticResource Accent}" />
+                               TextWrapping="Wrap" Foreground="{DynamicResource Accent}" />
                 </StackPanel>
             </Border>
         </StackPanel>
