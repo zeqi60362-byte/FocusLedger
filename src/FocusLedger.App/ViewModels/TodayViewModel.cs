@@ -10,7 +10,7 @@ namespace FocusLedger.App.ViewModels;
 public sealed partial class TodayViewModel : ObservableObject
 {
     private readonly RecordingService _recording;
-    private readonly SegmentBuilder _builder = new();
+    private readonly RuleService _rules;
     private readonly DispatcherTimer _timer;
 
     [ObservableProperty]
@@ -52,9 +52,10 @@ public sealed partial class TodayViewModel : ObservableObject
     [ObservableProperty]
     private string recordButtonText = "开始记录";
 
-    public TodayViewModel(RecordingService recording)
+    public TodayViewModel(RecordingService recording, RuleService rules)
     {
         _recording = recording;
+        _rules = rules;
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _timer.Tick += (_, _) => Refresh();
@@ -84,7 +85,7 @@ public sealed partial class TodayViewModel : ObservableObject
         RecordButtonText = IsRecording ? "暂停记录" : "开始记录";
 
         var samples = _recording.SnapshotToday();
-        var segments = _builder.Build(samples);
+        var segments = new SegmentBuilder(_rules.Current).Build(samples);
         Segments = segments;
 
         var today = DateOnly.FromDateTime(DateTime.Now);

@@ -14,7 +14,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly AppSettings _settings;
     private readonly FocusLedgerStore _store;
     private readonly RecordingService _recording;
-    private readonly SegmentBuilder _builder = new();
+    private readonly RuleService _rules;
     private bool _initialized;
 
     [ObservableProperty]
@@ -34,11 +34,12 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public ObservableCollection<string> Exclusions { get; } = new();
 
-    public SettingsViewModel(AppSettings settings, FocusLedgerStore store, RecordingService recording)
+    public SettingsViewModel(AppSettings settings, FocusLedgerStore store, RecordingService recording, RuleService rules)
     {
         _settings = settings;
         _store = store;
         _recording = recording;
+        _rules = rules;
 
         StartWithWindows = AutoStart.IsEnabled();
         RetentionDays = settings.RetentionDays;
@@ -119,7 +120,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         var date = DateOnly.FromDateTime(DateTime.Now);
         var (start, end) = DailyAggregator.DayRangeUtc(date, TimeZoneInfo.Local);
-        var segments = _builder.Build(_store.LoadSamples(start, end));
+        var segments = new SegmentBuilder(_rules.Current).Build(_store.LoadSamples(start, end));
 
         if (segments.Count == 0)
         {

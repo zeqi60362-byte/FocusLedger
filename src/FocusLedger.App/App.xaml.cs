@@ -12,6 +12,7 @@ public partial class App : System.Windows.Application
     private WinForms.NotifyIcon? _tray;
     private WinForms.ToolStripMenuItem? _pauseItem;
     private FocusLedgerStore? _store;
+    private RuleService? _rules;
     private RecordingService? _recording;
     private MainViewModel? _main;
     private MainWindow? _window;
@@ -37,13 +38,20 @@ public partial class App : System.Windows.Application
         _store = new FocusLedgerStore(FocusLedgerStore.DefaultDatabasePath);
         _store.Initialize();
 
-        _recording = new RecordingService(_store, _settings);
+        _rules = new RuleService(_store);
+        _recording = new RecordingService(_store, _settings, _rules);
         await _recording.InitializeAsync();
 
-        var today = new TodayViewModel(_recording);
-        var report = new ReportViewModel(_store);
-        var settingsView = new SettingsViewModel(_settings, _store, _recording);
-        _main = new MainViewModel(today, report, settingsView, _recording);
+        var today = new TodayViewModel(_recording, _rules);
+        var report = new ReportViewModel(_store, _rules);
+        var rulesView = new RulesViewModel(_rules, _recording);
+        var settingsView = new SettingsViewModel(_settings, _store, _recording, _rules);
+        _main = new MainViewModel(today, report, rulesView, settingsView, _recording);
+
+        // 规则一变，所有页面重算。用 BeginInvoke 避免在绑定更新中途重建列表。
+        _rules.Changed += (_, _) => Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Background,
+            new Action(() => _main?.RefreshAll()));
 
         _window = new MainWindow { DataContext = _main };
         _window.Closing += OnWindowClosing;

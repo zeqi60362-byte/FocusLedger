@@ -29,6 +29,7 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(
         TodayViewModel today,
         ReportViewModel report,
+        RulesViewModel rules,
         SettingsViewModel settings,
         RecordingService recording)
     {
@@ -36,7 +37,8 @@ public sealed partial class MainViewModel : ObservableObject
 
         Entries.Add(new NavEntry("今日", "时间轴 · 当前状态", today));
         Entries.Add(new NavEntry("日报", "对账 · 分心归因", report));
-        Entries.Add(new NavEntry("设置", "规则 · 排除 · 数据", settings));
+        Entries.Add(new NavEntry("规则", "什么算工作", rules));
+        Entries.Add(new NavEntry("设置", "启动 · 排除 · 数据", settings));
 
         Selected = Entries[0];
 
@@ -61,6 +63,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void ShowReport() => Selected = Entries[1];
 
+    public void ShowRules() => Selected = Entries[2];
+
     public void UpdateStatus()
     {
         StatusText = _recording.IsRecording
@@ -81,6 +85,9 @@ public sealed partial class MainViewModel : ObservableObject
                     break;
                 case ReportViewModel report:
                     report.Load();
+                    break;
+                case RulesViewModel rules:
+                    rules.Reload();
                     break;
                 case SettingsViewModel settings:
                     settings.RefreshStorageInfo();

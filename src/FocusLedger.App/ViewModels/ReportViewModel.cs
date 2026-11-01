@@ -12,7 +12,7 @@ public sealed record DistractionRow(string App, string Duration, string Share);
 public sealed partial class ReportViewModel : ObservableObject
 {
     private readonly FocusLedgerStore _store;
-    private readonly SegmentBuilder _builder = new();
+    private readonly RuleService _rules;
 
     private DateOnly _date = DateOnly.FromDateTime(DateTime.Now);
 
@@ -42,9 +42,10 @@ public sealed partial class ReportViewModel : ObservableObject
 
     public ObservableCollection<DistractionRow> Distractions { get; } = new();
 
-    public ReportViewModel(FocusLedgerStore store)
+    public ReportViewModel(FocusLedgerStore store, RuleService rules)
     {
         _store = store;
+        _rules = rules;
         Load();
     }
 
@@ -98,7 +99,7 @@ public sealed partial class ReportViewModel : ObservableObject
         HasData = true;
         EmptyHint = string.Empty;
 
-        var segments = _builder.Build(samples);
+        var segments = new SegmentBuilder(_rules.Current).Build(samples);
         var summary = DailyAggregator.Aggregate(segments, _date, TimeZoneInfo.Local);
 
         Effective = Fmt.Duration(summary.EffectiveSeconds);

@@ -143,6 +143,178 @@ public sealed class FocusLedgerStore : IDisposable
     public long CountSamples()
         => _connection.ExecuteScalar<long>("SELECT COUNT(1) FROM samples;");
 
+    // ---------- 规则 ----------
+
+    /// <summary>用户自定义规则的 id 偏移，避免与内置规则（1–999）冲突。</summary>
+    public const int UserRuleIdOffset = 100_000;
+
+    public IReadOnlyList<Rule> LoadUserRules()
+    {
+        var rows = _connection.Query<RuleRow>(
+            """
+            SELECT id, match_type, pattern, category, app_class, priority, enabled, label
+            FROM rules
+            WHERE is_builtin = 0
+            ORDER BY priority, id;
+            """);
+
+        var result = new List<Rule>(rows.Count());
+        foreach (var row in rows)
+        {
+            result.Add(new Rule(
+                UserRuleIdOffset + (int)row.id,
+                ParseRuleMatchType(row.match_type),
+                row.pattern ?? string.Empty,
+                ParseContext(row.category),
+                ParseAppClass(row.app_class),
+                row.priority,
+                row.enabled != 0,
+                IsBuiltin: false,
+                row.label));
+        }
+
+        return result;
+    }
+
+    public Rule InsertUserRule(Rule rule)
+    {
+        long id = _connection.ExecuteScalar<long>(
+            """
+            INSERT INTO rules (match_type, pattern, category, c_value, app_class, priority, enabled, is_builtin, label)
+            VALUES (@matchType, @pattern, @category, @cValue, @appClass, @priority, @enabled, 0, @label);
+            SELECT last_insert_rowid();
+            """,
+            new
+            {
+                matchType = RuleMatchTypeText(rule.MatchType),
+                pattern = rule.Pattern,
+                category = ContextText(rule.Context),
+                cValue = rule.ContextValue,
+                appClass = AppClassText(rule.AppClass),
+                priority = rule.Priority,
+                enabled = rule.Enabled ? 1 : 0,
+                label = rule.Label
+            });
+
+        return rule with { Id = UserRuleIdOffset + (int)id };
+    }
+
+    public void UpdateUserRule(Rule rule)
+    {
+        _connection.Execute(
+            """
+            UPDATE rules
+            SET match_type = @matchType, pattern = @pattern, category = @category,
+                c_value = @cValue, app_class = @appClass, priority = @priority,
+                enabled = @enabled, label = @label
+            WHERE id = @id AND is_builtin = 0;
+            """,
+            new
+            {
+                id = rule.Id - UserRuleIdOffset,
+                matchType = RuleMatchTypeText(rule.MatchType),
+                pattern = rule.Pattern,
+                category = ContextText(rule.Context),
+                cValue = rule.ContextValue,
+                appClass = AppClassText(rule.AppClass),
+                priority = rule.Priority,
+                enabled = rule.Enabled ? 1 : 0,
+                label = rule.Label
+            });
+    }
+
+    public void DeleteUserRule(int ruleId)
+        => _connection.Execute(
+            "DELETE FROM rules WHERE id = @id AND is_builtin = 0;",
+            new { id = ruleId - UserRuleIdOffset });
+
+    public IReadOnlySet<int> LoadDisabledBuiltinIds()
+    {
+        string? json = _connection.ExecuteScalar<string?>(
+            "SELECT value FROM meta WHERE key = 'rules.disabled_builtin';");
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new HashSet<int>();
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<int[]>(json)?.ToHashSet() ?? new HashSet<int>();
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return new HashSet<int>();
+        }
+    }
+
+    public void SaveDisabledBuiltinIds(IEnumerable<int> ids)
+    {
+        string json = System.Text.Json.JsonSerializer.Serialize(ids.Distinct().OrderBy(i => i).ToArray());
+        _connection.Execute(
+            """
+            INSERT INTO meta(key, value) VALUES('rules.disabled_builtin', @v)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value;
+            """,
+            new { v = json });
+    }
+
+    private static string RuleMatchTypeText(RuleMatchType type) => type switch
+    {
+        RuleMatchType.Process => "process",
+        RuleMatchType.TitleContains => "title_contains",
+        _ => "title_regex"
+    };
+
+    private static RuleMatchType ParseRuleMatchType(string? value) => (value ?? string.Empty).ToLowerInvariant() switch
+    {
+        "title_contains" => RuleMatchType.TitleContains,
+        "title_regex" => RuleMatchType.TitleRegex,
+        _ => RuleMatchType.Process
+    };
+
+    private static string ContextText(ContextLevel level) => level switch
+    {
+        ContextLevel.Task => "task",
+        ContextLevel.Neutral => "neutral",
+        _ => "distraction"
+    };
+
+    private static ContextLevel ParseContext(string? value) => (value ?? string.Empty).ToLowerInvariant() switch
+    {
+        "task" => ContextLevel.Task,
+        "distraction" => ContextLevel.Distraction,
+        _ => ContextLevel.Neutral
+    };
+
+    private static string AppClassText(AppClass appClass) => appClass switch
+    {
+        AppClass.Reading => "reading",
+        AppClass.Typing => "typing",
+        AppClass.Media => "media",
+        _ => "other"
+    };
+
+    private static AppClass ParseAppClass(string? value) => (value ?? string.Empty).ToLowerInvariant() switch
+    {
+        "reading" => AppClass.Reading,
+        "typing" => AppClass.Typing,
+        "media" => AppClass.Media,
+        _ => AppClass.Other
+    };
+
+    internal sealed class RuleRow
+    {
+        public long id { get; set; }
+        public string? match_type { get; set; }
+        public string? pattern { get; set; }
+        public string? category { get; set; }
+        public string? app_class { get; set; }
+        public int priority { get; set; }
+        public long enabled { get; set; }
+        public string? label { get; set; }
+    }
+
     /// <summary>删除全部数据（FR-C4）。不可恢复，调用方必须先二次确认。</summary>
     public void DeleteAll()
     {

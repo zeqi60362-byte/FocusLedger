@@ -59,7 +59,11 @@ public static class FeatureAggregator
         int playing = ordered.Count(s => s.MediaState == MediaPlaybackState.Playing);
         bool mediaPlaying = playing * 2 >= ordered.Count;
 
-        double contextValue = SnapContext(ordered.Average(s => s.ContextValue));
+        // 上下文按"当前规则"重新推导，而不是用采集时存下的快照。
+        // 这样用户改了规则，历史数据会立刻跟着变 —— 否则规则编辑形同虚设。
+        var matches = ordered.Select(s => rules.Match(s.App, s.Title)).ToList();
+
+        double contextValue = SnapContext(matches.Average(m => m.ContextValue));
         ContextLevel contextLevel = contextValue switch
         {
             >= 0.99 => ContextLevel.Task,
@@ -70,7 +74,8 @@ public static class FeatureAggregator
         int maxIdle = ordered.Max(s => s.IdleSeconds);
         double lockedRatio = ordered.Count(s => s.Locked) / (double)ordered.Count;
 
-        var appClass = rules.Match(app, title).AppClass;
+        int dominantIndex = ordered.FindIndex(s => string.Equals(s.App, app, StringComparison.OrdinalIgnoreCase));
+        var appClass = matches[Math.Max(0, dominantIndex)].AppClass;
 
         return new WindowFeatures(
             start,

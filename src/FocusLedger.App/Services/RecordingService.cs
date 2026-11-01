@@ -12,8 +12,11 @@ public sealed class RecordingService : IAsyncDisposable
 {
     private const int FlushBatch = 12; // 12 × 5s = 60s
 
+    private const string SelfAppName = "FocusLedger.exe";
+
     private readonly FocusLedgerStore _store;
     private readonly AppSettings _settings;
+    private readonly RuleService _rules;
     private readonly List<Sample> _today = new();
     private readonly List<Sample> _pending = new();
     private readonly object _gate = new();
@@ -22,10 +25,11 @@ public sealed class RecordingService : IAsyncDisposable
     private Task? _loop;
     private CollectorService? _collector;
 
-    public RecordingService(FocusLedgerStore store, AppSettings settings)
+    public RecordingService(FocusLedgerStore store, AppSettings settings, RuleService rules)
     {
         _store = store;
         _settings = settings;
+        _rules = rules;
     }
 
     public bool IsRecording { get; private set; }
@@ -58,7 +62,7 @@ public sealed class RecordingService : IAsyncDisposable
         }
 
         _cts = new CancellationTokenSource();
-        _collector = new CollectorService();
+        _collector = new CollectorService(_rules.Current);
         await _collector.StartAsync().ConfigureAwait(false);
 
         IsRecording = true;
@@ -121,12 +125,16 @@ public sealed class RecordingService : IAsyncDisposable
         {
             await foreach (var sample in _collector.CollectAsync(null, token).ConfigureAwait(false))
             {
+                // "当前窗口"指的是你打开面板之前用的那个窗口，所以记录所有非自身的样本
+                if (!string.Equals(sample.App, SelfAppName, StringComparison.OrdinalIgnoreCase))
+                {
+                    Current = sample;
+                }
+
                 if (_settings.IsExcluded(sample.App))
                 {
                     continue;
                 }
-
-                Current = sample;
 
                 bool flush;
                 lock (_gate)
@@ -195,6 +203,18 @@ public sealed class RecordingService : IAsyncDisposable
         {
             _today.Clear();
             _today.AddRange(samples);
+        }
+
+        // 启动时用最近一条非自身样本兜底，否则刚打开面板时"刚才在用的窗口"是空的
+        if (samples.Count > 0)
+        {
+            var last = samples[^1];
+            long ageMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - last.TsUtcMs;
+            if (ageMs < 30 * 60 * 1000
+                && !string.Equals(last.App, SelfAppName, StringComparison.OrdinalIgnoreCase))
+            {
+                Current = last;
+            }
         }
     }
 
