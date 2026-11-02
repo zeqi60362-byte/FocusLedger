@@ -1,7 +1,8 @@
 ﻿<UserControl x:Class="FocusLedger.App.Views.CalendarView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="clr-namespace:FocusLedger.App.Localization">
+             xmlns:loc="clr-namespace:FocusLedger.App.Localization"
+             xmlns:controls="clr-namespace:FocusLedger.App.Controls">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -135,65 +136,24 @@
                     </Grid>
 
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Hours}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,0,0,2">
-                                        <Grid.Style>
-                                            <Style TargetType="Grid">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsContinuation}" Value="True">
-                                                        <Setter Property="Margin" Value="0" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Grid.Style>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="56" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock Grid.Column="0" Text="{Binding TimeLabel}"
-                                                   Style="{StaticResource Caption}" VerticalAlignment="Center" />
-
-                                        <!-- 可编辑：开始 – 结束 + 标题 -->
-                                        <Grid Grid.Column="1" Visibility="{Binding IsEditable, Converter={StaticResource BoolToVis}}">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal"
-                                                        Visibility="{Binding HasPlan, Converter={StaticResource BoolToVis}}">
-                                                <ComboBox Width="62" Margin="0,0,4,0" FontSize="11" Padding="2,2"
-                                                          ItemsSource="{Binding TimeOptions}"
-                                                          SelectedItem="{Binding StartText, Mode=TwoWay}" />
-                                                <TextBlock Text="–" Style="{StaticResource Caption}"
-                                                           VerticalAlignment="Center" Margin="0,0,6,0" />
-                                                <ComboBox Width="62" Margin="0,0,8,0" FontSize="11" Padding="2,2"
-                                                          ItemsSource="{Binding TimeOptions}"
-                                                          SelectedItem="{Binding EndText, Mode=TwoWay}" />
-                                            </StackPanel>
-
-                                            <TextBox Grid.Column="1" Padding="8,4" FontSize="12"
-                                                     Text="{Binding Text, UpdateSourceTrigger=LostFocus}" />
-                                        </Grid>
-
-                                        <!-- 被上一条计划覆盖的小时：只读延续 -->
-                                        <Grid Grid.Column="1" Margin="0,0,8,0"
-                                              Visibility="{Binding IsContinuation, Converter={StaticResource BoolToVis}}">
-                                            <Border Height="18" VerticalAlignment="Center" CornerRadius="2"
-                                                    Background="{DynamicResource SurfaceAlt}" Opacity="0.85" />
-                                            <Border Width="2" Height="18" HorizontalAlignment="Left" CornerRadius="0"
-                                                    Background="{DynamicResource TextDim}" Opacity="0.45" />
-                                        </Grid>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <controls:PlanCanvas Height="600" Margin="0,2,0,0" Plans="{Binding PlanBlocks}" RangeSelected="OnRangeSelected" />
                     </ScrollViewer>
                 </Grid>
             </Border>
         </Grid>
-    </Grid>
+            <Grid Background="#66000000" Visibility="{Binding IsEditorOpen, Converter={StaticResource BoolToVis}}">
+            <Border Width="380" Style="{StaticResource Card}" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="22">
+                <StackPanel>
+                    <TextBlock Text="新建计划" Style="{StaticResource H2}" FontSize="15" />
+                    <TextBlock Text="{Binding EditorRange}" Style="{StaticResource Caption}" Margin="0,4,0,14" />
+                    <TextBox Height="34" Padding="10,6" FontSize="14"
+                             Text="{Binding EditorTitle, UpdateSourceTrigger=PropertyChanged}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                        <Button Content="取消" Style="{StaticResource GhostButton}" Padding="16,6" Command="{Binding CancelEditorCommand}" />
+                        <Button Content="保存" Style="{StaticResource PrimaryButton}" Padding="18,6" Margin="8,0,0,0" Command="{Binding SavePlanCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+</Grid>
 </UserControl>

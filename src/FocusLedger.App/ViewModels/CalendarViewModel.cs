@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using FocusLedger.App.Controls;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FocusLedger.App.Localization;
@@ -266,6 +267,20 @@ public sealed partial class CalendarViewModel : ObservableObject
 
     public ObservableCollection<HourSlot> Hours { get; } = new();
 
+    public ObservableCollection<PlanBlock> PlanBlocks { get; } = new();
+
+    [ObservableProperty]
+    private bool isEditorOpen;
+
+    [ObservableProperty]
+    private string editorTitle = string.Empty;
+
+    [ObservableProperty]
+    private string editorRange = string.Empty;
+
+    private int _pendingStart;
+    private int _pendingEnd;
+
     public ObservableCollection<string> Weekdays { get; } = new();
 
     public CalendarViewModel(FocusLedgerStore store)
@@ -425,6 +440,13 @@ public sealed partial class CalendarViewModel : ObservableObject
                 hourStart, hourEnd, isContinuation: false, SaveSlot, SaveRange));
         }
 
+        PlanBlocks.Clear();
+        foreach (var plan in plans)
+        {
+            PlanBlocks.Add(new PlanBlock(plan.id, plan.start_min, plan.end_min, plan.title ?? string.Empty,
+                string.Empty, string.Empty, true));
+        }
+
         _syncing = false;
         PlanCountText = Loc.T("Plan_Count", plans.Count);
     }
@@ -470,5 +492,31 @@ public sealed partial class CalendarViewModel : ObservableObject
             _store.UpdatePlanRange(id, slot.StartMinute, slot.EndMinute);
             PlanCountText = Loc.T("Plan_Count", _store.LoadPlans(_selected).Count);
         }
+    }
+
+    public void OnRangeSelected(int start, int end)
+    {
+        _pendingStart = start;
+        _pendingEnd = end;
+        EditorRange = $"{start / 60:00}:{start % 60:00} – {end / 60:00}:{end % 60:00}";
+        EditorTitle = string.Empty;
+        IsEditorOpen = true;
+    }
+
+    [RelayCommand]
+    private void CancelEditor() => IsEditorOpen = false;
+
+    [RelayCommand]
+    private void SavePlan()
+    {
+        string title = EditorTitle.Trim();
+        if (title.Length == 0)
+        {
+            return;
+        }
+
+        _store.AddPlanRange(_selected, _pendingStart, _pendingEnd, title);
+        IsEditorOpen = false;
+        LoadHours();
     }
 }
