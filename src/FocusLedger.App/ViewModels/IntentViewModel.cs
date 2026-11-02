@@ -51,6 +51,18 @@ public sealed partial class IntentViewModel : ObservableObject
 
     public IReadOnlyList<int> Durations { get; } = new[] { 25, 50, 90 };
 
+    /// <summary>
+    /// 剩余时间。超过一小时要带上小时，否则 mm:ss 只取分钟分量——
+    /// 90 分钟会被显示成 30:00，看起来像点错了时长。
+    /// </summary>
+    private static string FormatRemaining(long remainingMs)
+    {
+        var span = TimeSpan.FromMilliseconds(Math.Max(0, remainingMs));
+        return span.TotalHours >= 1
+            ? $"{(int)span.TotalHours}:{span.Minutes:00}:{span.Seconds:00}"
+            : $"{span.Minutes:00}:{span.Seconds:00}";
+    }
+
     partial void OnPlannedMinutesChanged(int value)
     {
         int clamped = Math.Clamp(value, 5, 600);
@@ -145,7 +157,7 @@ public sealed partial class IntentViewModel : ObservableObject
 
         Remaining = remainingMs <= 0
             ? Loc.T("Intent_TimeUp")
-            : Loc.T("Intent_Remaining", TimeSpan.FromMilliseconds(remainingMs).ToString(@"mm\:ss"));
+            : Loc.T("Intent_Remaining", FormatRemaining(remainingMs));
 
         long until = Math.Min(now, _active.PlannedEndUtcMs);
         var segments = new SegmentBuilder(_rules.Current)

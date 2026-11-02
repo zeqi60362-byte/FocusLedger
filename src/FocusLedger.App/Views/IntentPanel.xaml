@@ -90,7 +90,7 @@
                     <TextBlock Text="{loc:T Intent_Custom}" Style="{StaticResource Caption}"
                                VerticalAlignment="Center" Margin="4,0,8,0" />
                     <TextBox Width="58" Padding="8,4" VerticalContentAlignment="Center"
-                             Text="{Binding PlannedMinutes, UpdateSourceTrigger=LostFocus}" />
+                             Text="{Binding PlannedMinutes, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBlock Text="min" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="6,0,0,0" />
                 </StackPanel>
 
