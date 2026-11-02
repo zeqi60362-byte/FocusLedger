@@ -29,6 +29,12 @@ public sealed partial class TodayViewModel : ObservableObject
     private string headline = "—";
 
     [ObservableProperty]
+    private string distractedText = "—";
+
+    [ObservableProperty]
+    private string totalText = "—";
+
+    [ObservableProperty]
     private string band = string.Empty;
 
     [ObservableProperty]
@@ -128,6 +134,8 @@ public sealed partial class TodayViewModel : ObservableObject
         var summary = DailyAggregator.Aggregate(segments, today, TimeZoneInfo.Local);
 
         Headline = Fmt.Duration(summary.EffectiveSeconds);
+        DistractedText = Fmt.Duration(summary.OffTaskSeconds + summary.AwaySeconds);
+        TotalText = Fmt.Duration(summary.AccountedSeconds);
         Band = Loc.T("Today_Band",
             Fmt.Duration(summary.EffectiveLowSeconds),
             Fmt.Duration(summary.EffectiveHighSeconds));

@@ -141,7 +141,11 @@ public static class DailyAggregator
                     break;
             }
 
-            effective += duration * segment.Weight;
+            // 深度与静默按原始时长计入，不再打折——见 v0.6 口径调整
+            if (segment.State is ActivityState.ActiveFocus or ActivityState.SilentFocus)
+            {
+                effective += duration;
+            }
 
             if (segment.Weight < 0.999 && segment.State is ActivityState.ActiveFocus or ActivityState.SilentFocus)
             {

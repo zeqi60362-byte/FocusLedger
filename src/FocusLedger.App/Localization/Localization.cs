@@ -55,6 +55,8 @@ public sealed class Localization : INotifyPropertyChanged
         ["Today_Pause"] = ("暂停记录", "Pause"),
         ["Today_Resume"] = ("开始记录", "Resume"),
         ["Today_Effective"] = ("有效专注", "Effective focus"),
+        ["Today_DistractedAway"] = ("离席/分心", "Away / distracted"),
+        ["Today_TotalWork"] = ("今日总计", "Total today"),
         ["Today_EffectiveFormula"] = ("＝ 深度×1.0 ＋ 静默×0.85（弱证据段按 0.75 折算）",
                                       "= deep 1.0 + silent 0.85 (weak evidence at 0.75)"),
         ["Today_Band"] = ("区间 {0} – {1}", "range {0} – {1}"),
