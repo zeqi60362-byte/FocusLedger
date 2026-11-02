@@ -114,10 +114,29 @@
                                         </Grid.ColumnDefinitions>
                                         <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Fill}"
                                                  VerticalAlignment="Center" HorizontalAlignment="Left" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Label}" Style="{StaticResource Caption}"
-                                                   TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="2" Text="{Binding Value}" Style="{StaticResource Caption}"
-                                                   HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Label}" TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChild}" Value="True">
+                                                            <Setter Property="Margin" Value="14,0,0,0" />
+                                                            <Setter Property="FontSize" Value="11" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="2" Text="{Binding Value}" HorizontalAlignment="Right">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChild}" Value="True">
+                                                            <Setter Property="FontSize" Value="11" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -160,7 +179,7 @@
                     <TextBlock Text="{loc:T Report_FlowHint}" Style="{StaticResource Caption}"
                                Margin="0,4,0,10" TextWrapping="Wrap" />
                     <controls:SankeyChart Height="250" Flows="{Binding Flows}" />
-                    <ItemsControl ItemsSource="{Binding AppLegend}" Margin="0,14,0,0">
+                    <ItemsControl ItemsSource="{Binding FlowLegend}" Margin="0,14,0,0">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel />

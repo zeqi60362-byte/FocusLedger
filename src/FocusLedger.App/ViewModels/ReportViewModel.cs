@@ -12,7 +12,7 @@ namespace FocusLedger.App.ViewModels;
 
 public sealed record DistractionRow(string App, string Duration, string Share, IReadOnlyList<BarSlice> Bar);
 
-public sealed record LegendRow(string Label, string Value, Brush Fill);
+public sealed record LegendRow(string Label, string Value, Brush Fill, bool IsChild = false);
 
 public sealed record TransitionRow(string From, string To, string Count, IReadOnlyList<BarSlice> Bar);
 
@@ -70,6 +70,9 @@ public sealed partial class ReportViewModel : ObservableObject
     public ObservableCollection<LegendRow> Legend { get; } = new();
 
     public ObservableCollection<LegendRow> AppLegend { get; } = new();
+
+    /// <summary>桑基图底部用：只放顶层应用，不要站点子项。</summary>
+    public ObservableCollection<LegendRow> FlowLegend { get; } = new();
 
     [ObservableProperty]
     private IReadOnlyList<BarSlice> appSlices = Array.Empty<BarSlice>();
@@ -143,6 +146,7 @@ public sealed partial class ReportViewModel : ObservableObject
         Legend.Clear();
         Transitions.Clear();
         AppLegend.Clear();
+        FlowLegend.Clear();
         AppSlices = Array.Empty<BarSlice>();
         AppTotal = string.Empty;
         Flows = Array.Empty<FlowSlice>();
@@ -235,6 +239,17 @@ public sealed partial class ReportViewModel : ObservableObject
                 appColors[app.App] = brush;
                 appSlices.Add(new BarSlice(app.Seconds, brush));
                 AppLegend.Add(new LegendRow(label, Fmt.Duration(app.Seconds), brush));
+                FlowLegend.Add(new LegendRow(label, Fmt.Duration(app.Seconds), brush));
+
+                // 浏览器展开成站点子项，缩进显示，用同一个颜色
+                if (app.Children is { Count: > 0 })
+                {
+                    foreach (var child in app.Children)
+                    {
+                        AppLegend.Add(new LegendRow(child.App, Fmt.Duration(child.Seconds), brush, IsChild: true));
+                    }
+                }
+
                 colorIndex++;
             }
 

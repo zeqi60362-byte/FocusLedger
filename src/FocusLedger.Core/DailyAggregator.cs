@@ -1,7 +1,51 @@
-namespace FocusLedger.Core;
+﻿namespace FocusLedger.Core;
 
-public sealed record AppUsage(string App, double Seconds);
+public sealed record AppUsage(string App, double Seconds, IReadOnlyList<AppUsage>? Children = null);
 
+internal static class BrowserSites
+{
+    private static readonly HashSet<string> Browsers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "msedge.exe", "chrome.exe", "firefox.exe", "brave.exe", "opera.exe",
+        "360se.exe", "360chrome.exe", "qqbrowser.exe", "safari.exe", "iexplore.exe",
+        "vivaldi.exe", "arc.exe"
+    };
+
+    private static readonly (string Keyword, string Site)[] Sites =
+    {
+        ("bilibili", "B站"), ("哔哩哔哩", "B站"),
+        ("小红书", "小红书"), ("xiaohongshu", "小红书"),
+        ("weibo", "微博"), ("微博", "微博"),
+        ("zhihu", "知乎"), ("知乎", "知乎"),
+        ("douyin", "抖音"), ("抖音", "抖音"),
+        ("youtube", "YouTube"), ("github", "GitHub"), ("arxiv", "arXiv"),
+        ("google scholar", "Google Scholar"), ("overleaf", "Overleaf"),
+        ("cnki", "知网"), ("知网", "知网"),
+        ("taobao", "淘宝"), ("jd.com", "京东"), ("baidu", "百度"),
+        ("notion", "Notion"), ("chatgpt", "ChatGPT"), ("deepseek", "DeepSeek")
+    };
+
+    public static bool IsBrowser(string app) => !string.IsNullOrEmpty(app) && Browsers.Contains(app);
+
+    /// <summary>从窗口标题里认出站点。认不出就归到「其他网页」。</summary>
+    public static string? SiteOf(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return null;
+        }
+
+        foreach (var (keyword, site) in Sites)
+        {
+            if (title.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            {
+                return site;
+            }
+        }
+
+        return "其他网页";
+    }
+}
 /// <summary>从 A 应用切到 B 应用的次数。</summary>
 public sealed record AppTransition(string From, string To, int Count);
 
@@ -64,6 +108,7 @@ public static class DailyAggregator
         var distractions = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         var transitions = new Dictionary<(string From, string To), int>();
         var appSeconds = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        var browserSites = new Dictionary<string, Dictionary<string, double>>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var segment in segments.OrderBy(s => s.StartUtcMs))
         {
@@ -113,6 +158,19 @@ public static class DailyAggregator
                 appSeconds[segment.App] = appSeconds.TryGetValue(segment.App, out double seen)
                     ? seen + segment.DurationSeconds
                     : segment.DurationSeconds;
+
+                if (BrowserSites.IsBrowser(segment.App) && BrowserSites.SiteOf(segment.Title) is { } site)
+                {
+                    if (!browserSites.TryGetValue(segment.App, out var sites))
+                    {
+                        sites = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+                        browserSites[segment.App] = sites;
+                    }
+
+                    sites[site] = sites.TryGetValue(site, out double siteSeen)
+                        ? siteSeen + segment.DurationSeconds
+                        : segment.DurationSeconds;
+                }
             }
 
             if (segment.State == ActivityState.ActiveFocus)
@@ -152,7 +210,20 @@ public static class DailyAggregator
         var appTotals = appSeconds
             .OrderByDescending(kv => kv.Value)
             .Take(6)
-            .Select(kv => new AppUsage(kv.Key, kv.Value))
+            .Select(kv =>
+            {
+                IReadOnlyList<AppUsage>? children = null;
+                if (browserSites.TryGetValue(kv.Key, out var sites) && sites.Count > 0)
+                {
+                    children = sites
+                        .OrderByDescending(s => s.Value)
+                        .Take(5)
+                        .Select(s => new AppUsage(s.Key, s.Value))
+                        .ToList();
+                }
+
+                return new AppUsage(kv.Key, kv.Value, children);
+            })
             .ToList();
 
         double shown = appTotals.Sum(a => a.Seconds);
