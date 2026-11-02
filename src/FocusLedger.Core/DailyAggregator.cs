@@ -64,7 +64,8 @@ public sealed record DailySummary(
     int AppSwitches,
     IReadOnlyList<AppUsage> TopDistractions,
     IReadOnlyList<AppTransition> TopTransitions,
-    IReadOnlyList<AppUsage> AppTotals)
+    IReadOnlyList<AppUsage> AppTotals,
+    double WeakEvidenceSeconds = 0)
 {
     public double EffectiveHours => EffectiveSeconds / 3600.0;
     public double ActiveHours => ActiveSeconds / 3600.0;
@@ -100,6 +101,7 @@ public static class DailyAggregator
 
         double active = 0, silent = 0, offTask = 0, away = 0;
         double effective = 0, low = 0, high = 0;
+        double weak = 0;
         int switches = 0;
         int focusBlocks = 0;
         double longestBlock = 0;
@@ -140,6 +142,11 @@ public static class DailyAggregator
             }
 
             effective += duration * segment.Weight;
+
+            if (segment.Weight < 0.999 && segment.State is ActivityState.ActiveFocus or ActivityState.SilentFocus)
+            {
+                weak += duration;
+            }
             low += duration * segment.WeightLow;
             high += duration * segment.WeightHigh;
 
@@ -236,7 +243,7 @@ public static class DailyAggregator
         return new DailySummary(
             date, active, silent, offTask, away,
             effective, low, high,
-            focusBlocks, longestBlock, switches, top, topTransitions, appTotals);
+            focusBlocks, longestBlock, switches, top, topTransitions, appTotals, weak);
     }
 
     /// <summary>某一天在 UTC 上覆盖的区间 [start, end)。</summary>
