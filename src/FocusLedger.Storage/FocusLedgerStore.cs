@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using FocusLedger.Core;
 using Microsoft.Data.Sqlite;
 
@@ -40,6 +40,7 @@ public sealed class FocusLedgerStore : IDisposable
         _connection.Execute("PRAGMA journal_mode=WAL;");
         _connection.Execute("PRAGMA synchronous=NORMAL;");
         _connection.Execute(Schema);
+        MigratePlans();
         _connection.Execute(
             "INSERT INTO meta(key, value) VALUES('schema_version', @v) ON CONFLICT(key) DO NOTHING;",
             new { v = SchemaVersion.ToString() });
@@ -511,8 +512,8 @@ public sealed class FocusLedgerStore : IDisposable
     public IReadOnlyList<PlanRow> LoadPlans(DateOnly date)
         => _connection.Query<PlanRow>(
                 """
-                SELECT id, date_local, hour, title, done
-                FROM plans WHERE date_local = @d ORDER BY hour, id;
+                SELECT id, date_local, hour, title, done, start_min, end_min
+                FROM plans WHERE date_local = @d ORDER BY start_min, id;
                 """,
                 new { d = date.ToString("yyyy-MM-dd") })
             .ToList();
@@ -520,7 +521,7 @@ public sealed class FocusLedgerStore : IDisposable
     public IReadOnlyList<PlanRow> LoadPlansInRange(DateOnly from, DateOnly to)
         => _connection.Query<PlanRow>(
                 """
-                SELECT id, date_local, hour, title, done
+                SELECT id, date_local, hour, title, done, start_min, end_min
                 FROM plans WHERE date_local >= @a AND date_local <= @b
                 ORDER BY date_local, hour, id;
                 """,
@@ -541,6 +542,28 @@ public sealed class FocusLedgerStore : IDisposable
                 t = title,
                 now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             });
+
+    public long AddPlanRange(DateOnly date, int startMin, int endMin, string title)
+        => _connection.ExecuteScalar<long>(
+            """
+            INSERT INTO plans (date_local, hour, title, done, created_utc, start_min, end_min)
+            VALUES (@d, @h, @t, 0, @now, @s, @e);
+            SELECT last_insert_rowid();
+            """,
+            new
+            {
+                d = date.ToString("yyyy-MM-dd"),
+                h = startMin / 60,
+                t = title,
+                now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                s = startMin,
+                e = endMin
+            });
+
+    public void UpdatePlanRange(long id, int startMin, int endMin)
+        => _connection.Execute(
+            "UPDATE plans SET start_min = @s, end_min = @e, hour = @h WHERE id = @id;",
+            new { id, s = startMin, e = endMin, h = startMin / 60 });
 
     public void UpdatePlanTitle(long id, string title)
         => _connection.Execute("UPDATE plans SET title = @t WHERE id = @id;", new { id, t = title });
@@ -586,6 +609,8 @@ public sealed class FocusLedgerStore : IDisposable
         public int hour { get; set; }
         public string? title { get; set; }
         public long done { get; set; }
+        public int start_min { get; set; }
+        public int end_min { get; set; }
     }
 
     internal sealed class HolidayRow
@@ -629,6 +654,24 @@ public sealed class FocusLedgerStore : IDisposable
         public long locked { get; set; }
     }
 
+    /// <summary>老库没有 start_min/end_min，补上并把旧数据当成「整点开始、一小时长」。</summary>
+    private void MigratePlans()
+    {
+        var columns = _connection.Query<string>("SELECT name FROM pragma_table_info('plans');").ToList();
+
+        if (!columns.Contains("start_min"))
+        {
+            _connection.Execute("ALTER TABLE plans ADD COLUMN start_min INTEGER NOT NULL DEFAULT -1;");
+        }
+
+        if (!columns.Contains("end_min"))
+        {
+            _connection.Execute("ALTER TABLE plans ADD COLUMN end_min INTEGER NOT NULL DEFAULT -1;");
+        }
+
+        _connection.Execute(
+            "UPDATE plans SET start_min = hour * 60, end_min = (hour + 1) * 60 WHERE start_min < 0 OR end_min <= start_min;");
+    }
     private const string Schema =
         """
         CREATE TABLE IF NOT EXISTS meta (

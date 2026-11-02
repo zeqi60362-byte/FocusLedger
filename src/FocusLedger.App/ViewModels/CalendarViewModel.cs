@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FocusLedger.App.Localization;
@@ -46,27 +46,129 @@ public sealed partial class CalendarDay : ObservableObject
     partial void OnHasPlanChanged(bool value) => OnPropertyChanged(nameof(Marker));
 }
 
-/// <summary>时间表格里的一行：7:00–22:00，一格一条计划。</summary>
+/// <summary>时间表格里的一行。一条计划可以横跨多个小时，跨进来的那几行只做只读展示。</summary>
 public sealed partial class HourSlot : ObservableObject
 {
-    private readonly Action<HourSlot> _onTextChanged;
+    private readonly Action<HourSlot> _onTitleChanged;
+    private readonly Action<HourSlot> _onRangeChanged;
     private readonly bool _ready;
     private string _text;
 
-    public HourSlot(int hour, string text, long? planId, Action<HourSlot> onTextChanged)
+    public HourSlot(
+        int hour,
+        string text,
+        long? planId,
+        int startMinute,
+        int endMinute,
+        bool isContinuation,
+        Action<HourSlot> onTitleChanged,
+        Action<HourSlot> onRangeChanged)
     {
         Hour = hour;
         _text = text;
         PlanId = planId;
-        _onTextChanged = onTextChanged;
+        StartMinute = startMinute;
+        EndMinute = endMinute;
+        IsContinuation = isContinuation;
+        _onTitleChanged = onTitleChanged;
+        _onRangeChanged = onRangeChanged;
         _ready = true;
     }
 
     public int Hour { get; }
 
-    public long? PlanId { get; set; }
+    private long? _planId;
+
+    public long? PlanId
+    {
+        get => _planId;
+        set
+        {
+            if (_planId == value)
+            {
+                return;
+            }
+
+            _planId = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasPlan));
+        }
+    }
+
+    /// <summary>已经有计划的行才展开时间选择，空行只给一个输入框，避免整页都是下拉框。</summary>
+    public bool HasPlan => _planId is not null;
+
+    public bool IsContinuation { get; }
+
+    public bool IsEditable => !IsContinuation;
+
+    public int StartMinute { get; private set; }
+
+    public int EndMinute { get; private set; }
 
     public string TimeLabel => $"{Hour:00}:00";
+
+    /// <summary>15 分钟一档，6:00–24:00。实例属性，方便在 DataTemplate 里直接绑定。</summary>
+    public IReadOnlyList<string> TimeOptions => Options;
+
+    private static readonly IReadOnlyList<string> Options = BuildOptions();
+
+    public string StartText
+    {
+        get => Format(StartMinute);
+        set
+        {
+            if (!TryParse(value, out int minutes) || minutes == StartMinute)
+            {
+                return;
+            }
+
+            StartMinute = minutes;
+            if (EndMinute <= StartMinute)
+            {
+                EndMinute = Math.Min(24 * 60, StartMinute + 60);
+            }
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(EndText));
+            OnPropertyChanged(nameof(DurationText));
+            if (_ready)
+            {
+                _onRangeChanged(this);
+            }
+        }
+    }
+
+    public string EndText
+    {
+        get => Format(EndMinute);
+        set
+        {
+            if (!TryParse(value, out int minutes) || minutes == EndMinute)
+            {
+                return;
+            }
+
+            EndMinute = Math.Max(StartMinute + 15, minutes);
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DurationText));
+            if (_ready)
+            {
+                _onRangeChanged(this);
+            }
+        }
+    }
+
+    public string DurationText
+    {
+        get
+        {
+            int minutes = Math.Max(0, EndMinute - StartMinute);
+            return minutes >= 60
+                ? $"{minutes / 60}h{(minutes % 60 == 0 ? string.Empty : (minutes % 60) + "m")}"
+                : $"{minutes}m";
+        }
+    }
 
     public string Text
     {
@@ -82,9 +184,57 @@ public sealed partial class HourSlot : ObservableObject
             OnPropertyChanged();
             if (_ready)
             {
-                _onTextChanged(this);
+                _onTitleChanged(this);
             }
         }
+    }
+
+    public void ApplyRange(int startMinute, int endMinute)
+    {
+        StartMinute = startMinute;
+        EndMinute = endMinute;
+        OnPropertyChanged(nameof(StartText));
+        OnPropertyChanged(nameof(EndText));
+        OnPropertyChanged(nameof(DurationText));
+    }
+
+    private static string Format(int minutes) =>
+        $"{Math.Clamp(minutes, 0, 24 * 60) / 60:00}:{Math.Clamp(minutes, 0, 24 * 60) % 60:00}";
+
+    private static bool TryParse(string? value, out int minutes)
+    {
+        minutes = 0;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var parts = value.Split(':');
+        if (parts.Length != 2 ||
+            !int.TryParse(parts[0], out int hour) ||
+            !int.TryParse(parts[1], out int minute))
+        {
+            return false;
+        }
+
+        if (hour is < 0 or > 24 || minute is < 0 or > 59)
+        {
+            return false;
+        }
+
+        minutes = hour * 60 + minute;
+        return true;
+    }
+
+    private static IReadOnlyList<string> BuildOptions()
+    {
+        var list = new List<string>();
+        for (int m = 6 * 60; m <= 24 * 60; m += 15)
+        {
+            list.Add(Format(m));
+        }
+
+        return list;
     }
 }
 
@@ -244,13 +394,35 @@ public sealed partial class CalendarViewModel : ObservableObject
         Hours.Clear();
 
         var plans = _store.LoadPlans(_selected)
-            .GroupBy(p => p.hour)
-            .ToDictionary(g => g.Key, g => g.First());
+            .OrderBy(p => p.start_min)
+            .ToList();
 
         for (int hour = 7; hour <= 22; hour++)
         {
-            plans.TryGetValue(hour, out var plan);
-            Hours.Add(new HourSlot(hour, plan?.title ?? string.Empty, plan?.id, SaveSlot));
+            int hourStart = hour * 60;
+            int hourEnd = hourStart + 60;
+
+            // 正好在这个小时开始的计划
+            var owner = plans.FirstOrDefault(p => p.start_min >= hourStart && p.start_min < hourEnd);
+
+            if (owner is not null)
+            {
+                Hours.Add(new HourSlot(hour, owner.title ?? string.Empty, owner.id,
+                    owner.start_min, owner.end_min, isContinuation: false, SaveSlot, SaveRange));
+                continue;
+            }
+
+            // 被上一个小时的计划覆盖，只做只读展示
+            var covering = plans.FirstOrDefault(p => p.start_min < hourStart && p.end_min > hourStart);
+            if (covering is not null)
+            {
+                Hours.Add(new HourSlot(hour, covering.title ?? string.Empty, covering.id,
+                    covering.start_min, covering.end_min, isContinuation: true, SaveSlot, SaveRange));
+                continue;
+            }
+
+            Hours.Add(new HourSlot(hour, string.Empty, null,
+                hourStart, hourEnd, isContinuation: false, SaveSlot, SaveRange));
         }
 
         _syncing = false;
@@ -280,9 +452,23 @@ public sealed partial class CalendarViewModel : ObservableObject
         }
         else
         {
-            slot.PlanId = _store.AddPlan(_selected, slot.Hour, text);
+            slot.PlanId = _store.AddPlanRange(_selected, slot.StartMinute, slot.EndMinute, text);
         }
 
         PlanCountText = Loc.T("Plan_Count", _store.LoadPlans(_selected).Count);
+    }
+
+    private void SaveRange(HourSlot slot)
+    {
+        if (_syncing)
+        {
+            return;
+        }
+
+        if (slot.PlanId is { } id)
+        {
+            _store.UpdatePlanRange(id, slot.StartMinute, slot.EndMinute);
+            PlanCountText = Loc.T("Plan_Count", _store.LoadPlans(_selected).Count);
+        }
     }
 }
