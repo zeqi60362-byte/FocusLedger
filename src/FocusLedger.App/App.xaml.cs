@@ -190,6 +190,20 @@ public partial class App : System.Windows.Application
 
         _tray.Text = recording ? $"FocusLedger · {suffix}" : "FocusLedger · paused";
         _tray.Icon = TrayIcon.Build(recording, state);
+#if DEBUG
+        try
+        {
+            string log = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "FocusLedger", "state-debug.log");
+            System.IO.File.AppendAllText(log,
+                $"{DateTime.Now:HH:mm:ss}   -> tray icon set: rec={recording} state={state?.ToString() ?? "null"}{Environment.NewLine}");
+        }
+        catch
+        {
+            // 诊断日志失败不影响主流程
+        }
+#endif
 
         if (_pauseItem is not null)
         {

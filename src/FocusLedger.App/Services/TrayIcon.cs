@@ -34,7 +34,8 @@ internal static class TrayIcon
                 ActivityState.SilentFocus => Color.FromArgb(255, 96, 165, 250),
                 ActivityState.OffTask => Color.FromArgb(255, 248, 113, 113),
                 ActivityState.Away => Color.FromArgb(255, 156, 163, 175),
-                _ => Color.FromArgb(255, 74, 222, 128)
+                // 刚启动、还没攒够一个窗口时用中性灰，不要假装"很专注"
+                _ => Color.FromArgb(255, 140, 146, 156)
             };
 
         using var bitmap = new Bitmap(32, 32);

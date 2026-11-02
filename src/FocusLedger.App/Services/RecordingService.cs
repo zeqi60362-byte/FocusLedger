@@ -148,7 +148,7 @@ public sealed class RecordingService : IAsyncDisposable
                     _pending.Add(sample);
 
                     _recent.Enqueue(sample);
-                    while (_recent.Count > 12)
+                    while (_recent.Count > 15)
                     {
                         _recent.Dequeue();
                     }
@@ -192,10 +192,35 @@ public sealed class RecordingService : IAsyncDisposable
             return;
         }
 
+        // 样本不足 50 秒时先不判定，否则会拿 5 秒的碎片当结论，托盘一直显示"专注"。
+        // 攒够一个 60 秒窗口再更新，代价是最多滞后一分钟，但结论和日报一致。
+        long spanMs = window[^1].TsUtcMs - window[0].TsUtcMs;
+        if (spanMs < 50_000)
+        {
+            return;
+        }
+
         var segments = new SegmentBuilder(_rules.Current).Build(window, finalize: false);
         if (segments.Count > 0)
         {
-            CurrentState = segments[^1].State;
+            // 末尾那段是"还没走完"的残段（比如只有 10 秒），拿它当结论会永远显示专注。
+            // 有完整窗口时取倒数第二段，也就是最近一个满 60 秒的判定。
+            var chosen = segments.Count >= 2 ? segments[^2] : segments[^1];
+            CurrentState = chosen.State;
+#if DEBUG
+            try
+            {
+                string log = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "FocusLedger", "state-debug.log");
+                System.IO.File.AppendAllText(log,
+                    $"{DateTime.Now:HH:mm:ss} n={window.Length} span={spanMs / 1000}s segs={segments.Count} pick={(segments.Count >= 2 ? "lastFull" : "onlyPartial")} state={CurrentState}{Environment.NewLine}");
+            }
+            catch
+            {
+                // 诊断日志失败不影响主流程
+            }
+#endif
         }
     }
 
