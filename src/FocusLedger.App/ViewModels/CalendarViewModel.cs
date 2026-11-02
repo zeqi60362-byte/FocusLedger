@@ -269,6 +269,11 @@ public sealed partial class CalendarViewModel : ObservableObject
 
     public ObservableCollection<PlanBlock> PlanBlocks { get; } = new();
 
+    public ObservableCollection<WeekBlock> WeekBlocks { get; } = new();
+
+    private DateOnly _weekStart;
+    private DateOnly _pendingDate;
+
     [ObservableProperty]
     private bool isEditorOpen;
 
@@ -440,6 +445,26 @@ public sealed partial class CalendarViewModel : ObservableObject
                 hourStart, hourEnd, isContinuation: false, SaveSlot, SaveRange));
         }
 
+        int offset = ((int)_selected.DayOfWeek + 6) % 7;
+        _weekStart = _selected.AddDays(-offset);
+
+        WeekBlocks.Clear();
+        foreach (var weekPlan in _store.LoadPlansInRange(_weekStart, _weekStart.AddDays(6)))
+        {
+            if (!DateOnly.TryParse(weekPlan.date_local, out var day))
+            {
+                continue;
+            }
+
+            int index = day.DayNumber - _weekStart.DayNumber;
+            if (index is < 0 or > 6)
+            {
+                continue;
+            }
+
+            WeekBlocks.Add(new WeekBlock(weekPlan.id, index, weekPlan.start_min, weekPlan.end_min, weekPlan.title ?? string.Empty));
+        }
+
         PlanBlocks.Clear();
         foreach (var plan in plans)
         {
@@ -494,11 +519,13 @@ public sealed partial class CalendarViewModel : ObservableObject
         }
     }
 
-    public void OnRangeSelected(int start, int end)
+    public void OnRangeSelected(int dayIndex, int start, int end)
     {
+        _pendingDate = _weekStart.AddDays(dayIndex);
         _pendingStart = start;
         _pendingEnd = end;
-        EditorRange = $"{start / 60:00}:{start % 60:00} – {end / 60:00}:{end % 60:00}";
+        string[] names = { "周一", "周二", "周三", "周四", "周五", "周六", "周日" };
+        EditorRange = $"{names[Math.Clamp(dayIndex, 0, 6)]} {start / 60:00}:{start % 60:00} – {end / 60:00}:{end % 60:00}";
         EditorTitle = string.Empty;
         IsEditorOpen = true;
     }
@@ -515,7 +542,7 @@ public sealed partial class CalendarViewModel : ObservableObject
             return;
         }
 
-        _store.AddPlanRange(_selected, _pendingStart, _pendingEnd, title);
+        _store.AddPlanRange(_pendingDate, _pendingStart, _pendingEnd, title);
         IsEditorOpen = false;
         LoadHours();
     }

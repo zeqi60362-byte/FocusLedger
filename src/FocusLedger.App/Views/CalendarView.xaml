@@ -136,7 +136,7 @@
                     </Grid>
 
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <controls:PlanCanvas Height="600" Margin="0,2,0,0" Plans="{Binding PlanBlocks}" RangeSelected="OnRangeSelected" />
+                        <controls:WeekCanvas Height="600" Margin="0,2,0,0" Plans="{Binding WeekBlocks}" RangeSelected="OnRangeSelected" />
                     </ScrollViewer>
                 </Grid>
             </Border>

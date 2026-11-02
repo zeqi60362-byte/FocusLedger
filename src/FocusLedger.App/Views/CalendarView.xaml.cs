@@ -8,6 +8,6 @@ public partial class CalendarView : UserControl
     {
         InitializeComponent();
     }
-    private void OnRangeSelected(object? sender, (int Start, int End) e)
-        => (DataContext as ViewModels.CalendarViewModel)?.OnRangeSelected(e.Start, e.End);
+    private void OnRangeSelected(object? sender, (int Day, int Start, int End) e)
+        => (DataContext as ViewModels.CalendarViewModel)?.OnRangeSelected(e.Day, e.Start, e.End);
 }
