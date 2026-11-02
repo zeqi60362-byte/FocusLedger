@@ -55,6 +55,27 @@ public sealed partial class ReportViewModel : ObservableObject
     [ObservableProperty]
     private string statsSummary = string.Empty;
 
+    /// <summary>统计口径：effective = 有效专注，total = 总记录时长。</summary>
+    [ObservableProperty]
+    private string statsMetric = "effective";
+
+    public bool IsEffectiveMetric => StatsMetric == "effective";
+
+    public bool IsTotalMetric => StatsMetric == "total";
+
+    partial void OnStatsMetricChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsEffectiveMetric));
+        OnPropertyChanged(nameof(IsTotalMetric));
+        BuildStats();
+    }
+
+    [RelayCommand]
+    private void SetMetric(string? mode)
+    {
+        StatsMetric = mode == "total" ? "total" : "effective";
+    }
+
     [ObservableProperty]
     private IReadOnlyList<StateChip> chips = Array.Empty<StateChip>();
 
@@ -356,27 +377,29 @@ public sealed partial class ReportViewModel : ObservableObject
             .Select(b => (b.Label, Summary: SumRange(b.From, Min(b.To, today))))
             .ToList();
 
-        double max = values.Count == 0 ? 0 : values.Max(v => v.Summary.EffectiveSeconds);
+        double MetricOf(DailySummary s) => StatsMetric == "total" ? s.AccountedSeconds : s.EffectiveSeconds;
+
+        double max = values.Count == 0 ? 0 : values.Max(v => MetricOf(v.Summary));
         if (max <= 0)
         {
             max = 1;
         }
 
-        double total = values.Sum(v => v.Summary.EffectiveSeconds);
+        double total = values.Sum(v => MetricOf(v.Summary));
 
         foreach (var (label, summary) in values)
         {
             Stats.Add(new StatRow(
                 label,
-                summary.EffectiveSeconds > 0 ? Fmt.Duration(summary.EffectiveSeconds) : "—",
+                MetricOf(summary) > 0 ? Fmt.Duration(MetricOf(summary)) : "—",
                 Loc.T("Report_StatDetail",
                     Fmt.Duration(summary.ActiveSeconds),
                     Fmt.Duration(summary.SilentSeconds),
                     Fmt.Duration(summary.OffTaskSeconds)),
                 new[]
                 {
-                    new BarSlice(Math.Max(0.001, summary.EffectiveSeconds), Brush("StateActive")),
-                    new BarSlice(Math.Max(0.001, max - summary.EffectiveSeconds), Brushes.Transparent)
+                    new BarSlice(Math.Max(0.001, MetricOf(summary)), Brush("StateActive")),
+                    new BarSlice(Math.Max(0.001, max - MetricOf(summary)), Brushes.Transparent)
                 }));
         }
 

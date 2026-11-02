@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -120,6 +120,8 @@ public sealed class Localization : INotifyPropertyChanged
         ["Report_FlowHint"] = ("你一天里在软件之间跳了多少次，以及最常见的几条路径。",
             "How often you jump between apps — and the most common paths."),
         ["Report_Times"] = ("{0} 次", "{0}×"),
+        ["Report_MetricEffective"] = ("有效专注", "Effective"),
+        ["Report_MetricTotal"] = ("总时长", "Total"),
         ["Report_Stats"] = ("统计", "Stats"),
         ["Report_Week"] = ("逐周", "Weekly"),
         ["Report_Month"] = ("逐月", "Monthly"),

@@ -259,6 +259,34 @@
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                            <Button Content="{loc:T Report_MetricEffective}" Padding="10,4" Margin="0,0,6,0"
+                                    Command="{Binding SetMetricCommand}" CommandParameter="effective">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEffectiveMetric}" Value="True">
+                                                <Setter Property="Background" Value="#2B2B2B" />
+                                                <Setter Property="BorderBrush" Value="#2B2B2B" />
+                                                <Setter Property="Foreground" Value="#F2F2F0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Content="{loc:T Report_MetricTotal}" Padding="10,4" Margin="0,0,14,0"
+                                    Command="{Binding SetMetricCommand}" CommandParameter="total">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTotalMetric}" Value="True">
+                                                <Setter Property="Background" Value="#2B2B2B" />
+                                                <Setter Property="BorderBrush" Value="#2B2B2B" />
+                                                <Setter Property="Foreground" Value="#F2F2F0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             <Button Content="{loc:T Report_Week}" Style="{StaticResource GhostButton}" Padding="10,4" Margin="0,0,6,0"
                                     Command="{Binding SetPeriodCommand}" CommandParameter="week" />
                             <Button Content="{loc:T Report_Month}" Style="{StaticResource GhostButton}" Padding="10,4" Margin="0,0,6,0"
