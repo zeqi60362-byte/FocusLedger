@@ -138,7 +138,16 @@
                         <ItemsControl ItemsSource="{Binding Hours}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,0,0,4">
+                                    <Grid Margin="0,0,0,2">
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsContinuation}" Value="True">
+                                                        <Setter Property="Margin" Value="0" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="56" />
                                             <ColumnDefinition Width="*" />
@@ -171,15 +180,13 @@
                                         </Grid>
 
                                         <!-- 被上一条计划覆盖的小时：只读延续 -->
-                                        <Border Grid.Column="1" CornerRadius="6" Padding="10,4" Margin="0,0,8,0"
-                                                Background="{DynamicResource SurfaceAlt}"
-                                                Visibility="{Binding IsContinuation, Converter={StaticResource BoolToVis}}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="↳" Style="{StaticResource Caption}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                                <TextBlock Text="{Binding Text}" FontSize="12" Foreground="{DynamicResource TextDim}"
-                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                            </StackPanel>
-                                        </Border>
+                                        <Grid Grid.Column="1" Margin="0,0,8,0"
+                                              Visibility="{Binding IsContinuation, Converter={StaticResource BoolToVis}}">
+                                            <Border Height="18" VerticalAlignment="Center" CornerRadius="2"
+                                                    Background="{DynamicResource SurfaceAlt}" Opacity="0.85" />
+                                            <Border Width="2" Height="18" HorizontalAlignment="Left" CornerRadius="0"
+                                                    Background="{DynamicResource TextDim}" Opacity="0.45" />
+                                        </Grid>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
