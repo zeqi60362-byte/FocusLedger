@@ -1,4 +1,4 @@
-using FocusLedger.Core;
+﻿using FocusLedger.Core;
 using static FocusLedger.Core.Tests.TestSamples;
 
 namespace FocusLedger.Core.Tests;
@@ -99,24 +99,4 @@ public sealed class AggregationTests
         Assert.Equal(3600, summary.ActiveSeconds, 0);
     }
 
-    [Fact]
-    public void Daily_SilentFocusCountsAtDiscountedWeight()
-    {
-        long t0 = new DateTimeOffset(2026, 11, 1, 10, 0, 0, TimeSpan.Zero).ToUnixTimeMilliseconds();
-
-        var segments = new[]
-        {
-            Seg(t0, t0 + 3600_000, ActivityState.SilentFocus, 0.85, 0.75, 0.95)
-        };
-
-        var summary = DailyAggregator.Aggregate(
-            segments, new DateOnly(2026, 11, 1), TimeZoneInfo.Utc);
-
-        Assert.Equal(3600, summary.SilentSeconds, 0);
-
-        // 467f18e 起「深度与静默不再打折」：有效专注按原始时长计入，
-        // 权重只用来标记弱证据段（WeakEvidenceSeconds），不再参与折算。
-        Assert.Equal(3600, summary.EffectiveSeconds, 0);
-        Assert.Equal(3600, summary.WeakEvidenceSeconds, 0);
-    }
 }

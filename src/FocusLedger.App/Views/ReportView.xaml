@@ -273,7 +273,7 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button Content="{loc:T Report_MetricTotal}" Padding="10,4" Margin="0,0,14,0"
+                            <Button Content="{loc:T Report_MetricTotal}" Padding="10,4" Margin="0,0,30,0"
                                     Command="{Binding SetMetricCommand}" CommandParameter="total">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
