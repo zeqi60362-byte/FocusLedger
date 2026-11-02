@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.Core;
@@ -25,23 +25,70 @@ public partial class App : System.Windows.Application
     private AppSettings? _settings;
     private bool _exiting;
 
-    private static void WriteCrash(Exception? ex)
+    private static void WriteCrash(string source, Exception? ex)
     {
         try
         {
-            string path = System.IO.Path.Combine(
+            string directory = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "FocusLedger", "crash.log");
-            System.IO.File.WriteAllText(path, (ex?.ToString() ?? "unknown") + Environment.NewLine);
+                "FocusLedger");
+            System.IO.Directory.CreateDirectory(directory);
+
+            string path = System.IO.Path.Combine(directory, "crash.log");
+
+            // 超过 256 KB 就轮转一份，避免反复启动失败把盘写满
+            if (System.IO.File.Exists(path) && new System.IO.FileInfo(path).Length > 256 * 1024)
+            {
+                System.IO.File.Move(path, path + ".1", overwrite: true);
+            }
+
+            string entry = string.Join(Environment.NewLine,
+                $"=== {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss.fff zzz} ===",
+                $"source : {source}",
+                $"thread : {Environment.CurrentManagedThreadId}  pid: {Environment.ProcessId}",
+                ex?.ToString() ?? "unknown exception object",
+                string.Empty);
+
+            System.IO.File.AppendAllText(path, entry);
         }
         catch
         {
+            // 写日志本身失败也只能咽下去，不能因此再抛一次
         }
     }
+
     protected override async void OnStartup(StartupEventArgs e)
     {
-        AppDomain.CurrentDomain.UnhandledException += (_, a) => WriteCrash(a.ExceptionObject as Exception);
-        DispatcherUnhandledException += (_, a) => WriteCrash(a.Exception);
+        AppDomain.CurrentDomain.UnhandledException += (_, a) =>
+            WriteCrash("AppDomain.UnhandledException", a.ExceptionObject as Exception);
+        DispatcherUnhandledException += (_, a) =>
+            WriteCrash("DispatcherUnhandledException", a.Exception);
+        TaskScheduler.UnobservedTaskException += (_, a) =>
+            WriteCrash("TaskScheduler.UnobservedTaskException", a.Exception);
+
+        try
+        {
+            await StartupCore(e);
+        }
+        catch (Exception ex)
+        {
+            // 启动期崩了要留下证据，而不是让进程无声消失
+            WriteCrash("OnStartup", ex);
+            System.Windows.MessageBox.Show(
+                "FocusLedger 启动失败，详细信息已写入：\n" + CrashLogPath,
+                "FocusLedger",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+            Shutdown(1);
+        }
+    }
+
+    private static string CrashLogPath => System.IO.Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "FocusLedger", "crash.log");
+
+    private async Task StartupCore(StartupEventArgs e)
+    {
         base.OnStartup(e);
 
         _mutex = new Mutex(true, InstanceMutexName, out bool createdNew);
