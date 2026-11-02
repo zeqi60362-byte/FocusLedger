@@ -12,8 +12,8 @@ public sealed record FlowSlice(string From, string To, int Count, Brush SourceBr
 /// </summary>
 public sealed class SankeyChart : FrameworkElement
 {
-    private const double LeftLabel = 100;
-    private const double RightLabel = 118;
+    private const double LeftLabel = 4;
+    private const double RightLabel = 4;
     private const double NodeWidth = 10;
     private const double NodeGap = 9;
 
@@ -141,8 +141,7 @@ public sealed class SankeyChart : FrameworkElement
             var (top, h) = sourcePos[s.Name];
             dc.DrawRoundedRectangle(s.Brush, null, new Rect(x0, top, NodeWidth, h), 3, 3);
 
-            var text = MakeText(s.Name, 11.5, typeface, labelBrush, dpi, LeftLabel - 16);
-            dc.DrawText(text, new Point(x0 - 10 - text.Width, top + Math.Max(0, (h - text.Height) / 2)));
+
         }
 
         foreach (var t in targets)
@@ -150,8 +149,7 @@ public sealed class SankeyChart : FrameworkElement
             var (top, h) = targetPos[t.Name];
             dc.DrawRoundedRectangle(t.Brush, null, new Rect(x1, top, NodeWidth, h), 3, 3);
 
-            var text = MakeText(t.Name, 11.5, typeface, labelBrush, dpi, RightLabel - 20);
-            dc.DrawText(text, new Point(x1 + NodeWidth + 10, top + Math.Max(0, (h - text.Height) / 2)));
+
         }
     }
 

@@ -71,6 +71,7 @@
                 <Border Grid.Column="0" Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="{loc:T Report_BreakdownTitle}" Style="{StaticResource H2}" FontSize="13.5" />
+                        <TextBlock Text="{loc:T Report_CompositionNote}" Style="{StaticResource Caption}" FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap" />
                         <controls:DonutChart Height="150" Margin="0,20,0,10"
                                              Slices="{Binding DonutSlices}"
                                              CenterValue="{Binding DonutValue}"
@@ -84,8 +85,33 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="54" />
                                         </Grid.ColumnDefinitions>
-                                        <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Fill}"
-                                                 VerticalAlignment="Center" HorizontalAlignment="Left" />
+                                        <Grid Grid.Column="0" VerticalAlignment="Center">
+                                            <Ellipse Width="8" Height="8" Fill="{Binding Fill}" HorizontalAlignment="Left">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsChild}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <Rectangle Width="8" Height="1.5" RadiusX="1" RadiusY="1"
+                                                       Fill="{DynamicResource TextDim}" Opacity="0.55"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Left">
+                                                <Rectangle.Style>
+                                                    <Style TargetType="Rectangle">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsChild}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Rectangle.Style>
+                                            </Rectangle>
+                                        </Grid>
                                         <TextBlock Grid.Column="1" Text="{Binding Label}" Style="{StaticResource Caption}" />
                                         <TextBlock Grid.Column="2" Text="{Binding Value}" Style="{StaticResource Caption}"
                                                    HorizontalAlignment="Right" />
@@ -99,6 +125,7 @@
                 <Border Grid.Column="1" Style="{StaticResource Card}" Margin="14,0,0,0">
                     <StackPanel>
                         <TextBlock Text="{loc:T Report_AppTime}" Style="{StaticResource H2}" FontSize="13.5" />
+                        <TextBlock Text="{loc:T Report_AppNote}" Style="{StaticResource Caption}" FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap" />
                         <controls:DonutChart Height="150" Margin="0,20,0,10"
                                              Slices="{Binding AppSlices}"
                                              CenterValue="{Binding AppTotal}"
@@ -112,8 +139,33 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="54" />
                                         </Grid.ColumnDefinitions>
-                                        <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Fill}"
-                                                 VerticalAlignment="Center" HorizontalAlignment="Left" />
+                                        <Grid Grid.Column="0" VerticalAlignment="Center">
+                                            <Ellipse Width="8" Height="8" Fill="{Binding Fill}" HorizontalAlignment="Left">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsChild}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <Rectangle Width="8" Height="1.5" RadiusX="1" RadiusY="1"
+                                                       Fill="{DynamicResource TextDim}" Opacity="0.55"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Left">
+                                                <Rectangle.Style>
+                                                    <Style TargetType="Rectangle">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsChild}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Rectangle.Style>
+                                            </Rectangle>
+                                        </Grid>
                                         <TextBlock Grid.Column="1" Text="{Binding Label}" TextTrimming="CharacterEllipsis">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
