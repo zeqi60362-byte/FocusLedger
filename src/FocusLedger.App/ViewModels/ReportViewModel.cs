@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -195,7 +195,7 @@ public sealed partial class ReportViewModel : ObservableObject
                 new BarSlice(summary.AwaySeconds, Brush("StateIdle"))
             };
             DonutValue = Fmt.Duration(summary.AccountedSeconds);
-            DonutLabel = Loc.T("Today_Effective");
+            DonutLabel = Loc.T("Report_CompositionTotal");
 
             Legend.Add(new LegendRow(Loc.T("State_ActiveFull"), Fmt.Duration(summary.ActiveSeconds), Brush("StateActive")));
             Legend.Add(new LegendRow(Loc.T("State_OffTaskFull"), Fmt.Duration(summary.OffTaskSeconds), Brush("StateOffTask")));

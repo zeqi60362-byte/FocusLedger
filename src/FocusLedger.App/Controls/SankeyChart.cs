@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 
@@ -12,7 +12,8 @@ public sealed record FlowSlice(string From, string To, int Count, Brush SourceBr
 /// </summary>
 public sealed class SankeyChart : FrameworkElement
 {
-    private const double LabelWidth = 122;
+    private const double LeftLabel = 100;
+    private const double RightLabel = 118;
     private const double NodeWidth = 10;
     private const double NodeGap = 9;
 
@@ -50,8 +51,8 @@ public sealed class SankeyChart : FrameworkElement
         var labelBrush = Res("Text", Colors.Black);
         var dimBrush = Res("TextDim", Colors.Gray);
 
-        double x0 = LabelWidth;
-        double x1 = Math.Max(x0 + 40, width - LabelWidth);
+        double x0 = LeftLabel;
+        double x1 = Math.Max(x0 + 40, width - RightLabel);
 
         var sources = flows
             .GroupBy(f => f.From)
@@ -114,8 +115,8 @@ public sealed class SankeyChart : FrameworkElement
             double sy = sourceCursor[flow.From];
             double ty = Math.Min(targetCursor[flow.To], tp.Top + tp.Height - th);
 
-            sourceCursor[flow.From] = sy + sh + 1.2;
-            targetCursor[flow.To] = ty + th + 1.2;
+            sourceCursor[flow.From] = sy + sh;
+            targetCursor[flow.To] = ty + th;
 
             double mid = x0 + (x1 - x0) / 2;
 
@@ -140,7 +141,7 @@ public sealed class SankeyChart : FrameworkElement
             var (top, h) = sourcePos[s.Name];
             dc.DrawRoundedRectangle(s.Brush, null, new Rect(x0, top, NodeWidth, h), 3, 3);
 
-            var text = MakeText(s.Name, 11.5, typeface, labelBrush, dpi);
+            var text = MakeText(s.Name, 11.5, typeface, labelBrush, dpi, LeftLabel - 16);
             dc.DrawText(text, new Point(x0 - 10 - text.Width, top + Math.Max(0, (h - text.Height) / 2)));
         }
 
@@ -149,7 +150,7 @@ public sealed class SankeyChart : FrameworkElement
             var (top, h) = targetPos[t.Name];
             dc.DrawRoundedRectangle(t.Brush, null, new Rect(x1, top, NodeWidth, h), 3, 3);
 
-            var text = MakeText(t.Name, 11.5, typeface, labelBrush, dpi);
+            var text = MakeText(t.Name, 11.5, typeface, labelBrush, dpi, RightLabel - 20);
             dc.DrawText(text, new Point(x1 + NodeWidth + 10, top + Math.Max(0, (h - text.Height) / 2)));
         }
     }
@@ -181,8 +182,14 @@ public sealed class SankeyChart : FrameworkElement
         return result;
     }
 
-    private static FormattedText MakeText(string value, double size, Typeface typeface, Brush brush, double dpi) =>
-        new(value ?? string.Empty, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface, size, brush, dpi);
+    private static FormattedText MakeText(string value, double size, Typeface typeface, Brush brush, double dpi, double maxWidth)
+    {
+        var text = new FormattedText(value ?? string.Empty, CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight, typeface, size, brush, dpi);
+        text.MaxTextWidth = Math.Max(30, maxWidth);
+        text.Trimming = TextTrimming.CharacterEllipsis;
+        return text;
+    }
 
     private void DrawCentered(DrawingContext dc, string message, double width, double height)
     {

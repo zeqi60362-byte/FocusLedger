@@ -1,4 +1,4 @@
-<UserControl x:Class="FocusLedger.App.Views.ReportView"
+﻿<UserControl x:Class="FocusLedger.App.Views.ReportView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:FocusLedger.App.Controls"
@@ -71,7 +71,7 @@
                 <Border Grid.Column="0" Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="{loc:T Report_BreakdownTitle}" Style="{StaticResource H2}" FontSize="13.5" />
-                        <controls:DonutChart Height="150" Margin="0,10,0,10"
+                        <controls:DonutChart Height="150" Margin="0,20,0,10"
                                              Slices="{Binding DonutSlices}"
                                              CenterValue="{Binding DonutValue}"
                                              CenterLabel="{Binding DonutLabel}" />
@@ -99,7 +99,7 @@
                 <Border Grid.Column="1" Style="{StaticResource Card}" Margin="14,0,0,0">
                     <StackPanel>
                         <TextBlock Text="{loc:T Report_AppTime}" Style="{StaticResource H2}" FontSize="13.5" />
-                        <controls:DonutChart Height="150" Margin="0,10,0,10"
+                        <controls:DonutChart Height="150" Margin="0,20,0,10"
                                              Slices="{Binding AppSlices}"
                                              CenterValue="{Binding AppTotal}"
                                              CenterLabel="{loc:T Report_AppTotal}" />
@@ -160,6 +160,21 @@
                     <TextBlock Text="{loc:T Report_FlowHint}" Style="{StaticResource Caption}"
                                Margin="0,4,0,10" TextWrapping="Wrap" />
                     <controls:SankeyChart Height="250" Flows="{Binding Flows}" />
+                    <ItemsControl ItemsSource="{Binding AppLegend}" Margin="0,14,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,18,6">
+                                    <Ellipse Width="8" Height="8" Fill="{Binding Fill}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                    <TextBlock Text="{Binding Label}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
 

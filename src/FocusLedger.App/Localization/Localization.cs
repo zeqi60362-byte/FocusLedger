@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -108,6 +108,7 @@ public sealed class Localization : INotifyPropertyChanged
         ["Report_Next"] = ("后一天", "Next"),
         ["Report_DistractionTitle"] = ("分心点", "Distractions"),
         ["Report_BreakdownTitle"] = ("状态构成", "Composition"),
+        ["Report_CompositionTotal"] = ("总记录", "Tracked"),
         ["Report_AppTime"] = ("软件用时", "Time by app"),
         ["Report_AppTotal"] = ("总时长", "Total"),
         ["Report_Other"] = ("其他", "Other"),
