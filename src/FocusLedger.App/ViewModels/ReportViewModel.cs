@@ -77,6 +77,9 @@ public sealed partial class ReportViewModel : ObservableObject
     [ObservableProperty]
     private string appTotal = string.Empty;
 
+    [ObservableProperty]
+    private IReadOnlyList<FlowSlice> flows = Array.Empty<FlowSlice>();
+
     /// <summary>软件用时用的另一套配色：同样低饱和、中深，但和四状态色区分开。</summary>
     private static readonly string[] AppPalette =
     {
@@ -142,6 +145,7 @@ public sealed partial class ReportViewModel : ObservableObject
         AppLegend.Clear();
         AppSlices = Array.Empty<BarSlice>();
         AppTotal = string.Empty;
+        Flows = Array.Empty<FlowSlice>();
 
         if (summary is null)
         {
@@ -232,6 +236,29 @@ public sealed partial class ReportViewModel : ObservableObject
 
             AppSlices = appSlices;
             AppTotal = Fmt.Duration(appTotalSeconds);
+
+            var sourceColors = new Dictionary<string, Brush>();
+            var flowList = new List<FlowSlice>();
+            int flowColor = 0;
+
+            foreach (var transition in summary.TopTransitions.Take(10))
+            {
+                string from = Fmt.AppName(transition.From);
+                string to = Fmt.AppName(transition.To);
+
+                if (!sourceColors.TryGetValue(from, out Brush? brush))
+                {
+                    brush = new SolidColorBrush(
+                        (Color)ColorConverter.ConvertFromString(
+                            AppPalette[Math.Min(flowColor, AppPalette.Length - 1)]));
+                    sourceColors[from] = brush;
+                    flowColor++;
+                }
+
+                flowList.Add(new FlowSlice(from, to, transition.Count, brush));
+            }
+
+            Flows = flowList;
 
             double totalOffTask = summary.OffTaskSeconds;
             foreach (var usage in summary.TopDistractions)

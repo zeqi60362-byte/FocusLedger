@@ -58,17 +58,18 @@
                 </StackPanel>
             </Border>
 
-            <!-- 状态构成 + 分心点 -->
+            <!-- 三张并列：状态构成 / 软件用时 / 分心点 -->
             <Grid Margin="0,14,0,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0" Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="{loc:T Report_BreakdownTitle}" Style="{StaticResource H2}" FontSize="13.5" />
-                        <controls:DonutChart Height="176" Margin="0,12,0,12"
+                        <controls:DonutChart Height="150" Margin="0,10,0,10"
                                              Slices="{Binding DonutSlices}"
                                              CenterValue="{Binding DonutValue}"
                                              CenterLabel="{Binding DonutLabel}" />
@@ -79,7 +80,7 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="16" />
                                             <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="60" />
+                                            <ColumnDefinition Width="54" />
                                         </Grid.ColumnDefinitions>
                                         <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Fill}"
                                                  VerticalAlignment="Center" HorizontalAlignment="Left" />
@@ -95,39 +96,8 @@
 
                 <Border Grid.Column="1" Style="{StaticResource Card}" Margin="14,0,0,0">
                     <StackPanel>
-                        <TextBlock Text="{loc:T Report_DistractionTitle}" Style="{StaticResource H2}" FontSize="13.5" />
-                        <ItemsControl ItemsSource="{Binding Distractions}" Margin="0,10,0,0">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,0,0,7">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="80" />
-                                            <ColumnDefinition Width="56" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding App}" FontSize="12.5" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Duration}" Style="{StaticResource Caption}" />
-                                        <TextBlock Grid.Column="2" Text="{Binding Share}" Style="{StaticResource Caption}"
-                                                   HorizontalAlignment="Right" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <!-- 软件用时 + 应用流转 -->
-            <Border Style="{StaticResource Card}" Margin="0,14,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="300" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0">
                         <TextBlock Text="{loc:T Report_AppTime}" Style="{StaticResource H2}" FontSize="13.5" />
-                        <controls:DonutChart Height="168" Margin="0,10,0,10"
+                        <controls:DonutChart Height="150" Margin="0,10,0,10"
                                              Slices="{Binding AppSlices}"
                                              CenterValue="{Binding AppTotal}"
                                              CenterLabel="{loc:T Report_AppTotal}" />
@@ -151,36 +121,40 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
+                </Border>
 
-                    <StackPanel Grid.Column="1" Margin="20,0,0,0">
-                        <TextBlock Text="{loc:T Report_FlowTitle}" Style="{StaticResource H2}" FontSize="13.5" />
-                        <TextBlock Text="{loc:T Report_FlowHint}" Style="{StaticResource Caption}"
-                                   Margin="0,4,0,12" TextWrapping="Wrap" />
-                        <ItemsControl ItemsSource="{Binding Transitions}">
+                <Border Grid.Column="2" Style="{StaticResource Card}" Margin="14,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T Report_DistractionTitle}" Style="{StaticResource H2}" FontSize="13.5" />
+                        <ItemsControl ItemsSource="{Binding Distractions}" Margin="0,10,0,0">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,0,0,9">
+                                    <Grid Margin="0,0,0,7">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="130" />
                                             <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="130" />
-                                            <ColumnDefinition Width="46" />
+                                            <ColumnDefinition Width="64" />
+                                            <ColumnDefinition Width="48" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding From}" FontSize="12"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                        <controls:ProportionBar Grid.Column="1" Height="5" VerticalAlignment="Center"
-                                                                Margin="12,0" Track="Transparent" Slices="{Binding Bar}" />
-                                        <TextBlock Grid.Column="2" Text="{Binding To}" FontSize="12"
-                                                   TextTrimming="CharacterEllipsis" HorizontalAlignment="Right"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="3" Text="{Binding Count}" Style="{StaticResource Caption}"
-                                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="0" Text="{Binding App}" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Duration}" Style="{StaticResource Caption}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Share}" Style="{StaticResource Caption}"
+                                                   HorizontalAlignment="Right" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
-                </Grid>
+                </Border>
+            </Grid>
+
+            <!-- 应用流转（桑基图） -->
+            <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+                <StackPanel>
+                    <TextBlock Text="{loc:T Report_FlowTitle}" Style="{StaticResource H2}" FontSize="13.5" />
+                    <TextBlock Text="{loc:T Report_FlowHint}" Style="{StaticResource Caption}"
+                               Margin="0,4,0,10" TextWrapping="Wrap" />
+                    <controls:SankeyChart Height="250" Flows="{Binding Flows}" />
+                </StackPanel>
             </Border>
 
             <!-- 统计 -->
