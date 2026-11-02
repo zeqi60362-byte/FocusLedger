@@ -146,6 +146,30 @@ CREATE TABLE IF NOT EXISTS health (
     errors      INTEGER NOT NULL,
     degraded    TEXT
 );
+
+-- 计划：用户自己排的日程，只用于展示与提醒，不参与专注判定
+CREATE TABLE IF NOT EXISTS plans (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    date_local  TEXT    NOT NULL,
+    hour        INTEGER NOT NULL,              -- 冗余字段：start_min / 60，兼容最早按小时排版的版本
+    title       TEXT    NOT NULL,
+    location    TEXT    NOT NULL DEFAULT '',   -- 地点，纯文本
+    url         TEXT    NOT NULL DEFAULT '',   -- 关联链接
+    remind      INTEGER NOT NULL DEFAULT 1,    -- 0/1，是否到时提醒
+    done        INTEGER NOT NULL DEFAULT 0,
+    created_utc INTEGER NOT NULL,
+    start_min   INTEGER NOT NULL DEFAULT -1,   -- 距零点分钟数；-1 表示待迁移，由 hour 回填
+    end_min     INTEGER NOT NULL DEFAULT -1
+);
+CREATE INDEX IF NOT EXISTS idx_plans_date ON plans(date_local);
+
+-- 节假日（含法定假期与调休），按地区存储
+CREATE TABLE IF NOT EXISTS holidays (
+    date_local TEXT NOT NULL,
+    region     TEXT NOT NULL DEFAULT 'HK',
+    name       TEXT NOT NULL,
+    PRIMARY KEY (date_local, region)
+);
 ```
 
 ---
@@ -221,6 +245,19 @@ date,active_h,passive_h,silent_h,off_task_h,idle_h,ambiguous_h,effective_lo_h,ef
 - `meta.schema_version` 为整数，从 1 开始。
 - 每次升级：备份 `data.db` → 事务内执行迁移脚本 → 写入新版本号。
 - 迁移失败：回滚事务，保留备份，UI 提示"数据库升级失败，已回退"，并禁用写入避免二次损坏。
+
+### 6.1 加列的硬性规则（v0.4 起）
+
+`CREATE TABLE IF NOT EXISTS` 对**已存在的表不生效**。新增字段必须同时改两处：
+
+1. `Schema` 里的建表语句 —— 管新装用户；
+2. `MigratePlans()` 等迁移方法里的条件 `ALTER TABLE` —— 管老库。
+
+只改建表语句的后果：老库 `SELECT` 新列时抛 `no such column`，而且发生在启动路径上，
+表现为"双击图标没反应"。v0.4 的 `plans.location/url/remind` 就踩过这个坑，见 ADR-012。
+
+迁移方法必须**可重复执行**（先查 `pragma_table_info` 再决定是否 `ALTER`），
+因为每次启动都会跑一遍。
 
 ---
 
