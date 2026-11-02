@@ -55,9 +55,16 @@
                     <StackPanel Orientation="Horizontal">
                         <Border Width="32" Height="32" CornerRadius="10"
                                 Background="{DynamicResource Text}">
-                            <TextBlock Text="F" FontSize="16" FontWeight="Bold"
-                                       Foreground="{DynamicResource Bg}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <!-- 时间盘：与任务栏图标同一个符号，矢量绘制，任何缩放都清晰 -->
+                            <Viewbox Width="23" Height="23" Stretch="Uniform">
+                                <Canvas Width="32" Height="32">
+                                    <Ellipse Canvas.Left="4.75" Canvas.Top="4.75" Width="22.5" Height="22.5"
+                                             Stroke="{DynamicResource Bg}" StrokeThickness="3.5"
+                                             Fill="Transparent" />
+                                    <Path Fill="{DynamicResource Bg}"
+                                          Data="M16,16 L16,6.5 A9.5,9.5 0 0 1 24.23,20.75 Z" />
+                                </Canvas>
+                            </Viewbox>
                         </Border>
                         <TextBlock Text="FocusLedger" FontSize="16" FontWeight="SemiBold"
                                    VerticalAlignment="Center" Margin="12,0,0,0" />
