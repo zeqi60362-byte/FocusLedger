@@ -29,6 +29,8 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{loc:T Today_Effective}" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="0,0,8,7" />
                         <TextBlock Text="{Binding Effective}" Style="{StaticResource H1}" />
+                        <TextBlock Text="{loc:T Today_EffectiveFormula}" Style="{StaticResource Caption}"
+                                   VerticalAlignment="Bottom" Margin="10,0,0,7" />
                     </StackPanel>
 
                     <ItemsControl ItemsSource="{Binding Chips}" Margin="0,12,0,0">
@@ -73,7 +75,7 @@
                                              Slices="{Binding DonutSlices}"
                                              CenterValue="{Binding DonutValue}"
                                              CenterLabel="{Binding DonutLabel}" />
-                        <ItemsControl ItemsSource="{Binding Legend}">
+                        <ItemsControl ItemsSource="{Binding Legend}" Margin="0,8,0,0">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,0,0,6">
@@ -101,7 +103,7 @@
                                              Slices="{Binding AppSlices}"
                                              CenterValue="{Binding AppTotal}"
                                              CenterLabel="{loc:T Report_AppTotal}" />
-                        <ItemsControl ItemsSource="{Binding AppLegend}">
+                        <ItemsControl ItemsSource="{Binding AppLegend}" Margin="0,8,0,0">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,0,0,6">
@@ -129,17 +131,21 @@
                         <ItemsControl ItemsSource="{Binding Distractions}" Margin="0,10,0,0">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,0,0,7">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="64" />
-                                            <ColumnDefinition Width="48" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding App}" FontSize="12.5" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Duration}" Style="{StaticResource Caption}" />
-                                        <TextBlock Grid.Column="2" Text="{Binding Share}" Style="{StaticResource Caption}"
-                                                   HorizontalAlignment="Right" />
-                                    </Grid>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="64" />
+                                                <ColumnDefinition Width="48" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding App}" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Duration}" Style="{StaticResource Caption}" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Share}" Style="{StaticResource Caption}"
+                                                       HorizontalAlignment="Right" />
+                                        </Grid>
+                                        <controls:ProportionBar Height="4" Margin="0,6,0,0"
+                                                                Track="{DynamicResource TrackBg}" Slices="{Binding Bar}" />
+                                    </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>

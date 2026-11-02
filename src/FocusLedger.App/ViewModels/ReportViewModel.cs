@@ -10,7 +10,7 @@ using FocusLedger.Storage;
 
 namespace FocusLedger.App.ViewModels;
 
-public sealed record DistractionRow(string App, string Duration, string Share);
+public sealed record DistractionRow(string App, string Duration, string Share, IReadOnlyList<BarSlice> Bar);
 
 public sealed record LegendRow(string Label, string Value, Brush Fill);
 
@@ -219,8 +219,11 @@ public sealed partial class ReportViewModel : ObservableObject
             }
 
             var appSlices = new List<BarSlice>();
-            int colorIndex = 0;
             double appTotalSeconds = summary.AppTotals.Sum(a => a.Seconds);
+
+            // 一套颜色贯穿三处：环形图、图例、桑基图，避免同一个软件在不同图里颜色不同
+            var appColors = new Dictionary<string, Brush>(StringComparer.OrdinalIgnoreCase);
+            int colorIndex = 0;
 
             foreach (var app in summary.AppTotals)
             {
@@ -229,6 +232,7 @@ public sealed partial class ReportViewModel : ObservableObject
                     (Color)ColorConverter.ConvertFromString(
                         AppPalette[Math.Min(colorIndex, AppPalette.Length - 1)]));
 
+                appColors[app.App] = brush;
                 appSlices.Add(new BarSlice(app.Seconds, brush));
                 AppLegend.Add(new LegendRow(label, Fmt.Duration(app.Seconds), brush));
                 colorIndex++;
@@ -237,37 +241,54 @@ public sealed partial class ReportViewModel : ObservableObject
             AppSlices = appSlices;
             AppTotal = Fmt.Duration(appTotalSeconds);
 
-            var sourceColors = new Dictionary<string, Brush>();
             var flowList = new List<FlowSlice>();
-            int flowColor = 0;
 
             foreach (var transition in summary.TopTransitions.Take(10))
             {
-                string from = Fmt.AppName(transition.From);
-                string to = Fmt.AppName(transition.To);
-
-                if (!sourceColors.TryGetValue(from, out Brush? brush))
-                {
-                    brush = new SolidColorBrush(
-                        (Color)ColorConverter.ConvertFromString(
-                            AppPalette[Math.Min(flowColor, AppPalette.Length - 1)]));
-                    sourceColors[from] = brush;
-                    flowColor++;
-                }
-
-                flowList.Add(new FlowSlice(from, to, transition.Count, brush));
+                var fromBrush = ColorFor(transition.From);
+                var toBrush = ColorFor(transition.To);
+                flowList.Add(new FlowSlice(
+                    Fmt.AppName(transition.From),
+                    Fmt.AppName(transition.To),
+                    transition.Count,
+                    fromBrush,
+                    toBrush));
             }
 
             Flows = flowList;
 
+            Brush ColorFor(string app)
+            {
+                if (appColors.TryGetValue(app, out Brush? existing))
+                {
+                    return existing;
+                }
+
+                var fallback = new SolidColorBrush(
+                    (Color)ColorConverter.ConvertFromString(
+                        AppPalette[Math.Min(colorIndex, AppPalette.Length - 1)]));
+                appColors[app] = fallback;
+                colorIndex++;
+                return fallback;
+            }
+
             double totalOffTask = summary.OffTaskSeconds;
+            double maxDistraction = summary.TopDistractions.Count > 0
+                ? summary.TopDistractions[0].Seconds
+                : 1;
+
             foreach (var usage in summary.TopDistractions)
             {
                 string share = totalOffTask > 0 ? $"{usage.Seconds / totalOffTask:P0}" : "—";
                 Distractions.Add(new DistractionRow(
                     Fmt.AppName(usage.App),
                     Fmt.MinutesShort(usage.Seconds),
-                    share));
+                    share,
+                    new[]
+                    {
+                        new BarSlice(usage.Seconds, Brush("StateOffTask")),
+                        new BarSlice(Math.Max(0.001, maxDistraction - usage.Seconds), Brushes.Transparent)
+                    }));
             }
         }
 
