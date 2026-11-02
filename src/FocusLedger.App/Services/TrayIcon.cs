@@ -102,34 +102,34 @@ internal static class TrayIcon
             g.FillPath(background, path);
         }
 
-        DrawF(g, size, color);
+        DrawGlyph(g, size, color);
         return bitmap;
     }
 
-    /// <summary>粗体 F：先铺一层深色描边，再填状态色，保证在任何背景下都分得清。</summary>
-    private static void DrawF(Graphics g, int size, Color color)
+    /// <summary>时间盘符号：外环 + 从 12 点顺时针的一段扇形，直观表示"这一段时间"。</summary>
+    private static void DrawGlyph(Graphics g, int size, Color color)
     {
         float s = size;
-        float stemX = s * 0.30f;
-        float stemW = Math.Max(2f, s * 0.15f);
-        float top = s * 0.22f;
-        float bottom = s * 0.78f;
-        float topBarW = s * 0.44f;
-        float midY = s * 0.445f;
-        float midBarW = s * 0.33f;
+        float cx = s / 2f;
+        float cy = s / 2f;
+        float outer = s * 0.30f;
+        float thick = Math.Max(1.6f, s * 0.115f);
+        float inner = outer - thick;
 
-        float outline = Math.Max(1f, s * 0.055f);
-        using (var edge = new SolidBrush(Color.FromArgb(210, 8, 8, 10)))
+        using (var pen = new Pen(color, thick))
         {
-            g.FillRectangle(edge, stemX - outline, top - outline, stemW + outline * 2, (bottom - top) + outline * 2);
-            g.FillRectangle(edge, stemX - outline, top - outline, topBarW + outline, stemW + outline * 2);
-            g.FillRectangle(edge, stemX - outline, midY - outline, midBarW + outline, stemW + outline * 2);
+            g.DrawEllipse(pen, cx - (outer - thick / 2), cy - (outer - thick / 2),
+                (outer - thick / 2) * 2, (outer - thick / 2) * 2);
         }
 
+        // 12 点到 4 点方向的扇形
         using var brush = new SolidBrush(color);
-        g.FillRectangle(brush, stemX, top, stemW, bottom - top);
-        g.FillRectangle(brush, stemX, top, topBarW, stemW);
-        g.FillRectangle(brush, stemX, midY, midBarW, stemW);
+        var wedge = new GraphicsPath();
+        float r = inner - Math.Max(0.5f, s * 0.03f);
+        wedge.AddPie(cx - r, cy - r, r * 2, r * 2, -90, 120);
+        wedge.CloseFigure();
+        g.FillPath(brush, wedge);
+        wedge.Dispose();
     }
 
     private static GraphicsPath RoundedRect(float x, float y, float w, float h, float r)

@@ -19,7 +19,8 @@ public sealed record DailySummary(
     double LongestFocusBlockSeconds,
     int AppSwitches,
     IReadOnlyList<AppUsage> TopDistractions,
-    IReadOnlyList<AppTransition> TopTransitions)
+    IReadOnlyList<AppTransition> TopTransitions,
+    IReadOnlyList<AppUsage> AppTotals)
 {
     public double EffectiveHours => EffectiveSeconds / 3600.0;
     public double ActiveHours => ActiveSeconds / 3600.0;
@@ -33,7 +34,8 @@ public sealed record DailySummary(
     public double EffectiveRatio => AccountedSeconds > 0 ? EffectiveSeconds / AccountedSeconds : 0;
 
     public static DailySummary Empty(DateOnly date) =>
-        new(date, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Array.Empty<AppUsage>(), Array.Empty<AppTransition>());
+        new(date, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Array.Empty<AppUsage>(), Array.Empty<AppTransition>(),
+            Array.Empty<AppUsage>());
 }
 
 public static class DailyAggregator
@@ -61,6 +63,7 @@ public static class DailyAggregator
         string? lastApp = null;
         var distractions = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         var transitions = new Dictionary<(string From, string To), int>();
+        var appSeconds = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var segment in segments.OrderBy(s => s.StartUtcMs))
         {
@@ -105,6 +108,13 @@ public static class DailyAggregator
 
             lastApp = segment.App;
 
+            if (!string.IsNullOrEmpty(segment.App))
+            {
+                appSeconds[segment.App] = appSeconds.TryGetValue(segment.App, out double seen)
+                    ? seen + segment.DurationSeconds
+                    : segment.DurationSeconds;
+            }
+
             if (segment.State == ActivityState.ActiveFocus)
             {
                 currentRun += duration;
@@ -139,10 +149,23 @@ public static class DailyAggregator
             .Select(kv => new AppUsage(kv.Key, kv.Value))
             .ToList();
 
+        var appTotals = appSeconds
+            .OrderByDescending(kv => kv.Value)
+            .Take(6)
+            .Select(kv => new AppUsage(kv.Key, kv.Value))
+            .ToList();
+
+        double shown = appTotals.Sum(a => a.Seconds);
+        double otherSeconds = appSeconds.Sum(kv => kv.Value) - shown;
+        if (otherSeconds > 1)
+        {
+            appTotals.Add(new AppUsage("__other__", otherSeconds));
+        }
+
         return new DailySummary(
             date, active, silent, offTask, away,
             effective, low, high,
-            focusBlocks, longestBlock, switches, top, topTransitions);
+            focusBlocks, longestBlock, switches, top, topTransitions, appTotals);
     }
 
     /// <summary>某一天在 UTC 上覆盖的区间 [start, end)。</summary>

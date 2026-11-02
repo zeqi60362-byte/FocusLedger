@@ -69,6 +69,20 @@ public sealed partial class ReportViewModel : ObservableObject
 
     public ObservableCollection<LegendRow> Legend { get; } = new();
 
+    public ObservableCollection<LegendRow> AppLegend { get; } = new();
+
+    [ObservableProperty]
+    private IReadOnlyList<BarSlice> appSlices = Array.Empty<BarSlice>();
+
+    [ObservableProperty]
+    private string appTotal = string.Empty;
+
+    /// <summary>软件用时用的另一套配色：同样低饱和、中深，但和四状态色区分开。</summary>
+    private static readonly string[] AppPalette =
+    {
+        "#5B6F8F", "#8A6FA8", "#C08A3E", "#4E8C8A", "#9A6B6B", "#6E7A5A"
+    };
+
     public ObservableCollection<TransitionRow> Transitions { get; } = new();
 
     public ObservableCollection<DistractionRow> Distractions { get; } = new();
@@ -125,6 +139,9 @@ public sealed partial class ReportViewModel : ObservableObject
         Distractions.Clear();
         Legend.Clear();
         Transitions.Clear();
+        AppLegend.Clear();
+        AppSlices = Array.Empty<BarSlice>();
+        AppTotal = string.Empty;
 
         if (summary is null)
         {
@@ -184,7 +201,6 @@ public sealed partial class ReportViewModel : ObservableObject
             int maxTransition = summary.TopTransitions.Count > 0
                 ? summary.TopTransitions.Max(t => t.Count)
                 : 1;
-
             foreach (var transition in summary.TopTransitions)
             {
                 Transitions.Add(new TransitionRow(
@@ -197,6 +213,25 @@ public sealed partial class ReportViewModel : ObservableObject
                         new BarSlice(Math.Max(0.001, maxTransition - transition.Count), Brushes.Transparent)
                     }));
             }
+
+            var appSlices = new List<BarSlice>();
+            int colorIndex = 0;
+            double appTotalSeconds = summary.AppTotals.Sum(a => a.Seconds);
+
+            foreach (var app in summary.AppTotals)
+            {
+                string label = app.App == "__other__" ? Loc.T("Report_Other") : Fmt.AppName(app.App);
+                var brush = new SolidColorBrush(
+                    (Color)ColorConverter.ConvertFromString(
+                        AppPalette[Math.Min(colorIndex, AppPalette.Length - 1)]));
+
+                appSlices.Add(new BarSlice(app.Seconds, brush));
+                AppLegend.Add(new LegendRow(label, Fmt.Duration(app.Seconds), brush));
+                colorIndex++;
+            }
+
+            AppSlices = appSlices;
+            AppTotal = Fmt.Duration(appTotalSeconds);
 
             double totalOffTask = summary.OffTaskSeconds;
             foreach (var usage in summary.TopDistractions)
@@ -307,7 +342,7 @@ public sealed partial class ReportViewModel : ObservableObject
         }
 
         return new DailySummary(from, active, silent, offTask, away, effective, low, high, 0, 0, 0,
-            Array.Empty<AppUsage>(), Array.Empty<AppTransition>());
+            Array.Empty<AppUsage>(), Array.Empty<AppTransition>(), Array.Empty<AppUsage>());
     }
 
     private DailySummary? Summarize(DateOnly date)
