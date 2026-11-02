@@ -192,21 +192,20 @@ public sealed class RecordingService : IAsyncDisposable
             return;
         }
 
-        // 样本不足 50 秒时先不判定，否则会拿 5 秒的碎片当结论，托盘一直显示"专注"。
-        // 攒够一个 60 秒窗口再更新，代价是最多滞后一分钟，但结论和日报一致。
-        long spanMs = window[^1].TsUtcMs - window[0].TsUtcMs;
-        if (spanMs < 50_000)
+        // 托盘是"即时指示灯"，用最近 30 秒判，反应快一些；
+        // 日报仍然是 60 秒窗口的正式判定，两者口径不同但方向一致。
+        long nowMs = window[^1].TsUtcMs;
+        var recent = window.Where(s => nowMs - s.TsUtcMs <= 30_000).ToArray();
+        long spanMs = recent.Length == 0 ? 0 : recent[^1].TsUtcMs - recent[0].TsUtcMs;
+        if (spanMs < 25_000)
         {
             return;
         }
 
-        var segments = new SegmentBuilder(_rules.Current).Build(window, finalize: false);
+        var segments = new SegmentBuilder(_rules.Current).Build(recent, finalize: false);
         if (segments.Count > 0)
         {
-            // 末尾那段是"还没走完"的残段（比如只有 10 秒），拿它当结论会永远显示专注。
-            // 有完整窗口时取倒数第二段，也就是最近一个满 60 秒的判定。
-            var chosen = segments.Count >= 2 ? segments[^2] : segments[^1];
-            CurrentState = chosen.State;
+            CurrentState = segments[^1].State;
 #if DEBUG
             try
             {
@@ -214,7 +213,7 @@ public sealed class RecordingService : IAsyncDisposable
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "FocusLedger", "state-debug.log");
                 System.IO.File.AppendAllText(log,
-                    $"{DateTime.Now:HH:mm:ss} n={window.Length} span={spanMs / 1000}s segs={segments.Count} pick={(segments.Count >= 2 ? "lastFull" : "onlyPartial")} state={CurrentState}{Environment.NewLine}");
+                    $"{DateTime.Now:HH:mm:ss} n={recent.Length} span={spanMs / 1000}s state={CurrentState}{Environment.NewLine}");
             }
             catch
             {
