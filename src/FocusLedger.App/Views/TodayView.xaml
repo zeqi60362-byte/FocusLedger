@@ -5,12 +5,13 @@
              xmlns:views="clr-namespace:FocusLedger.App.Views"
              xmlns:loc="clr-namespace:FocusLedger.App.Localization">
 
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
@@ -99,7 +100,7 @@
 
                 <controls:TimelineControl Grid.Row="1"
                                           x:Name="Timeline"
-                                          MinHeight="130"
+                                          Height="150"
                                           Segments="{Binding Segments}"
                                           WindowStart="{Binding WindowStart}"
                                           WindowEnd="{Binding WindowEnd}"
@@ -115,4 +116,5 @@
             <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" FontSize="12.5" LineHeight="21" />
         </Border>
     </Grid>
+    </ScrollViewer>
 </UserControl>

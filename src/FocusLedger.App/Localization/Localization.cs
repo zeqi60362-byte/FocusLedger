@@ -78,6 +78,7 @@ public sealed class Localization : INotifyPropertyChanged
         ["Intent_Start"] = ("开始一段专注", "Start a session"),
         ["Intent_WhatNext"] = ("接下来做什么？", "What are you working on?"),
         ["Intent_Duration"] = ("时长", "Duration"),
+        ["Intent_Custom"] = ("自定义", "Custom"),
         ["Intent_Minutes"] = ("{0} 分钟", "{0} min"),
         ["Intent_Begin"] = ("开始", "Start"),
         ["Intent_Cancel"] = ("取消", "Cancel"),

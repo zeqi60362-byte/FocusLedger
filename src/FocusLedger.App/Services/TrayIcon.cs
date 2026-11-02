@@ -8,15 +8,24 @@ namespace FocusLedger.App.Services;
 /// <summary>
 /// 托盘图标：颜色跟随当前状态。
 /// 深度专注=绿、静默专注=蓝、分心=红、离席=灰、已暂停=深灰空心。
+/// 图标按状态缓存——每次新建 Icon 再销毁 handle，会让代理/资源管理器拿到失效图标。
 /// </summary>
 internal static class TrayIcon
 {
+    private static readonly Dictionary<string, Icon> Cache = new();
+
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool DestroyIcon(IntPtr handle);
 
     public static Icon Build(bool recording, ActivityState? state)
     {
+        string cacheKey = recording ? $"rec:{state?.ToString() ?? "none"}" : "paused";
+        if (Cache.TryGetValue(cacheKey, out Icon? cached))
+        {
+            return cached;
+        }
+
         Color ring = !recording
             ? Color.FromArgb(255, 110, 116, 126)
             : state switch
@@ -52,15 +61,10 @@ internal static class TrayIcon
             }
         }
 
+        // 注意：不要把 handle 销毁掉，Icon 缓存要长期存活
         IntPtr handle = bitmap.GetHicon();
-        try
-        {
-            using var temporary = Icon.FromHandle(handle);
-            return (Icon)temporary.Clone();
-        }
-        finally
-        {
-            DestroyIcon(handle);
-        }
+        var icon = Icon.FromHandle(handle);
+        Cache[cacheKey] = icon;
+        return icon;
     }
 }

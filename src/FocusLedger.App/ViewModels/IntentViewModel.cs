@@ -51,6 +51,15 @@ public sealed partial class IntentViewModel : ObservableObject
 
     public IReadOnlyList<int> Durations { get; } = new[] { 25, 50, 90 };
 
+    partial void OnPlannedMinutesChanged(int value)
+    {
+        int clamped = Math.Clamp(value, 5, 600);
+        if (clamped != value)
+        {
+            PlannedMinutes = clamped;
+        }
+    }
+
     public IntentViewModel(FocusLedgerStore store, RuleService rules)
     {
         _store = store;

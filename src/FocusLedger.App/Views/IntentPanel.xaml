@@ -41,22 +41,57 @@
 
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBlock Text="{loc:T Intent_Duration}" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,10,0" />
-                    <ItemsControl ItemsSource="{Binding Durations}">
-                        <ItemsControl.ItemsPanel>
+
+                    <!-- 选中态靠 ListBox 的 IsSelected，点击后变深色 -->
+                    <ListBox ItemsSource="{Binding Durations}"
+                             SelectedItem="{Binding PlannedMinutes, Mode=TwoWay}"
+                             Background="Transparent" BorderThickness="0" Padding="0">
+                        <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal" />
                             </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Margin" Value="0,0,8,0" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <Setter Property="Foreground" Value="{DynamicResource Text}" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="Bd" CornerRadius="16" Padding="14,5"
+                                                    Background="{DynamicResource SurfaceAlt}"
+                                                    BorderBrush="{DynamicResource Border}" BorderThickness="1">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="#2B2B2B" />
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#2B2B2B" />
+                                                    <Setter Property="Foreground" Value="#F2F2F0" />
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource TextDim}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Button Style="{StaticResource GhostButton}" Padding="10,5" Margin="0,0,8,0"
-                                        Command="{Binding DataContext.SetDurationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}">
-                                    <TextBlock Text="{Binding StringFormat={}{0} min}" FontSize="12.5" />
-                                </Button>
+                                <TextBlock Text="{Binding StringFormat={}{0} min}" FontSize="12.5"
+                                           Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=Foreground}" />
                             </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <TextBlock Text="{loc:T Intent_Custom}" Style="{StaticResource Caption}"
+                               VerticalAlignment="Center" Margin="4,0,8,0" />
+                    <TextBox Width="58" Padding="8,4" VerticalContentAlignment="Center"
+                             Text="{Binding PlannedMinutes, UpdateSourceTrigger=LostFocus}" />
+                    <TextBlock Text="min" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="6,0,0,0" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
