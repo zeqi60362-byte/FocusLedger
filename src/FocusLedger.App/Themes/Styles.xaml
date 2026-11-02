@@ -80,9 +80,9 @@
 
     <!-- 主按钮单独模板：悬停时只降低不透明度，避免背景被换成浅色后文字看不清 -->
     <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
-        <Setter Property="Background" Value="{DynamicResource Accent}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
-        <Setter Property="Foreground" Value="{DynamicResource Bg}" />
+        <Setter Property="Background" Value="#2B2B2B" />
+        <Setter Property="BorderBrush" Value="#2B2B2B" />
+        <Setter Property="Foreground" Value="#F2F2F0" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Padding" Value="18,6" />
         <Setter Property="Template">

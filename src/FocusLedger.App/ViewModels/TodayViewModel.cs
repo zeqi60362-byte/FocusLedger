@@ -8,7 +8,7 @@ using FocusLedger.Core;
 
 namespace FocusLedger.App.ViewModels;
 
-public sealed record StateChip(string Label, string Value);
+public sealed record StateChip(string Label, string Value, System.Windows.Media.Brush Fill);
 
 public sealed partial class TodayViewModel : ObservableObject
 {
@@ -93,6 +93,10 @@ public sealed partial class TodayViewModel : ObservableObject
         Refresh();
     }
 
+    private static System.Windows.Media.Brush StateBrush(string key) =>
+        System.Windows.Application.Current?.TryFindResource(key) as System.Windows.Media.Brush
+        ?? System.Windows.Media.Brushes.Gray;
+
     public void Refresh()
     {
         IsRecording = _recording.IsRecording;
@@ -116,10 +120,10 @@ public sealed partial class TodayViewModel : ObservableObject
             Fmt.Duration(summary.EffectiveHighSeconds));
         Chips = new[]
         {
-            new StateChip(Loc.T("State_ActiveFull"), Fmt.Duration(summary.ActiveSeconds)),
-            new StateChip(Loc.T("State_OffTaskFull"), Fmt.Duration(summary.OffTaskSeconds)),
-            new StateChip(Loc.T("State_AwayFull"), Fmt.Duration(summary.AwaySeconds)),
-            new StateChip(Loc.T("State_SilentFull"), Fmt.Duration(summary.SilentSeconds))
+            new StateChip(Loc.T("State_ActiveFull"), Fmt.Duration(summary.ActiveSeconds), StateBrush("StateActive")),
+            new StateChip(Loc.T("State_OffTaskFull"), Fmt.Duration(summary.OffTaskSeconds), StateBrush("StateOffTask")),
+            new StateChip(Loc.T("State_AwayFull"), Fmt.Duration(summary.AwaySeconds), StateBrush("StateIdle")),
+            new StateChip(Loc.T("State_SilentFull"), Fmt.Duration(summary.SilentSeconds), StateBrush("StateSilent"))
         };
         Breakdown = string.Empty;
         Secondary = string.Empty;

@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,7 +12,6 @@ using FocusLedger.Storage;
 
 namespace FocusLedger.App.ViewModels;
 
-public sealed record AccentOption(string Name, string Hex, Brush Fill);
 
 public sealed partial class SettingsViewModel : ObservableObject
 {
@@ -43,7 +42,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string currentTheme = "Dark";
 
-    public ObservableCollection<AccentOption> Accents { get; } = new();
 
     public event EventHandler? LanguageChanged;
 
@@ -60,26 +58,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         RetentionDays = settings.RetentionDays;
         IsEnglish = string.Equals(settings.Language, "en", StringComparison.OrdinalIgnoreCase);
         CurrentTheme = settings.Theme;
-
-        foreach (var (name, hex) in new[]
-                 {
-                     ("跟随皮肤", string.Empty),
-                     ("绿", "#4ADE80"),
-                     ("蓝", "#60A5FA"),
-                     ("紫", "#A78BFA"),
-                     ("粉", "#F472B6"),
-                     ("橙", "#FB923C"),
-                     ("黄", "#FACC15"),
-                     ("红", "#F87171"),
-                     ("青", "#2DD4BF")
-                 })
-        {
-            var brush = string.IsNullOrEmpty(hex)
-                ? new SolidColorBrush(Color.FromRgb(0x8A, 0x8A, 0x94))
-                : new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
-
-            Accents.Add(new AccentOption(name, hex, brush));
-        }
 
         foreach (var app in settings.ExcludedApps)
         {
@@ -146,15 +124,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         CurrentTheme = name;
         _settings.Theme = name;
         _settings.Save();
-        ThemeService.Apply(ThemeService.Parse(name), _settings.Accent);
-    }
-
-    [RelayCommand]
-    private void SetAccent(string? hex)
-    {
-        _settings.Accent = hex ?? string.Empty;
-        _settings.Save();
-        ThemeService.Apply(ThemeService.Parse(_settings.Theme), _settings.Accent);
+        ThemeService.Apply(ThemeService.Parse(name), null);
     }
 
     [RelayCommand]

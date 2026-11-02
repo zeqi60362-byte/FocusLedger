@@ -59,7 +59,7 @@ public partial class App : System.Windows.Application
                 ? AppLanguage.English
                 : AppLanguage.Chinese);
 
-        ThemeService.Apply(ThemeService.Parse(_settings.Theme), _settings.Accent);
+        ThemeService.Apply(ThemeService.Parse(_settings.Theme), null);
 
         _store = new FocusLedgerStore(FocusLedgerStore.DefaultDatabasePath);
         _store.Initialize();

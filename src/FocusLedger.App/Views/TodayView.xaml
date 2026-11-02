@@ -46,12 +46,15 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border CornerRadius="14" Padding="12,5" Margin="0,0,8,0" Background="{DynamicResource SurfaceAlt}">
-                                <TextBlock FontSize="12.5">
-                                    <Run Text="{Binding Label, Mode=OneWay}" Foreground="{DynamicResource TextDim}" />
-                                    <Run Text="  " />
-                                    <Run Text="{Binding Value, Mode=OneWay}" FontWeight="SemiBold" />
-                                </TextBlock>
+                            <Border CornerRadius="14" Padding="11,5" Margin="0,0,8,0" Background="{DynamicResource SurfaceAlt}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Width="7" Height="7" Fill="{Binding Fill}" VerticalAlignment="Center" Margin="0,0,7,0" />
+                                    <TextBlock FontSize="12.5">
+                                        <Run Text="{Binding Label, Mode=OneWay}" Foreground="{DynamicResource TextDim}" />
+                                        <Run Text="  " />
+                                        <Run Text="{Binding Value, Mode=OneWay}" FontWeight="SemiBold" />
+                                    </TextBlock>
+                                </StackPanel>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

@@ -23,30 +23,6 @@
                                 Command="{Binding SetThemeCommand}" CommandParameter="Midnight" />
                     </StackPanel>
 
-                    <TextBlock Text="{loc:T Settings_Accent}" Style="{StaticResource Caption}" Margin="0,0,0,8" />
-
-                    <ItemsControl ItemsSource="{Binding Accents}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Width="26" Height="26" Margin="0,0,8,0" Cursor="Hand"
-                                        ToolTip="{Binding Name}"
-                                        Command="{Binding DataContext.SetAccentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding Hex}">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{Binding Fill}" CornerRadius="13"
-                                                    BorderThickness="1" BorderBrush="{DynamicResource Border}" />
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
                 </StackPanel>
             </Border>
 

@@ -156,10 +156,10 @@ public sealed partial class ReportViewModel : ObservableObject
                 Fmt.Duration(summary.AwaySeconds));
             Chips = new[]
             {
-                new StateChip(Loc.T("State_ActiveFull"), Fmt.Duration(summary.ActiveSeconds)),
-                new StateChip(Loc.T("State_OffTaskFull"), Fmt.Duration(summary.OffTaskSeconds)),
-                new StateChip(Loc.T("State_AwayFull"), Fmt.Duration(summary.AwaySeconds)),
-                new StateChip(Loc.T("State_SilentFull"), Fmt.Duration(summary.SilentSeconds))
+                new StateChip(Loc.T("State_ActiveFull"), Fmt.Duration(summary.ActiveSeconds), Brush("StateActive")),
+                new StateChip(Loc.T("State_OffTaskFull"), Fmt.Duration(summary.OffTaskSeconds), Brush("StateOffTask")),
+                new StateChip(Loc.T("State_AwayFull"), Fmt.Duration(summary.AwaySeconds), Brush("StateIdle")),
+                new StateChip(Loc.T("State_SilentFull"), Fmt.Duration(summary.SilentSeconds), Brush("StateSilent"))
             };
             StatsRow = Loc.T("Report_StatLine",
                 summary.FocusBlocks,

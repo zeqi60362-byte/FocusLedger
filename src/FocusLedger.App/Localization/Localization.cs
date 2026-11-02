@@ -190,12 +190,10 @@ public sealed class Localization : INotifyPropertyChanged
         ["Settings_Language"] = ("语言", "Language"),
         ["Settings_LanguageDesc"] = ("切换界面语言，立即生效。", "Switch the interface language. Applies immediately."),
         ["Settings_Theme"] = ("皮肤", "Theme"),
-        ["Settings_ThemeDesc"] = ("三套预设，另可选一个强调色。", "Three presets, plus an optional accent colour."),
+        ["Settings_ThemeDesc"] = ("三套预设，切换即时生效。", "Three presets. Applies immediately."),
         ["Theme_Dark"] = ("深色", "Dark"),
         ["Theme_Light"] = ("浅色", "Light"),
         ["Theme_Midnight"] = ("夜蓝", "Midnight"),
-        ["Settings_Accent"] = ("强调色", "Accent"),
-        ["Settings_AccentDefault"] = ("跟随皮肤", "Follow theme"),
 
         // 计划
         ["Plan_Title"] = ("预期计划", "Planner"),
