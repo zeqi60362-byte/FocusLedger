@@ -16,7 +16,7 @@
     <SolidColorBrush x:Key="StateActive" Color="#2C7A52" />
     <SolidColorBrush x:Key="StateSilent" Color="#3B6EA5" />
     <SolidColorBrush x:Key="StateOffTask" Color="#B8483B" />
-    <SolidColorBrush x:Key="StateIdle" Color="#CFCFC9" />
+    <SolidColorBrush x:Key="StateIdle" Color="#A6A6A0" />
     <SolidColorBrush x:Key="StatePassive" Color="#8C8C8C" />
     <SolidColorBrush x:Key="StateLocked" Color="#E4E4E0" />
     <SolidColorBrush x:Key="StateAmbiguous" Color="#5E5E5E" />
