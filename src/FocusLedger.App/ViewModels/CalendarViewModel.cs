@@ -1,4 +1,4 @@
-﻿using FocusLedger.App.Controls;
+using FocusLedger.App.Controls;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -239,10 +239,28 @@ public sealed partial class HourSlot : ObservableObject
     }
 }
 
+/// <summary>编辑器里的一枚预设标签。点一下就把标题填成 <see cref="Title"/>。</summary>
+public sealed partial class PlanPreset : ObservableObject
+{
+    public PlanPreset(string label, string title)
+    {
+        Label = label;
+        Title = title;
+    }
+
+    public string Label { get; }
+
+    public string Title { get; }
+
+    [ObservableProperty]
+    private bool isActive;
+}
+
 public sealed partial class CalendarViewModel : ObservableObject
 {
     private readonly FocusLedgerStore _store;
     private readonly Dictionary<string, string> _holidays;
+    private readonly Dictionary<long, FocusLedgerStore.PlanRow> _planDetails = new();
     private bool _syncing;
 
     [ObservableProperty]
@@ -271,11 +289,17 @@ public sealed partial class CalendarViewModel : ObservableObject
 
     public ObservableCollection<WeekBlock> WeekBlocks { get; } = new();
 
+    public ObservableCollection<PlanPreset> Presets { get; } = new();
+
     private DateOnly _weekStart;
     private DateOnly _pendingDate;
+    private long? _editingPlanId;
 
     [ObservableProperty]
     private bool isEditorOpen;
+
+    [ObservableProperty]
+    private string editorHeading = string.Empty;
 
     [ObservableProperty]
     private string editorTitle = string.Empty;
@@ -283,10 +307,27 @@ public sealed partial class CalendarViewModel : ObservableObject
     [ObservableProperty]
     private string editorRange = string.Empty;
 
+    [ObservableProperty]
+    private string editorLocation = string.Empty;
+
+    [ObservableProperty]
+    private string editorUrl = string.Empty;
+
+    [ObservableProperty]
+    private bool editorRemind = true;
+
+    /// <summary>正在编辑已有计划时才显示删除按钮。</summary>
+    [ObservableProperty]
+    private bool isExistingPlan;
+
     private int _pendingStart;
     private int _pendingEnd;
 
     public ObservableCollection<string> Weekdays { get; } = new();
+
+    /// <summary>本周里"今天"是第几列；不在本周时为 -1。</summary>
+    [ObservableProperty]
+    private int todayIndex = -1;
 
     public CalendarViewModel(FocusLedgerStore store)
     {
@@ -300,7 +341,19 @@ public sealed partial class CalendarViewModel : ObservableObject
 
         _holidays = new Dictionary<string, string>(store.LoadHolidays(Holidays.DefaultRegion), StringComparer.Ordinal);
 
+        BuildPresets();
         Reload();
+    }
+
+    private void BuildPresets()
+    {
+        Presets.Clear();
+        Presets.Add(new PlanPreset(Loc.T("Preset_Write"), Loc.T("Preset_Write")));
+        Presets.Add(new PlanPreset(Loc.T("Preset_Read"), Loc.T("Preset_Read")));
+        Presets.Add(new PlanPreset(Loc.T("Preset_Meeting"), Loc.T("Preset_Meeting")));
+        Presets.Add(new PlanPreset(Loc.T("Preset_Exercise"), Loc.T("Preset_Exercise")));
+        Presets.Add(new PlanPreset(Loc.T("Preset_Break"), Loc.T("Preset_Break")));
+        Presets.Add(new PlanPreset(Loc.T("Preset_Chores"), Loc.T("Preset_Chores")));
     }
 
     [RelayCommand]
@@ -412,6 +465,7 @@ public sealed partial class CalendarViewModel : ObservableObject
     {
         _syncing = true;
         Hours.Clear();
+        _planDetails.Clear();
 
         var plans = _store.LoadPlans(_selected)
             .OrderBy(p => p.start_min)
@@ -448,9 +502,16 @@ public sealed partial class CalendarViewModel : ObservableObject
         int offset = ((int)_selected.DayOfWeek + 6) % 7;
         _weekStart = _selected.AddDays(-offset);
 
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        TodayIndex = today >= _weekStart && today <= _weekStart.AddDays(6)
+            ? today.DayNumber - _weekStart.DayNumber
+            : -1;
+
         WeekBlocks.Clear();
         foreach (var weekPlan in _store.LoadPlansInRange(_weekStart, _weekStart.AddDays(6)))
         {
+            _planDetails[weekPlan.id] = weekPlan;
+
             if (!DateOnly.TryParse(weekPlan.date_local, out var day))
             {
                 continue;
@@ -462,14 +523,20 @@ public sealed partial class CalendarViewModel : ObservableObject
                 continue;
             }
 
-            WeekBlocks.Add(new WeekBlock(weekPlan.id, index, weekPlan.start_min, weekPlan.end_min, weekPlan.title ?? string.Empty));
+            WeekBlocks.Add(new WeekBlock(weekPlan.id, index, weekPlan.start_min, weekPlan.end_min,
+                weekPlan.title ?? string.Empty, weekPlan.location ?? string.Empty));
+        }
+
+        foreach (var plan in plans)
+        {
+            _planDetails[plan.id] = plan;
         }
 
         PlanBlocks.Clear();
         foreach (var plan in plans)
         {
             PlanBlocks.Add(new PlanBlock(plan.id, plan.start_min, plan.end_min, plan.title ?? string.Empty,
-                string.Empty, string.Empty, true));
+                plan.location ?? string.Empty, plan.url ?? string.Empty, plan.Remind));
         }
 
         _syncing = false;
@@ -519,15 +586,78 @@ public sealed partial class CalendarViewModel : ObservableObject
         }
     }
 
+    /// <summary>周视图里拖出一段时间 → 打开新建计划窗。</summary>
     public void OnRangeSelected(int dayIndex, int start, int end)
     {
+        _editingPlanId = null;
         _pendingDate = _weekStart.AddDays(dayIndex);
         _pendingStart = start;
         _pendingEnd = end;
-        string[] names = { "周一", "周二", "周三", "周四", "周五", "周六", "周日" };
-        EditorRange = $"{names[Math.Clamp(dayIndex, 0, 6)]} {start / 60:00}:{start % 60:00} – {end / 60:00}:{end % 60:00}";
+
+        OpenEditor(Loc.T("Plan_EditorNew"), WeekdayName(dayIndex, start, end));
+        IsExistingPlan = false;
         EditorTitle = string.Empty;
+        EditorLocation = string.Empty;
+        EditorUrl = string.Empty;
+        EditorRemind = true;
+    }
+
+    /// <summary>点中已有计划 → 用同一扇窗编辑它。</summary>
+    public void OnBlockClicked(WeekBlock block)
+    {
+        if (!_planDetails.TryGetValue(block.Id, out var row))
+        {
+            return;
+        }
+
+        _editingPlanId = row.id;
+        _pendingStart = row.start_min;
+        _pendingEnd = row.end_min;
+        _pendingDate = DateOnly.TryParse(row.date_local, out var day) ? day : _weekStart.AddDays(block.DayIndex);
+
+        OpenEditor(Loc.T("Plan_EditorEdit"), WeekdayName(block.DayIndex, row.start_min, row.end_min));
+        IsExistingPlan = true;
+        EditorTitle = row.title ?? string.Empty;
+        EditorLocation = row.location ?? string.Empty;
+        EditorUrl = row.url ?? string.Empty;
+        EditorRemind = row.Remind;
+    }
+
+    private void OpenEditor(string heading, string range)
+    {
+        EditorHeading = heading;
+        EditorRange = range;
+        UpdatePresetHighlight();
         IsEditorOpen = true;
+    }
+
+    private string WeekdayName(int dayIndex, int start, int end)
+    {
+        string[] names = { "周一", "周二", "周三", "周四", "周五", "周六", "周日" };
+        return $"{names[Math.Clamp(dayIndex, 0, 6)]} {start / 60:00}:{start % 60:00} – {end / 60:00}:{end % 60:00}";
+    }
+
+    partial void OnEditorTitleChanged(string value) => UpdatePresetHighlight();
+
+    private void UpdatePresetHighlight()
+    {
+        string title = EditorTitle.Trim();
+        foreach (var preset in Presets)
+        {
+            preset.IsActive = title.Length > 0 && string.Equals(title, preset.Title, StringComparison.Ordinal);
+        }
+    }
+
+    [RelayCommand]
+    private void ApplyPreset(PlanPreset? preset)
+    {
+        if (preset is null)
+        {
+            return;
+        }
+
+        // 再点一次同一枚标签就取消选中，避免只能用一次
+        EditorTitle = EditorTitle.Trim() == preset.Title ? string.Empty : preset.Title;
     }
 
     [RelayCommand]
@@ -542,8 +672,35 @@ public sealed partial class CalendarViewModel : ObservableObject
             return;
         }
 
-        _store.AddPlanRange(_pendingDate, _pendingStart, _pendingEnd, title);
+        string location = EditorLocation.Trim();
+        string url = EditorUrl.Trim();
+
+        if (_editingPlanId is { } id)
+        {
+            _store.UpdatePlanDetails(id, title, location, url, EditorRemind);
+            _store.UpdatePlanRange(id, _pendingStart, _pendingEnd);
+        }
+        else
+        {
+            _store.AddPlanFull(_pendingDate, _pendingStart, _pendingEnd, title, location, url, EditorRemind);
+        }
+
         IsEditorOpen = false;
-        LoadHours();
+        _editingPlanId = null;
+        Reload();
+    }
+
+    [RelayCommand]
+    private void DeletePlan()
+    {
+        if (_editingPlanId is not { } id)
+        {
+            return;
+        }
+
+        _store.DeletePlan(id);
+        IsEditorOpen = false;
+        _editingPlanId = null;
+        Reload();
     }
 }

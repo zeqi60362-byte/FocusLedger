@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -216,12 +216,30 @@ public sealed class Localization : INotifyPropertyChanged
         ["Plan_Prev"] = ("上月", "Prev"),
         ["Plan_Today"] = ("今天", "Today"),
         ["Plan_Next"] = ("下月", "Next"),
-        ["Plan_WriteHere"] = ("直接在这一行里写计划", "Type your plan in a row"),
+        ["Plan_WriteHere"] = ("拖拽空白处新建计划", "Drag to add a plan"),
         ["Plan_MonthTitle"] = ("{0} 年 {1} 月", "{0}-{1:D2}"),
         ["Plan_Count"] = ("{0} 项计划", "{0} plans"),
         ["Plan_Holiday"] = ("节假日：{0}", "Holiday: {0}"),
         ["Plan_HolidaySource"] = ("节假日：香港 {0} 天", "Holidays: Hong Kong, {0} days"),
-        ["Plan_NoHoliday"] = ("未导入节假日", "No holidays imported")
+        ["Plan_NoHoliday"] = ("未导入节假日", "No holidays imported"),
+
+        // 计划编辑器
+        ["Plan_EditorNew"] = ("新建计划", "New plan"),
+        ["Plan_EditorEdit"] = ("编辑计划", "Edit plan"),
+        ["Plan_TitleLabel"] = ("标题", "Title"),
+        ["Plan_LocationLabel"] = ("地点", "Location"),
+        ["Plan_UrlLabel"] = ("网址", "Link"),
+        ["Plan_RemindLabel"] = ("到时提醒", "Remind me"),
+        ["Plan_Presets"] = ("常用", "Quick tags"),
+        ["Plan_Save"] = ("保存", "Save"),
+        ["Plan_Cancel"] = ("取消", "Cancel"),
+        ["Plan_Delete"] = ("删除", "Delete"),
+        ["Preset_Write"] = ("写论文", "Writing"),
+        ["Preset_Read"] = ("阅读", "Reading"),
+        ["Preset_Meeting"] = ("会议", "Meeting"),
+        ["Preset_Exercise"] = ("运动", "Exercise"),
+        ["Preset_Break"] = ("休息", "Break"),
+        ["Preset_Chores"] = ("杂事", "Chores")
     };
 
     private AppLanguage _language = AppLanguage.Chinese;

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="FocusLedger.App.Views.CalendarView"
+<UserControl x:Class="FocusLedger.App.Views.CalendarView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:FocusLedger.App.Localization"
@@ -6,7 +6,43 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!-- 预设标签：选中时整枚变成主色，再点一次取消 -->
+        <Style x:Key="ChipButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="{DynamicResource Text}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" CornerRadius="12" Padding="11,4" Margin="0,0,6,6"
+                                Background="{DynamicResource SurfaceAlt}"
+                                BorderBrush="{DynamicResource Border}" BorderThickness="1">
+                            <TextBlock x:Name="Txt" Text="{TemplateBinding Content}" FontSize="12"
+                                       FontFamily="{DynamicResource UiFont}"
+                                       Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource TextDim}" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Accent}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                                <Setter TargetName="Txt" Property="Foreground" Value="{DynamicResource Bg}" />
+                                <Setter TargetName="Txt" Property="FontWeight" Value="SemiBold" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CancelEditorCommand}" />
+        <KeyBinding Key="Enter" Command="{Binding SavePlanCommand}" />
+    </UserControl.InputBindings>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -34,7 +70,7 @@
 
         <Grid Grid.Row="1" Margin="0,14,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="440" />
+                <ColumnDefinition Width="396" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -117,7 +153,7 @@
                 </StackPanel>
             </Border>
 
-            <!-- 当天时间表 -->
+            <!-- 本周时间画布 -->
             <Border Grid.Column="1" Style="{StaticResource Card}" Margin="14,0,0,0" Padding="14">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -126,34 +162,104 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0" Margin="0,0,0,8">
-                        <StackPanel Orientation="Horizontal">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
                             <TextBlock Text="{Binding SelectedDateText}" FontSize="14" FontWeight="SemiBold" />
                             <TextBlock Text="{Binding PlanCountText}" Style="{StaticResource Caption}"
                                        Margin="12,3,0,0" />
                         </StackPanel>
-                        <TextBlock Text="{loc:T Plan_WriteHere}" Style="{StaticResource Caption}"
-                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{loc:T Plan_WriteHere}" Style="{StaticResource Caption}"
+                                   Margin="16,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                     </Grid>
 
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <controls:WeekCanvas Height="600" Margin="0,2,0,0" Plans="{Binding WeekBlocks}" RangeSelected="OnRangeSelected" />
-                    </ScrollViewer>
+                    <!-- 不要再套 ScrollViewer：它会拿无限宽去量画布，导致最右一列被切掉；
+                         也不要把高度绑到 ViewportHeight，那会和滚动条互相反馈。画布自己铺满这一行。 -->
+                    <controls:WeekCanvas Grid.Row="1" Margin="0,2,0,0"
+                                         Plans="{Binding WeekBlocks}"
+                                         TodayIndex="{Binding TodayIndex}"
+                                         RangeSelected="OnRangeSelected"
+                                         BlockClicked="OnBlockClicked" />
                 </Grid>
             </Border>
         </Grid>
-            <Grid Background="#66000000" Visibility="{Binding IsEditorOpen, Converter={StaticResource BoolToVis}}">
-            <Border Width="380" Style="{StaticResource Card}" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="22">
+
+        <!-- 新建 / 编辑计划：整页遮罩 + 居中卡片 -->
+        <Grid x:Name="EditorOverlay" Grid.Row="0" Grid.RowSpan="2" Background="#66000000"
+              Visibility="{Binding IsEditorOpen, Converter={StaticResource BoolToVis}}">
+            <Border Width="430" Padding="24" CornerRadius="20"
+                    Background="{DynamicResource Surface}"
+                    BorderBrush="{DynamicResource Border}" BorderThickness="1"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="8" Opacity="0.24" Color="Black" />
+                </Border.Effect>
+
                 <StackPanel>
-                    <TextBlock Text="新建计划" Style="{StaticResource H2}" FontSize="15" />
-                    <TextBlock Text="{Binding EditorRange}" Style="{StaticResource Caption}" Margin="0,4,0,14" />
-                    <TextBox Height="34" Padding="10,6" FontSize="14"
+                    <TextBlock Text="{Binding EditorHeading}" Style="{StaticResource H2}" FontSize="16" />
+                    <TextBlock Text="{Binding EditorRange}" Style="{StaticResource Caption}" Margin="0,5,0,18" />
+
+                    <TextBlock Text="{loc:T Plan_Presets}" Style="{StaticResource Caption}" Margin="2,0,0,6" />
+                    <ItemsControl ItemsSource="{Binding Presets}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource ChipButton}" Content="{Binding Label}"
+                                        Command="{Binding DataContext.ApplyPresetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{loc:T Plan_TitleLabel}" Style="{StaticResource Caption}" Margin="2,12,0,5" />
+                    <TextBox x:Name="TitleBox" FontSize="14"
                              Text="{Binding EditorTitle, UpdateSourceTrigger=PropertyChanged}" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                        <Button Content="取消" Style="{StaticResource GhostButton}" Padding="16,6" Command="{Binding CancelEditorCommand}" />
-                        <Button Content="保存" Style="{StaticResource PrimaryButton}" Padding="18,6" Margin="8,0,0,0" Command="{Binding SavePlanCommand}" />
-                    </StackPanel>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{loc:T Plan_LocationLabel}" Style="{StaticResource Caption}" Margin="2,0,0,5" />
+                            <TextBox Text="{Binding EditorLocation, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{loc:T Plan_UrlLabel}" Style="{StaticResource Caption}" Margin="2,0,0,5" />
+                            <TextBox Text="{Binding EditorUrl, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <CheckBox Content="{loc:T Plan_RemindLabel}" IsChecked="{Binding EditorRemind}" Margin="2,16,0,0" />
+
+                    <Grid Margin="0,22,0,0">
+                        <Button HorizontalAlignment="Left" Padding="14,6"
+                                Style="{StaticResource GhostButton}"
+                                Content="{loc:T Plan_Delete}"
+                                Command="{Binding DeletePlanCommand}"
+                                Visibility="{Binding IsExistingPlan, Converter={StaticResource BoolToVis}}" />
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource GhostButton}" Padding="16,6"
+                                    Content="{loc:T Plan_Cancel}"
+                                    Command="{Binding CancelEditorCommand}" />
+                            <Button Style="{StaticResource PrimaryButton}" Padding="18,6" Margin="8,0,0,0"
+                                    Content="{loc:T Plan_Save}"
+                                    Command="{Binding SavePlanCommand}" />
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
         </Grid>
-</Grid>
+    </Grid>
 </UserControl>
