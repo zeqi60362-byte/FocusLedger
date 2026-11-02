@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.Core;
@@ -25,8 +25,23 @@ public partial class App : System.Windows.Application
     private AppSettings? _settings;
     private bool _exiting;
 
+    private static void WriteCrash(Exception? ex)
+    {
+        try
+        {
+            string path = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "FocusLedger", "crash.log");
+            System.IO.File.WriteAllText(path, (ex?.ToString() ?? "unknown") + Environment.NewLine);
+        }
+        catch
+        {
+        }
+    }
     protected override async void OnStartup(StartupEventArgs e)
     {
+        AppDomain.CurrentDomain.UnhandledException += (_, a) => WriteCrash(a.ExceptionObject as Exception);
+        DispatcherUnhandledException += (_, a) => WriteCrash(a.Exception);
         base.OnStartup(e);
 
         _mutex = new Mutex(true, InstanceMutexName, out bool createdNew);
