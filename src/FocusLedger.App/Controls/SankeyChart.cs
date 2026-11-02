@@ -15,7 +15,6 @@ public sealed class SankeyChart : FrameworkElement
     private const double LabelWidth = 122;
     private const double NodeWidth = 10;
     private const double NodeGap = 9;
-    private const double MinNodeHeight = 22;
 
     public static readonly DependencyProperty FlowsProperty = DependencyProperty.Register(
         nameof(Flows),
@@ -109,8 +108,8 @@ public sealed class SankeyChart : FrameworkElement
             double sourceTotal = sources.First(s => s.Name == flow.From).Total;
             double targetTotal = targets.First(t => t.Name == flow.To).Total;
 
-            double sh = Math.Max(2, sp.Height * (flow.Count / sourceTotal) - 1.2);
-            double th = Math.Max(2, tp.Height * (flow.Count / targetTotal) - 1.2);
+            double sh = Math.Min(sp.Height, Math.Max(1, sp.Height * (flow.Count / sourceTotal)));
+            double th = Math.Min(tp.Height, Math.Max(1, tp.Height * (flow.Count / targetTotal)));
 
             double sy = sourceCursor[flow.From];
             double ty = Math.Min(targetCursor[flow.To], tp.Top + tp.Height - th);
@@ -156,8 +155,8 @@ public sealed class SankeyChart : FrameworkElement
     }
 
     /// <summary>
-    /// 分配节点高度：按总量线性分配，但每个节点给一个最小高度，
-    /// 差额从大节点里按比例扣，避免小应用被压成一条线。
+    /// 严格按总量线性分配节点高度：带宽和节点高度都对应真实次数，不做压缩。
+    /// 只保留 1.5px 的渲染下限，否则小节点会完全看不见。
     /// </summary>
     private static Dictionary<string, double> Layout(IReadOnlyList<(string Name, double Total)> nodes, double height)
     {
@@ -174,33 +173,9 @@ public sealed class SankeyChart : FrameworkElement
             return result;
         }
 
-        var heights = nodes.ToDictionary(n => n.Name, n => n.Total / sum * available);
-
-        double deficit = 0;
         foreach (var node in nodes)
         {
-            if (heights[node.Name] < MinNodeHeight)
-            {
-                deficit += MinNodeHeight - heights[node.Name];
-                heights[node.Name] = MinNodeHeight;
-            }
-        }
-
-        double aboveSum = nodes.Where(n => heights[n.Name] > MinNodeHeight).Sum(n => heights[n.Name]);
-        if (deficit > 0 && aboveSum > MinNodeHeight)
-        {
-            foreach (var node in nodes)
-            {
-                if (heights[node.Name] > MinNodeHeight)
-                {
-                    heights[node.Name] -= deficit * (heights[node.Name] / aboveSum);
-                }
-            }
-        }
-
-        foreach (var node in nodes)
-        {
-            result[node.Name] = Math.Max(MinNodeHeight / 2, heights[node.Name]);
+            result[node.Name] = Math.Max(1.5, node.Total / sum * available);
         }
 
         return result;
