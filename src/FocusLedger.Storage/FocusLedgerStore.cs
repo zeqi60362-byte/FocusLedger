@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using FocusLedger.Core;
 using Microsoft.Data.Sqlite;
 
@@ -512,7 +512,7 @@ public sealed class FocusLedgerStore : IDisposable
     public IReadOnlyList<PlanRow> LoadPlans(DateOnly date)
         => _connection.Query<PlanRow>(
                 """
-                SELECT id, date_local, hour, title, done, start_min, end_min
+                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind
                 FROM plans WHERE date_local = @d ORDER BY start_min, id;
                 """,
                 new { d = date.ToString("yyyy-MM-dd") })
@@ -521,7 +521,7 @@ public sealed class FocusLedgerStore : IDisposable
     public IReadOnlyList<PlanRow> LoadPlansInRange(DateOnly from, DateOnly to)
         => _connection.Query<PlanRow>(
                 """
-                SELECT id, date_local, hour, title, done, start_min, end_min
+                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind
                 FROM plans WHERE date_local >= @a AND date_local <= @b
                 ORDER BY date_local, hour, id;
                 """,
@@ -559,6 +559,37 @@ public sealed class FocusLedgerStore : IDisposable
                 s = startMin,
                 e = endMin
             });
+
+    /// <summary>一次写入完整信息。地点/网址留空存空串，避免 NULL 让上层到处判空。</summary>
+    public long AddPlanFull(
+        DateOnly date, int startMin, int endMin, string title, string? location, string? url, bool remind)
+        => _connection.ExecuteScalar<long>(
+            """
+            INSERT INTO plans (date_local, hour, title, done, created_utc, start_min, end_min, location, url, remind)
+            VALUES (@d, @h, @t, 0, @now, @s, @e, @loc, @url, @r);
+            SELECT last_insert_rowid();
+            """,
+            new
+            {
+                d = date.ToString("yyyy-MM-dd"),
+                h = startMin / 60,
+                t = title,
+                now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                s = startMin,
+                e = endMin,
+                loc = location ?? string.Empty,
+                url = url ?? string.Empty,
+                r = remind ? 1 : 0
+            });
+
+    public void UpdatePlanDetails(long id, string title, string? location, string? url, bool remind)
+        => _connection.Execute(
+            """
+            UPDATE plans
+            SET title = @t, location = @loc, url = @url, remind = @r
+            WHERE id = @id;
+            """,
+            new { id, t = title, loc = location ?? string.Empty, url = url ?? string.Empty, r = remind ? 1 : 0 });
 
     public void UpdatePlanRange(long id, int startMin, int endMin)
         => _connection.Execute(
@@ -611,6 +642,11 @@ public sealed class FocusLedgerStore : IDisposable
         public long done { get; set; }
         public int start_min { get; set; }
         public int end_min { get; set; }
+        public string? location { get; set; }
+        public string? url { get; set; }
+        public long remind { get; set; }
+
+        public bool Remind => remind != 0;
     }
 
     internal sealed class HolidayRow
@@ -654,7 +690,11 @@ public sealed class FocusLedgerStore : IDisposable
         public long locked { get; set; }
     }
 
-    /// <summary>老库没有 start_min/end_min，补上并把旧数据当成「整点开始、一小时长」。</summary>
+    /// <summary>
+    /// 老库补列。<c>CREATE TABLE IF NOT EXISTS</c> 对已存在的表无能为力，
+    /// 所以每次加列都必须在这里补一条 <c>ALTER TABLE</c>，否则老库 SELECT 新列会直接抛
+    /// <c>no such column</c>，启动即崩。
+    /// </summary>
     private void MigratePlans()
     {
         var columns = _connection.Query<string>("SELECT name FROM pragma_table_info('plans');").ToList();
@@ -667,6 +707,21 @@ public sealed class FocusLedgerStore : IDisposable
         if (!columns.Contains("end_min"))
         {
             _connection.Execute("ALTER TABLE plans ADD COLUMN end_min INTEGER NOT NULL DEFAULT -1;");
+        }
+
+        if (!columns.Contains("location"))
+        {
+            _connection.Execute("ALTER TABLE plans ADD COLUMN location TEXT NOT NULL DEFAULT '';");
+        }
+
+        if (!columns.Contains("url"))
+        {
+            _connection.Execute("ALTER TABLE plans ADD COLUMN url TEXT NOT NULL DEFAULT '';");
+        }
+
+        if (!columns.Contains("remind"))
+        {
+            _connection.Execute("ALTER TABLE plans ADD COLUMN remind INTEGER NOT NULL DEFAULT 1;");
         }
 
         _connection.Execute(
@@ -797,6 +852,9 @@ public sealed class FocusLedgerStore : IDisposable
             date_local  TEXT    NOT NULL,
             hour        INTEGER NOT NULL,
             title       TEXT    NOT NULL,
+            location    TEXT    NOT NULL DEFAULT '',
+            url         TEXT    NOT NULL DEFAULT '',
+            remind      INTEGER NOT NULL DEFAULT 1,
             done        INTEGER NOT NULL DEFAULT 0,
             created_utc INTEGER NOT NULL
         );
