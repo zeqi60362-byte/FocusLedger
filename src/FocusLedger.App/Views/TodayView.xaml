@@ -89,12 +89,48 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="{loc:T Today_ZoomHour}" Style="{StaticResource GhostButton}" Padding="9,4" Margin="0,0,6,0"
-                                Command="{Binding SetZoomCommand}" CommandParameter="hour" />
-                        <Button Content="{loc:T Today_ZoomSix}" Style="{StaticResource GhostButton}" Padding="9,4" Margin="0,0,6,0"
-                                Command="{Binding SetZoomCommand}" CommandParameter="six" />
-                        <Button Content="{loc:T Today_ZoomDay}" Style="{StaticResource GhostButton}" Padding="9,4"
-                                Command="{Binding SetZoomCommand}" CommandParameter="day" />
+                        <Button Content="{loc:T Today_ZoomHour}" Padding="9,4" Margin="0,0,6,0"
+                                Command="{Binding SetZoomCommand}" CommandParameter="hour">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsHourZoom}" Value="True">
+                                            <Setter Property="Background" Value="#2B2B2B" />
+                                            <Setter Property="BorderBrush" Value="#2B2B2B" />
+                                            <Setter Property="Foreground" Value="#F2F2F0" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="{loc:T Today_ZoomSix}" Padding="9,4" Margin="0,0,6,0"
+                                Command="{Binding SetZoomCommand}" CommandParameter="six">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSixZoom}" Value="True">
+                                            <Setter Property="Background" Value="#2B2B2B" />
+                                            <Setter Property="BorderBrush" Value="#2B2B2B" />
+                                            <Setter Property="Foreground" Value="#F2F2F0" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="{loc:T Today_ZoomDay}" Padding="9,4"
+                                Command="{Binding SetZoomCommand}" CommandParameter="day">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDayZoom}" Value="True">
+                                            <Setter Property="Background" Value="#2B2B2B" />
+                                            <Setter Property="BorderBrush" Value="#2B2B2B" />
+                                            <Setter Property="Foreground" Value="#F2F2F0" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </StackPanel>
                 </Grid>
 

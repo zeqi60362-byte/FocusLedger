@@ -53,7 +53,20 @@ public sealed partial class TodayViewModel : ObservableObject
     private bool isRecording;
 
     [ObservableProperty]
-    private string zoom = "day";
+    private string zoom = "hour";
+
+    public bool IsHourZoom => Zoom == "hour";
+
+    public bool IsSixZoom => Zoom == "six";
+
+    public bool IsDayZoom => Zoom == "day";
+
+    partial void OnZoomChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsHourZoom));
+        OnPropertyChanged(nameof(IsSixZoom));
+        OnPropertyChanged(nameof(IsDayZoom));
+    }
 
     [ObservableProperty]
     private string recordButtonText = string.Empty;
@@ -71,7 +84,7 @@ public sealed partial class TodayViewModel : ObservableObject
         _rules = rules;
         Intent = intent;
 
-        ApplyZoom("day");
+        ApplyZoom("hour");
         Refresh();
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
