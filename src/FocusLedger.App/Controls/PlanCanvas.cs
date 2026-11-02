@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -16,7 +16,7 @@ public sealed class PlanCanvas : FrameworkElement
     public const int DayStart = 7 * 60;
     public const int DayEnd = 23 * 60;
     private const double GutterWidth = 46;
-    private const int SnapMinutes = 15;
+    private const int SnapMinutes = 5;
 
     public static readonly DependencyProperty PlansProperty = DependencyProperty.Register(
         nameof(Plans),
@@ -91,7 +91,7 @@ public sealed class PlanCanvas : FrameworkElement
 
         int start = Math.Min(anchor, cursor);
         int end = Math.Max(anchor, cursor);
-        if (end - start < SnapMinutes)
+        if (end - start < 25)
         {
             end = Math.Min(DayEnd, start + 60);
         }
