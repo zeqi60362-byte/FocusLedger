@@ -268,11 +268,13 @@ public static class TimerCsvParser
             return false;
         }
 
+        // 顺序很重要：必须先试「带日期」的严格格式，再试「只有时间」，
+        // 最后才用宽松解析。否则 "14:00" 会被宽松解析当成「今天 14:00」，
+        // 让「日期列 + 时间列」的组合逻辑永远走不到。
         if (DateTime.TryParseExact(value, DateTimeFormats, CultureInfo.InvariantCulture,
-                DateTimeStyles.None, out var parsed)
-            || DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
+                DateTimeStyles.None, out var exact))
         {
-            local = DateTime.SpecifyKind(parsed, DateTimeKind.Unspecified);
+            local = DateTime.SpecifyKind(exact, DateTimeKind.Unspecified);
             hasDate = true;
             return true;
         }
@@ -282,6 +284,13 @@ public static class TimerCsvParser
         {
             local = DateTime.Today.Add(timeOnly.TimeOfDay);
             hasDate = false;
+            return true;
+        }
+
+        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var loose))
+        {
+            local = DateTime.SpecifyKind(loose, DateTimeKind.Unspecified);
+            hasDate = true;
             return true;
         }
 

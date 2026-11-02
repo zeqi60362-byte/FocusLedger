@@ -1,6 +1,7 @@
 using System.Windows;
 using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
+using FocusLedger.Core;
 using FocusLedger.App.ViewModels;
 using FocusLedger.Storage;
 using WinForms = System.Windows.Forms;
@@ -132,7 +133,7 @@ public partial class App : System.Windows.Application
     {
         _tray = new WinForms.NotifyIcon
         {
-            Icon = TrayIcon.Build(recording: _recording?.IsRecording ?? false),
+            Icon = TrayIcon.Build(_recording?.IsRecording ?? false, _recording?.CurrentState),
             Visible = true,
             Text = "FocusLedger"
         };
@@ -184,16 +185,28 @@ public partial class App : System.Windows.Application
         }
 
         bool recording = _recording.IsRecording;
-        _tray.Text = recording ? "FocusLedger · 记录中" : "FocusLedger · 已暂停";
-        _tray.Icon = TrayIcon.Build(recording);
+        var state = _recording.CurrentState;
+        string suffix = recording ? StateName(state) : Loc.T("Status_Paused").TrimStart('○', ' ');
+
+        _tray.Text = recording ? $"FocusLedger · {suffix}" : "FocusLedger · paused";
+        _tray.Icon = TrayIcon.Build(recording, state);
 
         if (_pauseItem is not null)
         {
-            _pauseItem.Text = recording ? "暂停记录" : "继续记录";
+            _pauseItem.Text = recording ? Loc.T("Today_Pause") : Loc.T("Today_Resume");
         }
 
         _main?.UpdateStatus();
     }
+
+    private static string StateName(ActivityState? state) => state switch
+    {
+        ActivityState.ActiveFocus => Loc.T("State_ActiveFull"),
+        ActivityState.SilentFocus => Loc.T("State_SilentFull"),
+        ActivityState.OffTask => Loc.T("State_OffTaskFull"),
+        ActivityState.Away => Loc.T("State_AwayFull"),
+        _ => Loc.T("Status_Recording").TrimStart('●', ' ')
+    };
 
     private async Task ToggleRecordingAsync()
     {

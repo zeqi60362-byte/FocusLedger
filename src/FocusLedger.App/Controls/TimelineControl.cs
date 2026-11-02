@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -67,7 +67,7 @@ public sealed class TimelineControl : FrameworkElement
         }
 
         var background = Res("TimelineBg", Color.FromRgb(0x14, 0x14, 0x17));
-        dc.DrawRoundedRectangle(background, null, new Rect(0, 0, width, height), 10, 10);
+        dc.DrawRoundedRectangle(background, null, new Rect(0, 0, width, height), 16, 16);
 
         long start = WindowStart;
         long end = WindowEnd;
@@ -98,7 +98,7 @@ public sealed class TimelineControl : FrameworkElement
         }
 
         var clip = new Rect(leftPad, topPad, plotWidth, plotHeight);
-        dc.PushClip(new RectangleGeometry(clip, 4, 4));
+        dc.PushClip(new RectangleGeometry(clip, 8, 8));
 
         foreach (var segment in segments)
         {
@@ -114,7 +114,7 @@ public sealed class TimelineControl : FrameworkElement
             var brush = BrushFor(segment.State);
 
             dc.PushOpacity(0.92);
-            dc.DrawRoundedRectangle(brush, null, new Rect(x1, topPad, barWidth, plotHeight), 2, 2);
+            dc.DrawRoundedRectangle(brush, null, new Rect(x1, topPad, barWidth, plotHeight), 3, 3);
             dc.Pop();
         }
 
@@ -122,8 +122,10 @@ public sealed class TimelineControl : FrameworkElement
         {
             double hx1 = leftPad + (Math.Max(_hover.StartUtcMs, start) - start) / (double)(end - start) * plotWidth;
             double hx2 = leftPad + (Math.Min(_hover.EndUtcMs, end) - start) / (double)(end - start) * plotWidth;
-            var pen = new Pen(new SolidColorBrush(Colors.White), 1.4);
-            dc.DrawRectangle(null, pen, new Rect(hx1, topPad, Math.Max(1.5, hx2 - hx1), plotHeight));
+            // 双层描边：外层面色 + 内层文字色，任何主题、任何色块上都清晰可见
+            var hoverRect = new Rect(hx1, topPad, Math.Max(1.5, hx2 - hx1), plotHeight);
+            dc.DrawRoundedRectangle(null, new Pen(Res("Surface", Colors.Black), 3.2), hoverRect, 3, 3);
+            dc.DrawRoundedRectangle(null, new Pen(Res("Text", Colors.White), 1.2), hoverRect, 3, 3);
         }
 
         dc.Pop();
@@ -222,11 +224,11 @@ public sealed class TimelineControl : FrameworkElement
             typeface, 11.5, Res("OverlayText", Color.FromRgb(0xD8, 0xD8, 0xDE)), dpi);
 
         double boxWidth = Math.Min(formatted.Width + 16, width - 20);
-        var boxRect = new Rect(10, 6, boxWidth, 20);
-        dc.DrawRoundedRectangle(Res("OverlayBg", Color.FromArgb(0xEE, 0x22, 0x22, 0x28)), null, boxRect, 4, 4);
+        var boxRect = new Rect(12, 6, boxWidth, 22);
+        dc.DrawRoundedRectangle(Res("OverlayBg", Color.FromArgb(0xEE, 0x22, 0x22, 0x28)), null, boxRect, 11, 11);
 
-        dc.PushClip(new RectangleGeometry(boxRect));
-        dc.DrawText(formatted, new Point(18, 8));
+        dc.PushClip(new RectangleGeometry(boxRect, 11, 11));
+        dc.DrawText(formatted, new Point(20, 8));
         dc.Pop();
     }
 

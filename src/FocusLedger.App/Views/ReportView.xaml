@@ -40,11 +40,13 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Margin="0,0,24,0" FontSize="13">
-                                    <Run Text="{Binding Label, Mode=OneWay}" FontWeight="Bold" />
-                                    <Run Text="  " />
-                                    <Run Text="{Binding Value, Mode=OneWay}" />
-                                </TextBlock>
+                                <Border CornerRadius="14" Padding="12,5" Margin="0,0,8,0" Background="{DynamicResource SurfaceAlt}">
+                                    <TextBlock FontSize="12.5">
+                                        <Run Text="{Binding Label, Mode=OneWay}" Foreground="{DynamicResource TextDim}" />
+                                        <Run Text="  " />
+                                        <Run Text="{Binding Value, Mode=OneWay}" FontWeight="SemiBold" />
+                                    </TextBlock>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -54,22 +56,90 @@
                 </StackPanel>
             </Border>
 
-            <!-- 分心归因 -->
+            <!-- 状态构成 + 分心点 -->
+            <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T Report_BreakdownTitle}" Style="{StaticResource H2}" FontSize="13.5" />
+                        <controls:DonutChart Height="176" Margin="0,12,0,12"
+                                             Slices="{Binding DonutSlices}"
+                                             CenterValue="{Binding DonutValue}"
+                                             CenterLabel="{Binding DonutLabel}" />
+                        <ItemsControl ItemsSource="{Binding Legend}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="60" />
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Grid.Column="0" Width="8" Height="8" Fill="{Binding Fill}"
+                                                 VerticalAlignment="Center" HorizontalAlignment="Left" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Label}" Style="{StaticResource Caption}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Value}" Style="{StaticResource Caption}"
+                                                   HorizontalAlignment="Right" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource Card}" Margin="14,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{loc:T Report_DistractionTitle}" Style="{StaticResource H2}" FontSize="13.5" />
+                        <ItemsControl ItemsSource="{Binding Distractions}" Margin="0,10,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,7">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="56" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding App}" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Duration}" Style="{StaticResource Caption}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Share}" Style="{StaticResource Caption}"
+                                                   HorizontalAlignment="Right" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 应用流转 -->
             <Border Style="{StaticResource Card}" Margin="0,14,0,0">
                 <StackPanel>
-                    <TextBlock Text="{loc:T Report_DistractionTitle}" Style="{StaticResource H2}" FontSize="13.5" />
-                    <ItemsControl ItemsSource="{Binding Distractions}" Margin="0,10,0,0">
+                    <TextBlock Text="{loc:T Report_FlowTitle}" Style="{StaticResource H2}" FontSize="13.5" />
+                    <TextBlock Text="{loc:T Report_FlowHint}" Style="{StaticResource Caption}"
+                               Margin="0,4,0,12" TextWrapping="Wrap" />
+                    <ItemsControl ItemsSource="{Binding Transitions}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,0,0,7">
+                                <Grid Margin="0,0,0,9">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="220" />
-                                        <ColumnDefinition Width="90" />
-                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="46" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding App}" FontSize="12.5" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Duration}" Style="{StaticResource Caption}" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Share}" Style="{StaticResource Caption}" />
+                                    <TextBlock Grid.Column="0" Text="{Binding From}" FontSize="12"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ProportionBar Grid.Column="1" Height="5" VerticalAlignment="Center"
+                                                            Margin="12,0" Track="Transparent" Slices="{Binding Bar}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding To}" FontSize="12"
+                                               TextTrimming="CharacterEllipsis" HorizontalAlignment="Right"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Count}" Style="{StaticResource Caption}"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

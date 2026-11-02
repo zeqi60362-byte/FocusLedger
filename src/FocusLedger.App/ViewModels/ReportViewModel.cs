@@ -12,6 +12,10 @@ namespace FocusLedger.App.ViewModels;
 
 public sealed record DistractionRow(string App, string Duration, string Share);
 
+public sealed record LegendRow(string Label, string Value, Brush Fill);
+
+public sealed record TransitionRow(string From, string To, string Count, IReadOnlyList<BarSlice> Bar);
+
 public sealed record StatRow(string Label, string Effective, string Detail, IReadOnlyList<BarSlice> Bar);
 
 public sealed partial class ReportViewModel : ObservableObject
@@ -53,6 +57,19 @@ public sealed partial class ReportViewModel : ObservableObject
 
     [ObservableProperty]
     private IReadOnlyList<StateChip> chips = Array.Empty<StateChip>();
+
+    [ObservableProperty]
+    private IReadOnlyList<BarSlice> donutSlices = Array.Empty<BarSlice>();
+
+    [ObservableProperty]
+    private string donutValue = string.Empty;
+
+    [ObservableProperty]
+    private string donutLabel = string.Empty;
+
+    public ObservableCollection<LegendRow> Legend { get; } = new();
+
+    public ObservableCollection<TransitionRow> Transitions { get; } = new();
 
     public ObservableCollection<DistractionRow> Distractions { get; } = new();
 
@@ -106,6 +123,8 @@ public sealed partial class ReportViewModel : ObservableObject
 
         var summary = Summarize(_date);
         Distractions.Clear();
+        Legend.Clear();
+        Transitions.Clear();
 
         if (summary is null)
         {
@@ -116,6 +135,9 @@ public sealed partial class ReportViewModel : ObservableObject
             SecondaryRow = string.Empty;
             StatsRow = string.Empty;
             EmptyHint = Loc.T("Report_Empty");
+            DonutSlices = Array.Empty<BarSlice>();
+            DonutValue = "—";
+            DonutLabel = string.Empty;
         }
         else
         {
@@ -143,6 +165,38 @@ public sealed partial class ReportViewModel : ObservableObject
                 summary.FocusBlocks,
                 (summary.LongestFocusBlockSeconds / 60).ToString("F0"),
                 summary.AppSwitches);
+
+            DonutSlices = new[]
+            {
+                new BarSlice(summary.ActiveSeconds, Brush("StateActive")),
+                new BarSlice(summary.SilentSeconds, Brush("StateSilent")),
+                new BarSlice(summary.OffTaskSeconds, Brush("StateOffTask")),
+                new BarSlice(summary.AwaySeconds, Brush("StateIdle"))
+            };
+            DonutValue = Fmt.Duration(summary.AccountedSeconds);
+            DonutLabel = Loc.T("Today_Effective");
+
+            Legend.Add(new LegendRow(Loc.T("State_ActiveFull"), Fmt.Duration(summary.ActiveSeconds), Brush("StateActive")));
+            Legend.Add(new LegendRow(Loc.T("State_OffTaskFull"), Fmt.Duration(summary.OffTaskSeconds), Brush("StateOffTask")));
+            Legend.Add(new LegendRow(Loc.T("State_AwayFull"), Fmt.Duration(summary.AwaySeconds), Brush("StateIdle")));
+            Legend.Add(new LegendRow(Loc.T("State_SilentFull"), Fmt.Duration(summary.SilentSeconds), Brush("StateSilent")));
+
+            int maxTransition = summary.TopTransitions.Count > 0
+                ? summary.TopTransitions.Max(t => t.Count)
+                : 1;
+
+            foreach (var transition in summary.TopTransitions)
+            {
+                Transitions.Add(new TransitionRow(
+                    Fmt.AppName(transition.From),
+                    Fmt.AppName(transition.To),
+                    Loc.T("Report_Times", transition.Count),
+                    new[]
+                    {
+                        new BarSlice(transition.Count, Brush("StateSilent")),
+                        new BarSlice(Math.Max(0.001, maxTransition - transition.Count), Brushes.Transparent)
+                    }));
+            }
 
             double totalOffTask = summary.OffTaskSeconds;
             foreach (var usage in summary.TopDistractions)
@@ -253,7 +307,7 @@ public sealed partial class ReportViewModel : ObservableObject
         }
 
         return new DailySummary(from, active, silent, offTask, away, effective, low, high, 0, 0, 0,
-            Array.Empty<AppUsage>());
+            Array.Empty<AppUsage>(), Array.Empty<AppTransition>());
     }
 
     private DailySummary? Summarize(DateOnly date)

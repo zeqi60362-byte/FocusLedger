@@ -19,6 +19,7 @@ public sealed class RecordingService : IAsyncDisposable
     private readonly RuleService _rules;
     private readonly List<Sample> _today = new();
     private readonly List<Sample> _pending = new();
+    private readonly Queue<Sample> _recent = new();
     private readonly object _gate = new();
 
     private CancellationTokenSource? _cts;
@@ -35,6 +36,9 @@ public sealed class RecordingService : IAsyncDisposable
     public bool IsRecording { get; private set; }
 
     public Sample? Current { get; private set; }
+
+    /// <summary>最近一个窗口判定出的状态，用于托盘图标着色。</summary>
+    public ActivityState? CurrentState { get; private set; }
 
     public event EventHandler? Changed;
 
@@ -80,6 +84,7 @@ public sealed class RecordingService : IAsyncDisposable
         }
 
         IsRecording = false;
+        CurrentState = null;
         _cts?.Cancel();
 
         if (_loop is not null)
@@ -141,8 +146,17 @@ public sealed class RecordingService : IAsyncDisposable
                 {
                     _today.Add(sample);
                     _pending.Add(sample);
+
+                    _recent.Enqueue(sample);
+                    while (_recent.Count > 12)
+                    {
+                        _recent.Dequeue();
+                    }
+
                     flush = _pending.Count >= FlushBatch;
                 }
+
+                UpdateCurrentState();
 
                 if (flush)
                 {
@@ -161,6 +175,27 @@ public sealed class RecordingService : IAsyncDisposable
             // 采集异常不得让应用退出；界面会显示"已停止"
             IsRecording = false;
             Changed?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>用最近 60 秒的样本算一次判定，供托盘图标取色。</summary>
+    private void UpdateCurrentState()
+    {
+        Sample[] window;
+        lock (_gate)
+        {
+            window = _recent.ToArray();
+        }
+
+        if (window.Length == 0)
+        {
+            return;
+        }
+
+        var segments = new SegmentBuilder(_rules.Current).Build(window, finalize: false);
+        if (segments.Count > 0)
+        {
+            CurrentState = segments[^1].State;
         }
     }
 

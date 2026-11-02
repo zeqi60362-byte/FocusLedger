@@ -1,32 +1,33 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <!-- 板岩灰：比石墨黑略冷的深灰，带极轻微的蓝灰倾向 -->
     <FontFamily x:Key="UiFont">Microsoft YaHei UI</FontFamily>
 
-    <SolidColorBrush x:Key="Bg" Color="#0A1020" />
-    <SolidColorBrush x:Key="Surface" Color="#0F1A2E" />
-    <SolidColorBrush x:Key="SurfaceAlt" Color="#16243C" />
-    <SolidColorBrush x:Key="Border" Color="#23344F" />
-    <SolidColorBrush x:Key="Text" Color="#E4ECF7" />
-    <SolidColorBrush x:Key="TextDim" Color="#8AA0BE" />
-    <SolidColorBrush x:Key="Accent" Color="#4ADE80" />
-    <SolidColorBrush x:Key="Danger" Color="#F87171" />
+    <SolidColorBrush x:Key="Bg" Color="#0C0D10" />
+    <SolidColorBrush x:Key="Surface" Color="#14161A" />
+    <SolidColorBrush x:Key="SurfaceAlt" Color="#1D2025" />
+    <SolidColorBrush x:Key="Border" Color="#292C33" />
+    <SolidColorBrush x:Key="Text" Color="#EEF0F3" />
+    <SolidColorBrush x:Key="TextDim" Color="#8B909A" />
+    <SolidColorBrush x:Key="Accent" Color="#EEF0F3" />
+    <SolidColorBrush x:Key="Danger" Color="#E07A70" />
 
-    <SolidColorBrush x:Key="StateActive" Color="#4ADE80" />
-    <SolidColorBrush x:Key="StateSilent" Color="#5EA8FF" />
-    <SolidColorBrush x:Key="StateOffTask" Color="#F87171" />
-    <SolidColorBrush x:Key="StateIdle" Color="#4A5C77" />
-    <SolidColorBrush x:Key="StatePassive" Color="#5EA8FF" />
-    <SolidColorBrush x:Key="StateLocked" Color="#2A3A55" />
-    <SolidColorBrush x:Key="StateAmbiguous" Color="#A78BFA" />
+    <SolidColorBrush x:Key="StateActive" Color="#7FD8A6" />
+    <SolidColorBrush x:Key="StateSilent" Color="#7FA6D9" />
+    <SolidColorBrush x:Key="StateOffTask" Color="#D06A5E" />
+    <SolidColorBrush x:Key="StateIdle" Color="#3C4A63" />
+    <SolidColorBrush x:Key="StatePassive" Color="#8F96A3" />
+    <SolidColorBrush x:Key="StateLocked" Color="#23262C" />
+    <SolidColorBrush x:Key="StateAmbiguous" Color="#666C78" />
 
-    <SolidColorBrush x:Key="TrackBg" Color="#1B2B45" />
-    <SolidColorBrush x:Key="ScrollThumb" Color="#35507A" />
-    <SolidColorBrush x:Key="TimelineBg" Color="#0C1526" />
-    <SolidColorBrush x:Key="TimelineGrid" Color="#22FFFFFF" />
-    <SolidColorBrush x:Key="TimelineLabel" Color="#6E86A8" />
-    <SolidColorBrush x:Key="HolidayBg" Color="#2A1A2A" />
-    <SolidColorBrush x:Key="OverlayBg" Color="#EE16243C" />
-    <SolidColorBrush x:Key="OverlayText" Color="#DCE7F5" />
+    <SolidColorBrush x:Key="TrackBg" Color="#252830" />
+    <SolidColorBrush x:Key="ScrollThumb" Color="#3C414B" />
+    <SolidColorBrush x:Key="TimelineBg" Color="#101216" />
+    <SolidColorBrush x:Key="TimelineGrid" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="TimelineLabel" Color="#747A85" />
+    <SolidColorBrush x:Key="HolidayBg" Color="#2A1B1B" />
+    <SolidColorBrush x:Key="OverlayBg" Color="#F0191B20" />
+    <SolidColorBrush x:Key="OverlayText" Color="#E3E6EB" />
 
 </ResourceDictionary>

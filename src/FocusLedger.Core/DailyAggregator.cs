@@ -2,6 +2,9 @@ namespace FocusLedger.Core;
 
 public sealed record AppUsage(string App, double Seconds);
 
+/// <summary>从 A 应用切到 B 应用的次数。</summary>
+public sealed record AppTransition(string From, string To, int Count);
+
 /// <summary>一天的账。</summary>
 public sealed record DailySummary(
     DateOnly Date,
@@ -15,7 +18,8 @@ public sealed record DailySummary(
     int FocusBlocks,
     double LongestFocusBlockSeconds,
     int AppSwitches,
-    IReadOnlyList<AppUsage> TopDistractions)
+    IReadOnlyList<AppUsage> TopDistractions,
+    IReadOnlyList<AppTransition> TopTransitions)
 {
     public double EffectiveHours => EffectiveSeconds / 3600.0;
     public double ActiveHours => ActiveSeconds / 3600.0;
@@ -29,7 +33,7 @@ public sealed record DailySummary(
     public double EffectiveRatio => AccountedSeconds > 0 ? EffectiveSeconds / AccountedSeconds : 0;
 
     public static DailySummary Empty(DateOnly date) =>
-        new(date, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Array.Empty<AppUsage>());
+        new(date, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Array.Empty<AppUsage>(), Array.Empty<AppTransition>());
 }
 
 public static class DailyAggregator
@@ -56,6 +60,7 @@ public static class DailyAggregator
         double currentRun = 0;
         string? lastApp = null;
         var distractions = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        var transitions = new Dictionary<(string From, string To), int>();
 
         foreach (var segment in segments.OrderBy(s => s.StartUtcMs))
         {
@@ -94,6 +99,8 @@ public static class DailyAggregator
                 && !string.Equals(lastApp, segment.App, StringComparison.OrdinalIgnoreCase))
             {
                 switches++;
+                var key = (lastApp, segment.App);
+                transitions[key] = transitions.TryGetValue(key, out int seen) ? seen + 1 : 1;
             }
 
             lastApp = segment.App;
@@ -120,6 +127,12 @@ public static class DailyAggregator
             longestBlock = Math.Max(longestBlock, currentRun);
         }
 
+        var topTransitions = transitions
+            .OrderByDescending(kv => kv.Value)
+            .Take(8)
+            .Select(kv => new AppTransition(kv.Key.From, kv.Key.To, kv.Value))
+            .ToList();
+
         var top = distractions
             .OrderByDescending(kv => kv.Value)
             .Take(5)
@@ -129,7 +142,7 @@ public static class DailyAggregator
         return new DailySummary(
             date, active, silent, offTask, away,
             effective, low, high,
-            focusBlocks, longestBlock, switches, top);
+            focusBlocks, longestBlock, switches, top, topTransitions);
     }
 
     /// <summary>某一天在 UTC 上覆盖的区间 [start, end)。</summary>

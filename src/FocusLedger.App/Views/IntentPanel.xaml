@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="FocusLedger.App.Views.IntentPanel"
+<UserControl x:Class="FocusLedger.App.Views.IntentPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:FocusLedger.App.Controls"
@@ -8,7 +8,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
 
-    <Border Style="{StaticResource Card}">
+    <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Border}" Padding="2,0,2,16" Margin="0,0,0,16">
         <Grid>
             <!-- 空闲 -->
             <Grid Visibility="{Binding ShowIdle, Converter={StaticResource BoolToVis}}">
@@ -18,10 +18,11 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="{loc:T Intent_Title}" Style="{StaticResource H2}" FontSize="13.5" />
-                    <TextBlock Text="{Binding ResultText}" FontSize="12.5" Margin="0,5,0,0"
-                               Foreground="{DynamicResource Accent}" TextWrapping="Wrap" />
-                    <TextBlock Style="{StaticResource Caption}" Margin="0,5,0,0"
+                    <TextBlock Text="{loc:T Intent_Title}" Style="{StaticResource Caption}" />
+                    <TextBlock Text="{Binding ResultText}" FontSize="14" FontWeight="SemiBold" Margin="0,5,0,0"
+                               Foreground="{DynamicResource Accent}" TextWrapping="Wrap"
+                               Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}" />
+                    <TextBlock Style="{StaticResource Caption}" Margin="0,5,0,0" FontSize="11"
                                Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}"
                                Text="{loc:T Intent_NextHint}" />
                 </StackPanel>
@@ -33,7 +34,7 @@
 
             <!-- 编辑 -->
             <StackPanel Visibility="{Binding ShowEditor, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="{loc:T Intent_WhatNext}" Style="{StaticResource H2}" FontSize="13.5" />
+                <TextBlock Text="{loc:T Intent_WhatNext}" FontSize="14" FontWeight="SemiBold" />
 
                 <TextBox Width="360" Margin="0,10,0,0" HorizontalAlignment="Left"
                          Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" />
@@ -66,26 +67,29 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- 进行中 -->
+            <!-- 进行中：去掉卡片边框，让进度条成为视觉主体 -->
             <StackPanel Visibility="{Binding ShowActive, Converter={StaticResource BoolToVis}}">
                 <Grid>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{loc:T Intent_Running}" Style="{StaticResource Caption}" VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding ActiveLabel}" FontSize="14" FontWeight="SemiBold" Margin="10,0,0,0" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse Width="9" Height="9" Fill="{DynamicResource Accent}" Margin="0,1,10,0" />
+                        <TextBlock Text="{Binding ActiveLabel}" FontSize="16" FontWeight="SemiBold" />
+                        <TextBlock Text="{loc:T Intent_Running}" Style="{StaticResource Caption}"
+                                   Margin="10,3,0,0" VerticalAlignment="Center" />
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <TextBlock Text="{Binding Remaining}" FontSize="13" VerticalAlignment="Center" />
-                        <Button Content="{loc:T Intent_End}" Style="{StaticResource GhostButton}" Padding="10,4" Margin="12,0,0,0"
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Remaining}" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <Button Content="{loc:T Intent_End}" Style="{StaticResource GhostButton}" Padding="10,4"
                                 Command="{Binding FinishCommand}" />
                         <Button Content="{loc:T Intent_GiveUp}" Style="{StaticResource GhostButton}" Padding="10,4" Margin="6,0,0,0"
                                 Foreground="{DynamicResource TextDim}" Command="{Binding AbandonCommand}" />
                     </StackPanel>
                 </Grid>
 
-                <controls:ProportionBar Height="10" Margin="0,12,0,0" Track="{DynamicResource TrackBg}" Slices="{Binding ProgressSlices}" />
+                <controls:ProportionBar Height="9" Margin="0,14,0,0"
+                                        Track="{DynamicResource TrackBg}" Slices="{Binding ProgressSlices}" />
 
-                <TextBlock Text="{Binding AdherenceText}" Style="{StaticResource Caption}" Margin="0,8,0,0" />
+                <TextBlock Text="{Binding AdherenceText}" Style="{StaticResource Caption}" Margin="0,9,0,0" FontSize="12.5" />
             </StackPanel>
         </Grid>
     </Border>
