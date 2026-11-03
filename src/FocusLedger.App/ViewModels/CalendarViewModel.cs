@@ -1,4 +1,4 @@
-﻿using FocusLedger.App.Controls;
+using FocusLedger.App.Controls;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -294,7 +294,7 @@ public sealed partial class CalendarViewModel : ObservableObject
             }
 
             WeekBlocks.Add(new WeekBlock(plan.id, index, plan.start_min, plan.end_min,
-                plan.title ?? string.Empty, plan.location ?? string.Empty));
+                plan.title ?? string.Empty, plan.location ?? string.Empty, plan.url ?? string.Empty));
         }
 
         PlanCountText = Loc.T("Plan_Count", _store.LoadPlans(_selected).Count);

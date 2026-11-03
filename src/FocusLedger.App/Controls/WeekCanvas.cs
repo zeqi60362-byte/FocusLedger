@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+using System.Collections.Specialized;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
@@ -6,7 +6,8 @@ using System.Windows.Media;
 
 namespace FocusLedger.App.Controls;
 
-public sealed record WeekBlock(long Id, int DayIndex, int StartMin, int EndMin, string Title, string Location);
+public sealed record WeekBlock(
+    long Id, int DayIndex, int StartMin, int EndMin, string Title, string Location, string Url);
 
 /// <summary>
 /// 周视图：横轴周一到周日，纵轴 07:00–23:00。
@@ -264,7 +265,10 @@ public sealed class WeekCanvas : FrameworkElement
         }
 
         // 已有计划
-        var soft = new SolidColorBrush(((SolidColorBrush)accent).Color) { Opacity = 0.16 };
+        // 计划块必须是实色的：半透明底会让背后的横向刻度线透出来，
+        // 一块 5 小时的计划看上去像被切成好几段。这里把 16% 的绿色和卡片底色
+        // 预先混成一个不透明色，视觉效果和原来一样，但挡得住底层网格。
+        var blockFill = new SolidColorBrush(BlendOverSurface(accent, 0.16));
 
         if (Plans is not null)
         {
@@ -275,26 +279,48 @@ public sealed class WeekCanvas : FrameworkElement
                 double bottom = YOf(plan.EndMin);
                 var rect = new Rect(x + 2, top + 1, Math.Max(6, ColumnWidth - 5), Math.Max(5, bottom - top - 2));
 
-                dc.DrawRoundedRectangle(soft, null, rect, 5, 5);
+                dc.DrawRoundedRectangle(blockFill, null, rect, 5, 5);
                 dc.DrawRoundedRectangle(accent, null, new Rect(rect.X, rect.Y, 2.5, rect.Height), 1, 1);
 
-                // 一周七列，单列通常只有 40–60 px：塞不下「标题 · 地点」就别硬塞，
-                // 否则会折成四行把整块涂满。列够宽才带地点。
-                string label = plan.Location.Length > 0 && ColumnWidth >= 90
-                    ? $"{plan.Title} · {plan.Location}"
-                    : plan.Title;
-
-                var title = new FormattedText(label, CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight, typeface, 10.5, textBrush, dpi);
-                title.MaxTextWidth = Math.Max(10, rect.Width - 6);
-                title.Trimming = TextTrimming.CharacterEllipsis;
-
-                int maxLines = Math.Max(0, (int)((rect.Height - 4) / Math.Max(1, title.Height)));
-                title.MaxLineCount = Math.Max(1, maxLines);
-
-                if (rect.Height > title.Height + 4)
+                // 标题 / 地点 / 网址各占一行，水平居中；放不下就少画几行，绝不画出块外
+                var lines = new List<string> { plan.Title };
+                if (!string.IsNullOrWhiteSpace(plan.Location))
                 {
-                    dc.DrawText(title, new Point(rect.X + 5, rect.Y + 2));
+                    lines.Add(plan.Location);
+                }
+
+                if (!string.IsNullOrWhiteSpace(plan.Url))
+                {
+                    lines.Add(ShortenUrl(plan.Url));
+                }
+
+                double textWidth = Math.Max(10, rect.Width - 6);
+                var probe = new FormattedText("测", CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                    typeface, 10.5, textBrush, dpi);
+                double lineHeight = probe.Height + 1;
+
+                int fits = Math.Max(0, (int)((rect.Height - 6) / lineHeight));
+                int show = Math.Min(lines.Count, fits);
+                if (show == 0)
+                {
+                    continue;
+                }
+
+                // 整组文字在块内垂直居中
+                double startY = rect.Y + Math.Max(2, (rect.Height - show * lineHeight) / 2);
+
+                for (int i = 0; i < show; i++)
+                {
+                    var line = new FormattedText(lines[i], CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                        typeface, 10.5, textBrush, dpi)
+                    {
+                        MaxTextWidth = textWidth,
+                        MaxLineCount = 1,
+                        Trimming = TextTrimming.CharacterEllipsis,
+                        TextAlignment = TextAlignment.Center
+                    };
+
+                    dc.DrawText(line, new Point(rect.X + 3, startY + i * lineHeight));
                 }
             }
         }
@@ -324,4 +350,40 @@ public sealed class WeekCanvas : FrameworkElement
 
     private Brush Res(string key, Color fallback) =>
         TryFindResource(key) as Brush ?? new SolidColorBrush(fallback);
+
+    /// <summary>
+    /// 一列只有 40–60 px，`https://` 白占 8 个字符，去掉协议和 www 前缀能多露出几个字。
+    /// </summary>
+    private static string ShortenUrl(string url)
+    {
+        string value = url.Trim();
+
+        int scheme = value.IndexOf("://", StringComparison.Ordinal);
+        if (scheme >= 0)
+        {
+            value = value[(scheme + 3)..];
+        }
+
+        if (value.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+        {
+            value = value[4..];
+        }
+
+        return value.TrimEnd('/');
+    }
+
+    /// <summary>
+    /// 把半透明色和卡片底色预先混成一个不透明色：视觉上和「16% 透明绿」一致，
+    /// 但画上去会把背后的刻度线挡住。
+    /// </summary>
+    private Color BlendOverSurface(Brush over, double alpha)
+    {
+        var surface = (Res("Surface", Colors.White) as SolidColorBrush)?.Color ?? Colors.White;
+        var tint = (over as SolidColorBrush)?.Color ?? Color.FromRgb(0x2C, 0x7A, 0x52);
+
+        return Color.FromRgb(
+            (byte)Math.Round(surface.R * (1 - alpha) + tint.R * alpha),
+            (byte)Math.Round(surface.G * (1 - alpha) + tint.G * alpha),
+            (byte)Math.Round(surface.B * (1 - alpha) + tint.B * alpha));
+    }
 }
