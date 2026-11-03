@@ -56,7 +56,7 @@ public sealed partial class IntentViewModel : ObservableObject
     [ObservableProperty]
     private string activeLabel = string.Empty;
 
-    public IReadOnlyList<(string Id, string Label)> MusicOptions => FocusAudio.Options;
+    public IReadOnlyList<MusicOption> MusicOptions => FocusAudio.Options;
 
     [ObservableProperty]
     private string selectedMusic = "none";

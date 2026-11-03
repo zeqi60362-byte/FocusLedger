@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Media;
 
 namespace FocusLedger.App.Services;
@@ -7,16 +7,18 @@ namespace FocusLedger.App.Services;
 /// 专注背景音：完全由代码合成，不打包任何音频文件，因此没有版权问题。
 /// 目前两种：白噪音（屏蔽环境杂音）、棕噪音（更接近雨声/风声）。
 /// </summary>
+public sealed record MusicOption(string Id, string Label);
+
 public static class FocusAudio
 {
     private static SoundPlayer? _player;
     private static MemoryStream? _stream;
 
-    public static readonly (string Id, string Label)[] Options =
+    public static readonly MusicOption[] Options =
     {
-        ("none", "无"),
-        ("white", "白噪音"),
-        ("rain", "雨声")
+        new("none", "无"),
+        new("white", "白噪音"),
+        new("rain", "雨声")
     };
 
     public static void Play(string mode)
