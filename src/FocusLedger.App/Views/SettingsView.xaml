@@ -102,7 +102,7 @@
                     <TextBlock Text="{loc:T Settings_RetentionDesc}" Style="{StaticResource Caption}"
                                Margin="0,4,0,10" TextWrapping="Wrap" />
                     <StackPanel Orientation="Horizontal">
-                        <TextBox Width="80" Text="{Binding RetentionDays, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Width="80" Padding="10,4" Text="{Binding RetentionDays, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBlock Text="{loc:T Settings_Days}" Style="{StaticResource Caption}"
                                    VerticalAlignment="Center" Margin="8,0,0,0" />
                     </StackPanel>
@@ -117,7 +117,7 @@
                                Margin="0,4,0,10" TextWrapping="Wrap" />
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBox Width="240" Text="{Binding NewExclusion, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Width="240" Padding="10,4" Text="{Binding NewExclusion, UpdateSourceTrigger=PropertyChanged}" />
                         <Button Content="{loc:T Settings_Add}" Style="{StaticResource GhostButton}" Margin="8,0,0,0"
                                 Command="{Binding AddExclusionCommand}" />
                     </StackPanel>
