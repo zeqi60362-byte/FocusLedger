@@ -116,6 +116,10 @@ public sealed partial class CalendarViewModel : ObservableObject
     [ObservableProperty]
     private string editorUrl = string.Empty;
 
+    /// <summary>保存被拒绝时显示在弹窗里的提示（时间冲突、标题为空）。空串表示没有错误。</summary>
+    [ObservableProperty]
+    private string editorError = string.Empty;
+
     [ObservableProperty]
     private bool editorRemind = true;
 
@@ -341,6 +345,7 @@ public sealed partial class CalendarViewModel : ObservableObject
     {
         EditorHeading = heading;
         EditorRange = range;
+        EditorError = string.Empty;
         UpdatePresetHighlight();
         IsEditorOpen = true;
     }
@@ -383,6 +388,17 @@ public sealed partial class CalendarViewModel : ObservableObject
         string title = EditorTitle.Trim();
         if (title.Length == 0)
         {
+            EditorError = Loc.T("Plan_NeedTitle");
+            return;
+        }
+
+        // 同一份日程上不允许两段时间重叠：拖的时候看着是一整条，保存后却是两条，
+        // 后面读回来自己也分不清哪条算数，所以直接拒绝，让人重拖。
+        if (FindConflict(_pendingDate, _pendingStart, _pendingEnd, _editingPlanId) is { } clash)
+        {
+            EditorError = Loc.T("Plan_Conflict",
+                clash.title ?? string.Empty,
+                $"{clash.start_min / 60:00}:{clash.start_min % 60:00} – {clash.end_min / 60:00}:{clash.end_min % 60:00}");
             return;
         }
 
@@ -399,10 +415,25 @@ public sealed partial class CalendarViewModel : ObservableObject
             _store.AddPlanFull(_pendingDate, _pendingStart, _pendingEnd, title, location, url, EditorRemind);
         }
 
+        EditorError = string.Empty;
         IsEditorOpen = false;
         _editingPlanId = null;
+
+        // 在别的日子上新建/编辑完，把选中日也挪过去：
+        // 否则顶栏还写着「11 月 3 日 星期二」、计数也不变，看着像没生效。
+        if (_pendingDate != _selected)
+        {
+            _selected = _pendingDate;
+            _month = new DateOnly(_selected.Year, _selected.Month, 1);
+        }
+
         Reload();
     }
+
+    /// <summary>同一天里与 [start, end) 相交的另一条计划；编辑自己时要把自己排除掉。</summary>
+    private FocusLedgerStore.PlanRow? FindConflict(DateOnly date, int start, int end, long? ignoreId)
+        => _store.LoadPlans(date)
+            .FirstOrDefault(p => p.id != ignoreId && start < p.end_min && end > p.start_min);
 
     [RelayCommand]
     private void DeletePlan()

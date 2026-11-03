@@ -72,7 +72,7 @@
         <!-- 顶栏（不跟着滚，始终在顶部） -->
         <Grid Grid.Row="0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="{loc:T Plan_Title}" Style="{StaticResource H2}" />
+                <TextBlock Text="{loc:T Plan_Title}" Style="{StaticResource PageTitle}" />
                 <TextBlock Text="{Binding HolidaySourceText}" Style="{StaticResource Caption}"
                            Margin="12,2,0,0" VerticalAlignment="Bottom" />
             </StackPanel>
@@ -269,6 +269,22 @@
                     </Grid>
 
                     <CheckBox Content="{loc:T Plan_RemindLabel}" IsChecked="{Binding EditorRemind}" Margin="2,16,0,0" />
+
+                    <!-- 时间冲突 / 标题为空时在这里说明，弹窗不关，改完可以直接重存 -->
+                    <TextBlock Text="{Binding EditorError}" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
+                                <Setter Property="Foreground" Value="{DynamicResource StateOffTask}" />
+                                <Setter Property="FontSize" Value="12" />
+                                <Setter Property="Margin" Value="2,12,0,0" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EditorError}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
 
                     <Grid Margin="0,22,0,0">
                         <Button HorizontalAlignment="Left" Padding="14,6"
