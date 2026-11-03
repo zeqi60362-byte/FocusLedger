@@ -59,6 +59,19 @@ public sealed partial class ReportViewModel : ObservableObject
     [ObservableProperty]
     private string statsMetric = "effective";
 
+    public bool IsWeekPeriod => StatsPeriod == "week";
+
+    public bool IsMonthPeriod => StatsPeriod == "month";
+
+    public bool IsYearPeriod => StatsPeriod == "year";
+
+    partial void OnStatsPeriodChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsWeekPeriod));
+        OnPropertyChanged(nameof(IsMonthPeriod));
+        OnPropertyChanged(nameof(IsYearPeriod));
+    }
+
     public bool IsEffectiveMetric => StatsMetric == "effective";
 
     public bool IsTotalMetric => StatsMetric == "total";
