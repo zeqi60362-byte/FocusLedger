@@ -129,16 +129,8 @@
                                    Margin="10,3,0,0" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding ActiveTrack}" Style="{StaticResource Caption}" FontSize="11"
                                    Margin="10,3,0,0" VerticalAlignment="Center" Opacity="0.75"
-                                   TextTrimming="CharacterEllipsis" MaxWidth="150" />
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0"
-                                    Visibility="{Binding IsMusicPlaying, Converter={StaticResource BoolToVis}}">
-                            <Button Content="◀" Style="{StaticResource GhostButton}" Padding="7,2" FontSize="10"
-                                    Command="{Binding MusicPreviousCommand}" />
-                            <Button Content="▶" Style="{StaticResource GhostButton}" Padding="7,2" FontSize="10" Margin="4,0,8,0"
-                                    Command="{Binding MusicNextCommand}" />
-                            <Slider Width="70" Minimum="0" Maximum="1" VerticalAlignment="Center"
-                                    Value="{Binding MusicVolume, Mode=TwoWay}" />
-                        </StackPanel>
+                                   TextTrimming="CharacterEllipsis" MaxWidth="180" />
+
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
