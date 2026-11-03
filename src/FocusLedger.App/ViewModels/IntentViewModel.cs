@@ -50,6 +50,28 @@ public sealed partial class IntentViewModel : ObservableObject
     [ObservableProperty]
     private string activeTrack = string.Empty;
 
+    [ObservableProperty]
+    private bool isMusicPlaying;
+
+    [ObservableProperty]
+    private double musicVolume = 0.35;
+
+    partial void OnMusicVolumeChanged(double value) => FocusAudio.Volume = value;
+
+    [RelayCommand]
+    private void MusicNext()
+    {
+        FocusAudio.Next();
+        ActiveTrack = FocusAudio.CurrentTrack;
+    }
+
+    [RelayCommand]
+    private void MusicPrevious()
+    {
+        FocusAudio.Previous();
+        ActiveTrack = FocusAudio.CurrentTrack;
+    }
+
     private static string MusicFolder => FocusAudio.Folder;
 
     [ObservableProperty]
@@ -130,6 +152,8 @@ public sealed partial class IntentViewModel : ObservableObject
         {
             FocusAudio.PlayFolder(MusicFolder);
             ActiveTrack = FocusAudio.CurrentTrack;
+            IsMusicPlaying = ActiveTrack.Length > 0;
+            FocusAudio.Volume = MusicVolume;
         }
         else
         {
@@ -221,6 +245,7 @@ public sealed partial class IntentViewModel : ObservableObject
     {
         FocusAudio.Stop();
         ActiveTrack = string.Empty;
+        IsMusicPlaying = false;
         if (_active is null)
         {
             return;

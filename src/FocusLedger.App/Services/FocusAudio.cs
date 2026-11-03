@@ -63,6 +63,31 @@ public static class FocusAudio
         PlayCurrent();
     }
 
+    public static void Next() => NextTrack();
+
+    public static void Previous()
+    {
+        if (_playlist.Count == 0)
+        {
+            return;
+        }
+
+        _index = (_index - 1 + _playlist.Count) % _playlist.Count;
+        PlayCurrent();
+    }
+
+    public static double Volume
+    {
+        get => _media?.Volume ?? 0.35;
+        set
+        {
+            if (_media is not null)
+            {
+                _media.Volume = Math.Clamp(value, 0, 1);
+            }
+        }
+    }
+
     private static void NextTrack()
     {
         if (_playlist.Count == 0)
