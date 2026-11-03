@@ -262,12 +262,6 @@ public sealed class WeekCanvas : FrameworkElement
 
             double x = GutterWidth + ColumnWidth * i + ColumnWidth / 2;
             dc.DrawText(text, new Point(x - text.Width / 2, HeaderHeight - text.Height - 4));
-
-            if (isToday)
-            {
-                dc.DrawRectangle(accent, null,
-                    new Rect(x - 9, HeaderHeight - 3, 18, 2));
-            }
         }
 
         // 已有计划
