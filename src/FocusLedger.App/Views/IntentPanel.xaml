@@ -29,7 +29,11 @@
                 </StackPanel>
 
                 <Button Grid.Column="1" Content="{loc:T Intent_Start}"
-                        Style="{StaticResource GhostButton}" Padding="14,6" VerticalAlignment="Center"
+                        Style="{StaticResource GhostButton}" Padding="16,7" VerticalAlignment="Center"
+                        Background="{DynamicResource Surface}"
+                        Foreground="{DynamicResource Text}"
+                        BorderBrush="{DynamicResource Border}"
+                        FontWeight="SemiBold"
                         Command="{Binding BeginEditCommand}" />
             </Grid>
 
