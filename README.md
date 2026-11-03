@@ -28,7 +28,7 @@
 | RescueTime | 应用 / 网站用时 | 按应用分类推测，不判断实际投入 | 无 |
 | Toggl | 你手动按下的计时 | 无 | 无 |
 | ActivityWatch | 应用 / 窗口 / 键鼠空闲 | 只区分是否 AFK | 无 |
-| **FocusLedger** | 应用 + 窗口标题 + 画面变化 + 媒体播放 + 键鼠 + 锁屏 | **四态判定，带置信区间** | **有，且能拆分差额** |
+| **FocusLedger** | 应用 + 窗口标题 + 画面变化 + 媒体播放 + 键鼠 + 锁屏 | **四态判定，每段可下钻看规则** | **有，且能拆分差额** |
 
 护城河不在记录。记录层会被开源项目做平；判定与对账不会。
 
@@ -91,6 +91,19 @@ powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 test
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 publish
 ```
+
+### 被 SmartScreen 或杀软拦了怎么办
+
+发布包**暂时没有代码签名证书**，Windows 首次运行会提示「已保护你的电脑」，需要点「更多信息 → 仍要运行」。
+更麻烦的是杀软误报：本程序会装全局键鼠**计数**钩子并轮询前台窗口，行为特征与键盘记录器接近，容易被拦截。
+
+这不是在偷偷做什么——源码全在这里，且进程不发起任何网络请求。如果被拦：
+
+1. 先核对发布页给出的 **SHA256**，确认文件没被动过；
+2. 按 [误报模板](.github/ISSUE_TEMPLATE/antivirus-false-positive.md) 提一个 issue，带上杀软名称、版本、拦截截图；
+3. 也可以直接**从源码构建**（上面那几行命令），完全绕过签名问题。
+
+代码签名的现状与取舍见 [docs/05-roadmap.md](docs/05-roadmap.md) 的 M4 进度清单。
 
 ## 命令行
 
