@@ -203,13 +203,15 @@
                                                         <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HolidayBg}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource TextDim}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Accent}" />
-                                                        <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource Bg}" />
+                                                        <!-- 选中日原来是一整块黑，太抢眼；改成浅灰底 + 深色字，
+                                                             和悬停的极浅灰形成层次，黑色只留给「今天」的描边 -->
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Border}" />
+                                                        <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource Text}" />
                                                         <Setter TargetName="Num" Property="FontWeight" Value="SemiBold" />
-                                                        <Setter TargetName="HolidayLabel" Property="Foreground" Value="{DynamicResource Bg}" />
+                                                        <Setter TargetName="HolidayLabel" Property="Foreground" Value="{DynamicResource Text}" />
                                                     </DataTrigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
