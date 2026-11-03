@@ -23,7 +23,7 @@ public sealed class Localization : INotifyPropertyChanged
     {
         // 全局
         ["App_Name"] = ("FocusLedger", "FocusLedger"),
-        ["App_Tagline"] = ("专注账本 · 本地优先", "Focus ledger · local-first"),
+        ["App_Tagline"] = ("专注账本 · 每一分钟都对得上", "Focus ledger · every minute accounted for"),
         ["App_LocalOnly"] = ("数据仅存本机", "Data stays on this device"),
         ["Status_Recording"] = ("● 记录中", "● Recording"),
         ["Status_Paused"] = ("○ 已暂停", "○ Paused"),
