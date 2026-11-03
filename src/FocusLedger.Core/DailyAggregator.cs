@@ -1,4 +1,4 @@
-﻿namespace FocusLedger.Core;
+namespace FocusLedger.Core;
 
 public sealed record AppUsage(string App, double Seconds, IReadOnlyList<AppUsage>? Children = null);
 
@@ -57,8 +57,6 @@ public sealed record DailySummary(
     double OffTaskSeconds,
     double AwaySeconds,
     double EffectiveSeconds,
-    double EffectiveLowSeconds,
-    double EffectiveHighSeconds,
     int FocusBlocks,
     double LongestFocusBlockSeconds,
     int AppSwitches,
@@ -79,7 +77,7 @@ public sealed record DailySummary(
     public double EffectiveRatio => AccountedSeconds > 0 ? EffectiveSeconds / AccountedSeconds : 0;
 
     public static DailySummary Empty(DateOnly date) =>
-        new(date, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Array.Empty<AppUsage>(), Array.Empty<AppTransition>(),
+        new(date, 0, 0, 0, 0, 0, 0, 0, 0, Array.Empty<AppUsage>(), Array.Empty<AppTransition>(),
             Array.Empty<AppUsage>());
 }
 
@@ -100,7 +98,7 @@ public static class DailyAggregator
         long dayEnd = StartOfDayUtc(date.AddDays(1), tz);
 
         double active = 0, silent = 0, offTask = 0, away = 0;
-        double effective = 0, low = 0, high = 0;
+        double effective = 0;
         double weak = 0;
         int switches = 0;
         int focusBlocks = 0;
@@ -146,13 +144,10 @@ public static class DailyAggregator
             {
                 effective += duration;
             }
-
             if (segment.Weight < 0.999 && segment.State is ActivityState.ActiveFocus or ActivityState.SilentFocus)
             {
                 weak += duration;
             }
-            low += duration * segment.WeightLow;
-            high += duration * segment.WeightHigh;
 
             if (lastApp is not null
                 && !string.Equals(lastApp, segment.App, StringComparison.OrdinalIgnoreCase))
@@ -246,7 +241,7 @@ public static class DailyAggregator
 
         return new DailySummary(
             date, active, silent, offTask, away,
-            effective, low, high,
+            effective,
             focusBlocks, longestBlock, switches, top, topTransitions, appTotals, weak);
     }
 

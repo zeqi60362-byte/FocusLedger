@@ -485,7 +485,7 @@ internal static class Program
         double coveredSeconds = segments.Sum(s => s.DurationSeconds);
 
         Console.WriteLine();
-        Console.WriteLine($"{date:yyyy-MM-dd}   有效专注 {Dur(summary.EffectiveSeconds)} [{Dur(summary.EffectiveLowSeconds)}–{Dur(summary.EffectiveHighSeconds)}]");
+        Console.WriteLine($"{date:yyyy-MM-dd}   有效专注 {Dur(summary.EffectiveSeconds)}");
         Console.WriteLine();
         Console.WriteLine($"  深度 {Dur(summary.ActiveSeconds)}  |  静默 {Dur(summary.SilentSeconds)}");
         Console.WriteLine($"  分心 {Dur(summary.OffTaskSeconds)}  |  离席 {Dur(summary.AwaySeconds)}");

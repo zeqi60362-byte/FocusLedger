@@ -32,9 +32,6 @@ public sealed partial class ReportViewModel : ObservableObject
     private string effective = "—";
 
     [ObservableProperty]
-    private string band = string.Empty;
-
-    [ObservableProperty]
     private string primaryRow = string.Empty;
 
     [ObservableProperty]
@@ -186,7 +183,6 @@ public sealed partial class ReportViewModel : ObservableObject
         {
             HasData = false;
             Effective = "—";
-            Band = string.Empty;
             PrimaryRow = string.Empty;
             SecondaryRow = string.Empty;
             EmptyHint = Loc.T("Report_Empty");
@@ -200,9 +196,6 @@ public sealed partial class ReportViewModel : ObservableObject
             EmptyHint = string.Empty;
 
             Effective = Fmt.Duration(summary.EffectiveSeconds);
-            Band = Loc.T("Today_Band",
-                Fmt.Duration(summary.EffectiveLowSeconds),
-                Fmt.Duration(summary.EffectiveHighSeconds));
             PrimaryRow = Loc.T("Today_Breakdown",
                 Fmt.Duration(summary.ActiveSeconds),
                 Fmt.Duration(summary.SilentSeconds));
@@ -413,7 +406,7 @@ public sealed partial class ReportViewModel : ObservableObject
 
     private DailySummary SumRange(DateOnly from, DateOnly to)
     {
-        double active = 0, silent = 0, offTask = 0, away = 0, effective = 0, low = 0, high = 0;
+        double active = 0, silent = 0, offTask = 0, away = 0, effective = 0;
 
         for (var day = from; day <= to; day = day.AddDays(1))
         {
@@ -428,11 +421,9 @@ public sealed partial class ReportViewModel : ObservableObject
             offTask += summary.OffTaskSeconds;
             away += summary.AwaySeconds;
             effective += summary.EffectiveSeconds;
-            low += summary.EffectiveLowSeconds;
-            high += summary.EffectiveHighSeconds;
         }
 
-        return new DailySummary(from, active, silent, offTask, away, effective, low, high, 0, 0, 0,
+        return new DailySummary(from, active, silent, offTask, away, effective, 0, 0, 0,
             Array.Empty<AppUsage>(), Array.Empty<AppTransition>(), Array.Empty<AppUsage>());
     }
 

@@ -59,7 +59,6 @@ public sealed class Localization : INotifyPropertyChanged
         ["Today_TotalWork"] = ("今日总计", "Total today"),
         ["Today_EffectiveFormula"] = ("＝ 深度 ＋ 静默（按原始时长计入，不再折算）",
                                       "= deep + silent, counted in full"),
-        ["Today_Band"] = ("区间 {0} – {1}", "range {0} – {1}"),
         ["Today_Breakdown"] = ("深度 {0}     静默 {1}", "Deep {0}     Silent {1}"),
         ["Today_Secondary"] = ("分心 {0}     离席 {1}", "Distracted {0}     Away {1}"),
         ["Today_Coverage"] = ("样本 {0} 条  ·  覆盖 {1}  ·  深度工作块 {2} 次{3}",
