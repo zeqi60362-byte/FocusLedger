@@ -1,5 +1,36 @@
 # 变更记录
 
+## v0.5 · 2026-11-03 · 计划页可滚动 + 建表重复列修复
+
+### 修复：新装用户启动即崩
+
+`plans` 的建表语句里 `location / url / remind` 被写了两遍，`MigratePlans()` 里也重复了两组
+`if (!columns.Contains(...))`。两个后果：
+
+- 全新安装：`CREATE TABLE` 直接抛 `SQLite Error 1: 'duplicate column name: location'`，
+  库都建不起来；
+- 老库升级：列快照在方法开头取一次，第一组加完列后快照没变，第二组会照着过期快照再
+  `ALTER` 一遍，同样抛 `duplicate column name`。
+
+本机之所以一直没炸，是因为那份 `data.db` 三列早就齐了，两处都被 `IF NOT EXISTS` / `Contains` 跳过。
+Storage 测试（新建库 + 老库各一条路径）把两边都照出来了。
+
+改为 `Ensure(列名, 定义)` 单列单判，加完立刻记进快照。
+
+### 计划页可滚动
+
+上下堆叠之后，页面用的是「星号行 + GridSplitter 分剩余空间」，外层没有滚动容器，
+窗口一矮内容就被裁掉，而且整页滚不动。
+
+- 换成「固定高度 + 滚动」：周视图卡片给定高度（默认 480），月历按内容自适应，
+  两者一起放进 `ScrollViewer`；顶栏留在滚动容器外面，始终可见
+- 分隔条不再分星号行，改成拖拽时直接改 `WeekCard.Height`（320–1400 之间夹紧）；
+  星号行在 `ScrollViewer` 里拿不到确定高度，本来也拖不动
+- `HorizontalScrollBarVisibility` 必须是 `Disabled`：横向一开，`ScrollViewer`
+  会用无限宽去量 `WeekCanvas`，最右一列又会被切掉（v0.4 踩过一次）
+
+---
+
 ## v0.4 · 2026-11-02 · 计划页可用化 + 启动崩溃修复
 
 ### 修复：加字段导致启动即崩

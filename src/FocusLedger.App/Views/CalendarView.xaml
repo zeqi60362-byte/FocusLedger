@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="FocusLedger.App.Views.CalendarView"
+<UserControl x:Class="FocusLedger.App.Views.CalendarView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:FocusLedger.App.Localization"
@@ -37,6 +37,25 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- 两张卡之间的拖拽把手：只负责竖向拖，实际高度由 code-behind 改 WeekCard.Height -->
+        <Style x:Key="SplitHandle" TargetType="Thumb">
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Cursor" Value="SizeNS" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="Transparent" Height="12">
+                            <Border Width="44" Height="4" CornerRadius="2"
+                                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Background="{DynamicResource Border}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <UserControl.InputBindings>
@@ -50,7 +69,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 顶栏 -->
+        <!-- 顶栏（不跟着滚，始终在顶部） -->
         <Grid Grid.Row="0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="{loc:T Plan_Title}" Style="{StaticResource H2}" />
@@ -68,138 +87,135 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="0,14,0,0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="1.9*" MinHeight="300" />
-                <RowDefinition Height="10" />
-                <RowDefinition Height="1*" MinHeight="150" />
-            </Grid.RowDefinitions>
+        <!--
+            计划页整体可滚动。
+            这里刻意不用「星号行 + GridSplitter 分剩余空间」：一旦外层套 ScrollViewer，
+            内容拿到的是无限高度，* 行就没有意义，分隔条也失去可拖的基准。
+            改成：上面那张卡固定高度（分隔条就改这个数字），月历按内容自适应，两者一起滚。
 
-            <GridSplitter Grid.Row="1" Height="10" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                          Background="Transparent" Cursor="SizeNS" ResizeBehavior="PreviousAndNext" ResizeDirection="Rows">
-                <GridSplitter.Template>
-                    <ControlTemplate TargetType="GridSplitter">
-                        <Border Background="Transparent" Height="10">
-                            <Border Width="44" Height="4" CornerRadius="2" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                    Background="{DynamicResource Border}" />
-                        </Border>
-                    </ControlTemplate>
-                </GridSplitter.Template>
-            </GridSplitter>
-            <!-- 月历 -->
-            <Border Grid.Row="2" Style="{StaticResource Card}" Padding="16">
-                <StackPanel>
-                    <TextBlock Text="{Binding MonthTitle}" FontSize="15" FontWeight="SemiBold" Margin="4,2,0,14" />
+            另外 HorizontalScrollBarVisibility 必须是 Disabled —— 横向一开，
+            ScrollViewer 会用无限宽去量 WeekCanvas，最右一列又会被切掉。
+        -->
+        <ScrollViewer x:Name="PageScroll" Grid.Row="1" Margin="0,14,0,0"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
 
-                    <ItemsControl ItemsSource="{Binding Weekdays}" Margin="0,0,0,4">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="7" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}" Style="{StaticResource Caption}" HorizontalAlignment="Center" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+            <StackPanel>
+                <!-- 本周时间画布 -->
+                <Border x:Name="WeekCard" Style="{StaticResource Card}" Height="480" Padding="16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
 
-                    <ItemsControl ItemsSource="{Binding Days}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="7" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Height="46" Margin="2" Padding="0" Cursor="Hand"
-                                        Command="{Binding DataContext.SelectDayCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="Bd" CornerRadius="14" Background="Transparent"
-                                                    BorderThickness="1.5" BorderBrush="Transparent">
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock x:Name="Num" Text="{Binding Day}" FontSize="12.5"
-                                                               HorizontalAlignment="Center" />
-                                                    <Ellipse Width="5" Height="5" Margin="0,3,0,2"
-                                                             HorizontalAlignment="Center"
-                                                             Fill="{DynamicResource StateOffTask}"
-                                                             Visibility="{Binding HasPlan, Converter={StaticResource BoolToVis}}" />
-                                                </StackPanel>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceAlt}" />
-                                                </Trigger>
-                                                <DataTrigger Binding="{Binding InMonth}" Value="False">
-                                                    <Setter TargetName="Num" Property="Opacity" Value="0.28" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsWeekend}" Value="True">
-                                                    <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource TextDim}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsHoliday}" Value="True">
-                                                    <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource StateOffTask}" />
-                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HolidayBg}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Accent}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Accent}" />
-                                                    <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource Bg}" />
-                                                    <Setter TargetName="Num" Property="FontWeight" Value="SemiBold" />
-                                                </DataTrigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Margin="4,10,0,0">
-                        <TextBlock Text="{Binding HolidayText}" Style="{StaticResource Caption}"
-                                   Foreground="{DynamicResource StateOffTask}" TextWrapping="Wrap" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="{Binding SelectedDateText}" FontSize="14" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding PlanCountText}" Style="{StaticResource Caption}"
+                                           Margin="12,3,0,0" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{loc:T Plan_WriteHere}" Style="{StaticResource Caption}"
+                                       Margin="16,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        </Grid>
 
-            <!-- 本周时间画布 -->
-            <Border Grid.Row="0" Style="{StaticResource Card}" VerticalAlignment="Stretch" Padding="16">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0" Margin="0,0,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Orientation="Horizontal">
-                            <TextBlock Text="{Binding SelectedDateText}" FontSize="14" FontWeight="SemiBold" />
-                            <TextBlock Text="{Binding PlanCountText}" Style="{StaticResource Caption}"
-                                       Margin="12,3,0,0" />
-                        </StackPanel>
-                        <TextBlock Grid.Column="1" Text="{loc:T Plan_WriteHere}" Style="{StaticResource Caption}"
-                                   Margin="16,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <controls:WeekCanvas Grid.Row="1" Margin="0,2,0,0"
+                                             Plans="{Binding WeekBlocks}"
+                                             TodayIndex="{Binding TodayIndex}"
+                                             RangeSelected="OnRangeSelected"
+                                             BlockClicked="OnBlockClicked" />
                     </Grid>
+                </Border>
 
-                    <!-- 不要再套 ScrollViewer：它会拿无限宽去量画布，导致最右一列被切掉；
-                         也不要把高度绑到 ViewportHeight，那会和滚动条互相反馈。画布自己铺满这一行。 -->
-                    <controls:WeekCanvas Grid.Row="1" Margin="0,2,0,0"
-                                         Plans="{Binding WeekBlocks}"
-                                         TodayIndex="{Binding TodayIndex}"
-                                         RangeSelected="OnRangeSelected"
-                                         BlockClicked="OnBlockClicked" />
-                </Grid>
-            </Border>
-        </Grid>
+                <Thumb Style="{StaticResource SplitHandle}" DragDelta="OnSplitterDrag" />
 
-        <!-- 新建 / 编辑计划：整页遮罩 + 居中卡片 -->
+                <!-- 月历：高度跟着内容走 -->
+                <Border Style="{StaticResource Card}" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="{Binding MonthTitle}" FontSize="15" FontWeight="SemiBold" Margin="4,2,0,14" />
+
+                        <ItemsControl ItemsSource="{Binding Weekdays}" Margin="0,0,0,4">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="7" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Style="{StaticResource Caption}" HorizontalAlignment="Center" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <ItemsControl ItemsSource="{Binding Days}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="7" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Height="46" Margin="2" Padding="0" Cursor="Hand"
+                                            Command="{Binding DataContext.SelectDayCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="Bd" CornerRadius="14" Background="Transparent"
+                                                        BorderThickness="1.5" BorderBrush="Transparent">
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock x:Name="Num" Text="{Binding Day}" FontSize="12.5"
+                                                                   HorizontalAlignment="Center" />
+                                                        <Ellipse Width="5" Height="5" Margin="0,3,0,2"
+                                                                 HorizontalAlignment="Center"
+                                                                 Fill="{DynamicResource StateOffTask}"
+                                                                 Visibility="{Binding HasPlan, Converter={StaticResource BoolToVis}}" />
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceAlt}" />
+                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding InMonth}" Value="False">
+                                                        <Setter TargetName="Num" Property="Opacity" Value="0.28" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsWeekend}" Value="True">
+                                                        <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource TextDim}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsHoliday}" Value="True">
+                                                        <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource StateOffTask}" />
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HolidayBg}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Accent}" />
+                                                        <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource Bg}" />
+                                                        <Setter TargetName="Num" Property="FontWeight" Value="SemiBold" />
+                                                    </DataTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <StackPanel Orientation="Horizontal" Margin="4,10,0,0">
+                            <TextBlock Text="{Binding HolidayText}" Style="{StaticResource Caption}"
+                                       Foreground="{DynamicResource StateOffTask}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 新建 / 编辑计划：整页遮罩 + 居中卡片（挂在滚动容器外层，滚动时不会跟着跑） -->
         <Grid x:Name="EditorOverlay" Grid.Row="0" Grid.RowSpan="2" Background="#66000000"
               Visibility="{Binding IsEditorOpen, Converter={StaticResource BoolToVis}}">
             <Border Width="430" Padding="24" CornerRadius="20"
