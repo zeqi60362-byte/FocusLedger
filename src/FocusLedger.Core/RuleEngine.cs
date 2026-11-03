@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace FocusLedger.Core;
 
@@ -134,7 +134,16 @@ public static class BuiltinRules
                      "sublime_text.exe", "notepad++.exe", "cursor.exe", "typora.exe", "obsidian.exe",
                      "windowsterminal.exe", "powershell.exe", "pwsh.exe", "cmd.exe", "wt.exe",
                      "winword.exe", "excel.exe", "powerpnt.exe", "wps.exe", "et.exe", "wpp.exe",
-                     "stata.exe", "stata-mp.exe", "spss.exe", "matlab.exe", "jupyter.exe"
+                     "stata.exe", "stata-mp.exe", "spss.exe", "matlab.exe", "jupyter.exe",
+                     // 设计 / 建筑 / 工程
+                     "photoshop.exe", "illustrator.exe", "indesign.exe", "lightroom.exe",
+                     "rhino.exe", "autocad.exe", "acad.exe", "sketchup.exe", "revit.exe",
+                     "3dsmax.exe", "blender.exe", "cinema 4d.exe", "c4d.exe",
+                     "archicad.exe", "vectorworks.exe", "lumion.exe", "enscape.exe",
+                     "arcgispro.exe", "arcmap.exe", "qgis.exe", "qgis-ltr-bin.exe",
+                     // 科研 / 数据
+                     "origin.exe", "graphpad prism.exe", "prism.exe", "spss.exe",
+                     "mendeley.exe", "endnote.exe", "jasp.exe", "rstudio.exe"
                  })
         {
             Add(RuleMatchType.Process, p, ContextLevel.Task, AppClass.Typing, 10, "任务·写作与编码");
