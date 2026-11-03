@@ -69,7 +69,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 顶栏（不跟着滚，始终在顶部） -->
+        <!-- 顶栏（不跟着滚，始终在顶部）；月份切换挪到整页右下角 -->
         <Grid Grid.Row="0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="{loc:T Plan_Title}" Style="{StaticResource PageTitle}" />
@@ -86,15 +86,6 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="{loc:T Plan_Prev}" Style="{StaticResource GhostButton}" Padding="10,5" Margin="0,0,6,0"
-                        Command="{Binding PreviousMonthCommand}" />
-                <Button Content="{loc:T Plan_Today}" Style="{StaticResource GhostButton}" Padding="10,5" Margin="0,0,6,0"
-                        Command="{Binding GoTodayCommand}" />
-                <Button Content="{loc:T Plan_Next}" Style="{StaticResource GhostButton}" Padding="10,5"
-                        Command="{Binding NextMonthCommand}" />
             </StackPanel>
         </Grid>
 
@@ -181,10 +172,19 @@
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock x:Name="Num" Text="{Binding Day}" FontSize="12.5"
                                                                    HorizontalAlignment="Center" />
-                                                        <Ellipse Width="5" Height="5" Margin="0,3,0,2"
-                                                                 HorizontalAlignment="Center"
-                                                                 Fill="{DynamicResource StateOffTask}"
-                                                                 Visibility="{Binding HasPlan, Converter={StaticResource BoolToVis}}" />
+                                                        <StackPanel Orientation="Horizontal" Margin="0,2,0,1"
+                                                                    HorizontalAlignment="Center">
+                                                            <!-- 节假日名字挂在日期下面，不再堆在卡片左下角 -->
+                                                            <TextBlock x:Name="HolidayLabel" Text="{Binding Holiday}"
+                                                                       FontSize="8.5" Margin="1,0,0,0"
+                                                                       MaxWidth="56" TextTrimming="CharacterEllipsis"
+                                                                       Foreground="{DynamicResource StateOffTask}"
+                                                                       Visibility="{Binding IsHoliday, Converter={StaticResource BoolToVis}}" />
+                                                            <Ellipse Width="5" Height="5" Margin="4,0,0,0"
+                                                                     VerticalAlignment="Center"
+                                                                     Fill="{DynamicResource StateOffTask}"
+                                                                     Visibility="{Binding HasPlan, Converter={StaticResource BoolToVis}}" />
+                                                        </StackPanel>
                                                     </StackPanel>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
@@ -193,6 +193,7 @@
                                                     </Trigger>
                                                     <DataTrigger Binding="{Binding InMonth}" Value="False">
                                                         <Setter TargetName="Num" Property="Opacity" Value="0.28" />
+                                                        <Setter TargetName="HolidayLabel" Property="Opacity" Value="0.28" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsWeekend}" Value="True">
                                                         <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource TextDim}" />
@@ -208,6 +209,7 @@
                                                         <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Accent}" />
                                                         <Setter TargetName="Num" Property="Foreground" Value="{DynamicResource Bg}" />
                                                         <Setter TargetName="Num" Property="FontWeight" Value="SemiBold" />
+                                                        <Setter TargetName="HolidayLabel" Property="Foreground" Value="{DynamicResource Bg}" />
                                                     </DataTrigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -217,9 +219,14 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <StackPanel Orientation="Horizontal" Margin="4,10,0,0">
-                            <TextBlock Text="{Binding HolidayText}" Style="{StaticResource Caption}"
-                                       Foreground="{DynamicResource StateOffTask}" TextWrapping="Wrap" />
+                        <!-- 月份切换放在整页右下角，跟着月历走 -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                            <Button Content="{loc:T Plan_Prev}" Style="{StaticResource GhostButton}"
+                                    Padding="12,5" Margin="0,0,8,0"
+                                    Command="{Binding PreviousMonthCommand}" />
+                            <Button Content="{loc:T Plan_Next}" Style="{StaticResource GhostButton}"
+                                    Padding="12,5"
+                                    Command="{Binding NextMonthCommand}" />
                         </StackPanel>
                     </StackPanel>
                 </Border>

@@ -128,9 +128,6 @@ public sealed partial class CalendarViewModel : ObservableObject
     private string selectedDateText = string.Empty;
 
     [ObservableProperty]
-    private string holidayText = string.Empty;
-
-    [ObservableProperty]
     private string planCountText = string.Empty;
 
     /// <summary>顶栏右侧的临时提示（周期任务建了几条、跳过了几天）。</summary>
@@ -368,10 +365,6 @@ public sealed partial class CalendarViewModel : ObservableObject
             day.HasPlan = plans.ContainsKey(key);
             Days.Add(day);
         }
-
-        HolidayText = _holidays.TryGetValue(_selected.ToString("yyyy-MM-dd"), out string? holiday)
-            ? Loc.T("Plan_Holiday", holiday)
-            : string.Empty;
 
         StatusText = string.Empty;
         LoadWeek();
