@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="FocusLedger.App.Views.IntentPanel"
+<UserControl x:Class="FocusLedger.App.Views.IntentPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:FocusLedger.App.Controls"
@@ -8,7 +8,8 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
 
-    <Border Style="{StaticResource Card}" Padding="18,16" Margin="0,0,0,14">
+    <!-- 上下间距交给外层页面控制，自己不再多贴一个 14，否则和下一张卡的 margin 叠成 28 -->
+    <Border Style="{StaticResource Card}" Padding="18,16" Margin="0">
         <Grid>
             <!-- 空闲 -->
             <Grid Visibility="{Binding ShowIdle, Converter={StaticResource BoolToVis}}">
