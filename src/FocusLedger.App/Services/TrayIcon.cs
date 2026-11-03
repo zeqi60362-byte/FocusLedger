@@ -7,7 +7,7 @@ using FocusLedger.Core;
 namespace FocusLedger.App.Services;
 
 /// <summary>
-/// 托盘图标：深色圆角方块 + 粗体 F，F 的颜色表示当前状态。
+/// 托盘图标：白色圆角方块 + 时间盘符号，符号的颜色表示当前状态。
 /// 按状态缓存，并且一次生成 16/20/24/32 四个尺寸——让系统挑原生尺寸，
 /// 避免拿大图缩小导致发糊。
 /// </summary>
@@ -21,15 +21,16 @@ internal static class TrayIcon
 
     public static Icon Build(bool recording, ActivityState? state)
     {
+        // 白底上颜色要压深一档，否则浅绿/浅蓝在白底上糊成一片
         Color color = !recording
-            ? Color.FromArgb(255, 150, 155, 165)
+            ? Color.FromArgb(255, 138, 143, 151)
             : state switch
             {
-                ActivityState.ActiveFocus => Color.FromArgb(255, 74, 222, 128),
-                ActivityState.SilentFocus => Color.FromArgb(255, 96, 165, 250),
-                ActivityState.OffTask => Color.FromArgb(255, 248, 113, 113),
-                ActivityState.Away => Color.FromArgb(255, 160, 165, 175),
-                _ => Color.FromArgb(255, 150, 155, 165)
+                ActivityState.ActiveFocus => Color.FromArgb(255, 44, 122, 82),
+                ActivityState.SilentFocus => Color.FromArgb(255, 59, 110, 165),
+                ActivityState.OffTask => Color.FromArgb(255, 194, 69, 46),
+                ActivityState.Away => Color.FromArgb(255, 130, 136, 145),
+                _ => Color.FromArgb(255, 138, 143, 151)
             };
 
         string key = $"{recording}:{color.ToArgb()}";
@@ -96,10 +97,13 @@ internal static class TrayIcon
         float radius = size * 0.24f;
         float side = size - pad * 2;
 
+        // 白底：任务栏/托盘背景有深有浅，白底反差最稳
         using (var path = RoundedRect(pad, pad, side, side, radius))
-        using (var background = new SolidBrush(Color.FromArgb(255, 20, 20, 24)))
+        using (var background = new SolidBrush(Color.FromArgb(255, 255, 255, 255)))
+        using (var outline = new Pen(Color.FromArgb(46, 0, 0, 0), Math.Max(1f, size * 0.03f)))
         {
             g.FillPath(background, path);
+            g.DrawPath(outline, path);
         }
 
         DrawGlyph(g, size, color);

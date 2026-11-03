@@ -54,14 +54,15 @@
                 <StackPanel Grid.Row="0" Margin="6,0,6,22">
                     <StackPanel Orientation="Horizontal">
                         <Border Width="32" Height="32" CornerRadius="10"
-                                Background="{DynamicResource Text}">
+                                Background="White"
+                                BorderBrush="{DynamicResource Border}" BorderThickness="1">
                             <!-- 时间盘：与任务栏图标同一个符号，矢量绘制，任何缩放都清晰 -->
                             <Viewbox Width="23" Height="23" Stretch="Uniform">
                                 <Canvas Width="32" Height="32">
                                     <Ellipse Canvas.Left="4.75" Canvas.Top="4.75" Width="22.5" Height="22.5"
-                                             Stroke="{DynamicResource Bg}" StrokeThickness="3.5"
+                                             Stroke="{DynamicResource StateActive}" StrokeThickness="3.5"
                                              Fill="Transparent" />
-                                    <Path Fill="{DynamicResource Bg}"
+                                    <Path Fill="{DynamicResource StateActive}"
                                           Data="M16,16 L16,6.5 A9.5,9.5 0 0 1 24.23,20.75 Z" />
                                 </Canvas>
                             </Viewbox>
