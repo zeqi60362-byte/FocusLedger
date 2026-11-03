@@ -288,37 +288,26 @@ public sealed class WeekCanvas : FrameworkElement
                 dc.DrawRoundedRectangle(blockFill, null, rect, 5, 5);
                 dc.DrawRoundedRectangle(accent, null, new Rect(rect.X, rect.Y, 2.5, rect.Height), 1, 1);
 
-                // 标题 / 地点 / 网址各占一行，水平居中；放不下就少画几行，绝不画出块外
-                var lines = new List<string> { plan.Title };
+                // 标题 / 地点 / 网址各占一行，水平居中；放不下就少画几行，绝不画出块外。
+                // 标题单独加大加粗：一周七列里它是唯一能用来认出这块是什么的信息。
+                var lines = new List<(string Text, bool IsTitle)> { (plan.Title, true) };
                 if (!string.IsNullOrWhiteSpace(plan.Location))
                 {
-                    lines.Add(plan.Location);
+                    lines.Add((plan.Location, false));
                 }
 
                 if (!string.IsNullOrWhiteSpace(plan.Url))
                 {
-                    lines.Add(ShortenUrl(plan.Url));
+                    lines.Add((ShortenUrl(plan.Url), false));
                 }
 
                 double textWidth = Math.Max(10, rect.Width - 6);
-                var probe = new FormattedText("测", CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                    typeface, 10.5, textBrush, dpi);
-                double lineHeight = probe.Height + 1;
+                var titleTypeface = new Typeface(typeface.FontFamily, FontStyles.Normal,
+                    FontWeights.Bold, FontStretches.Normal);
 
-                int fits = Math.Max(0, (int)((rect.Height - 6) / lineHeight));
-                int show = Math.Min(lines.Count, fits);
-                if (show == 0)
-                {
-                    continue;
-                }
-
-                // 整组文字在块内垂直居中
-                double startY = rect.Y + Math.Max(2, (rect.Height - show * lineHeight) / 2);
-
-                for (int i = 0; i < show; i++)
-                {
-                    var line = new FormattedText(lines[i], CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                        typeface, 10.5, textBrush, dpi)
+                FormattedText MakeLine(string text, bool isTitle) =>
+                    new(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                        isTitle ? titleTypeface : typeface, isTitle ? 12 : 10.5, textBrush, dpi)
                     {
                         MaxTextWidth = textWidth,
                         MaxLineCount = 1,
@@ -326,7 +315,30 @@ public sealed class WeekCanvas : FrameworkElement
                         TextAlignment = TextAlignment.Center
                     };
 
-                    dc.DrawText(line, new Point(rect.X + 3, startY + i * lineHeight));
+                // 从标题往下逐行加，直到超出块高为止（标题永远留）
+                var drawn = new List<(FormattedText Text, double Height)>();
+                double total = 0;
+                foreach (var (text, isTitle) in lines)
+                {
+                    var formatted = MakeLine(text, isTitle);
+                    double step = formatted.Height + 1;
+
+                    if (drawn.Count > 0 && total + step > rect.Height - 6)
+                    {
+                        break;
+                    }
+
+                    drawn.Add((formatted, step));
+                    total += step;
+                }
+
+                // 整组文字在块内垂直居中
+                double startY = rect.Y + Math.Max(2, (rect.Height - total) / 2);
+
+                foreach (var (text, lineStep) in drawn)
+                {
+                    dc.DrawText(text, new Point(rect.X + 3, startY));
+                    startY += lineStep;
                 }
             }
         }
