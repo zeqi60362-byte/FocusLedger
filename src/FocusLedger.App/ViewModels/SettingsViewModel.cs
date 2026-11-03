@@ -45,6 +45,41 @@ public sealed partial class SettingsViewModel : ObservableObject
         .ToList();
 
     [ObservableProperty]
+    private string musicFolder = string.Empty;
+
+    [RelayCommand]
+    private void PickMusicFolder()
+    {
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "选择背景音乐文件夹",
+            UseDescriptionForTitle = true,
+            SelectedPath = Directory.Exists(MusicFolder) ? MusicFolder : string.Empty
+        };
+
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        MusicFolder = dialog.SelectedPath;
+        _settings.MusicFolder = MusicFolder;
+        _settings.Save();
+        FocusAudio.Folder = MusicFolder;
+        Status = Loc.T("Settings_MusicSaved");
+    }
+
+    [RelayCommand]
+    private void ClearMusicFolder()
+    {
+        MusicFolder = string.Empty;
+        _settings.MusicFolder = string.Empty;
+        _settings.Save();
+        FocusAudio.Folder = string.Empty;
+        Status = Loc.T("Settings_MusicSaved");
+    }
+
+    [ObservableProperty]
     private string profile = "general";
 
     [RelayCommand]
@@ -116,6 +151,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _recording = recording;
         _rules = rules;
 
+        MusicFolder = settings.MusicFolder ?? string.Empty;
         Profile = RulePacks.Normalize(_settings.Profile);
         SyncSelection();
 

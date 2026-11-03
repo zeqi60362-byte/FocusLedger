@@ -8,6 +8,20 @@
             <TextBlock Text="{loc:T Settings_Title}" Style="{StaticResource PageTitle}" />
             <TextBlock Text="{loc:T Settings_Desc}" Style="{StaticResource Caption}" Margin="0,4,0,16" />
 
+            <!-- 背景音乐 -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                <StackPanel>
+                    <TextBlock Text="{loc:T Settings_Music}" Style="{StaticResource H2}" FontSize="13.5" />
+                    <TextBlock Text="{loc:T Settings_MusicDesc}" Style="{StaticResource Caption}" Margin="0,4,0,10" TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{loc:T Settings_MusicPick}" Style="{StaticResource GhostButton}" Padding="14,5"
+                                Command="{Binding PickMusicFolderCommand}" />
+                        <Button Content="{loc:T Settings_MusicClear}" Style="{StaticResource GhostButton}" Padding="12,5" Margin="8,0,0,0"
+                                Command="{Binding ClearMusicFolderCommand}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding MusicFolder}" Style="{StaticResource Caption}" Margin="0,8,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Border>
             <!-- 身份 -->
             <Border Style="{StaticResource Card}" Margin="0,0,0,14">
                 <StackPanel>
