@@ -29,6 +29,16 @@ Storage 测试（新建库 + 老库各一条路径）把两边都照出来了。
 - `HorizontalScrollBarVisibility` 必须是 `Disabled`：横向一开，`ScrollViewer`
   会用无限宽去量 `WeekCanvas`，最右一列又会被切掉（v0.4 踩过一次）
 
+### 界面细节
+
+- 滚动条不再显示：五个页面的 `ScrollViewer` 全改 `VerticalScrollBarVisibility="Hidden"`
+  （可滚、不画、不占位），`ScrollBar` 的隐式样式宽度也归零兜底
+- 今日页标题「意图声明」→「设定今日专注任务」
+  （上一笔 `34d9b23` 只改了字号字重，文案本体在 `Localization.cs` 里根本没动）
+- 今日页「意图卡 → 主数字卡」间距 28 → 14，与「主数字卡 → 时间轴卡」一致
+  （`IntentPanel` 自带的 14 底边距和外层卡片的 14 上边距叠在一起了）
+- 统计页汇总卡删掉「深度工作块 … 应用切换 …」一行，四种状态的胶囊之后不再留大段空白
+
 ---
 
 ## v0.4 · 2026-11-02 · 计划页可用化 + 启动崩溃修复
