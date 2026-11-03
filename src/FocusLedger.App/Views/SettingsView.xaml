@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="FocusLedger.App.Views.SettingsView"
+<UserControl x:Class="FocusLedger.App.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:FocusLedger.App.Localization">
@@ -15,12 +15,49 @@
                     <TextBlock Text="{loc:T Settings_ThemeDesc}" Style="{StaticResource Caption}" Margin="0,4,0,10" />
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                        <Button Content="{loc:T Theme_Dark}" Style="{StaticResource GhostButton}" Padding="14,5" Margin="0,0,8,0"
-                                Command="{Binding SetThemeCommand}" CommandParameter="Dark" />
-                        <Button Content="{loc:T Theme_Light}" Style="{StaticResource GhostButton}" Padding="14,5" Margin="0,0,8,0"
-                                Command="{Binding SetThemeCommand}" CommandParameter="Light" />
-                        <Button Content="{loc:T Theme_Midnight}" Style="{StaticResource GhostButton}" Padding="14,5"
-                                Command="{Binding SetThemeCommand}" CommandParameter="Midnight" />
+                        <!-- 当前生效的那一档要看得出来：选中态用深底白字 -->
+                        <Button Content="{loc:T Theme_Dark}" Padding="14,5" Margin="0,0,8,0"
+                                Command="{Binding SetThemeCommand}" CommandParameter="Dark">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentTheme}" Value="Dark">
+                                            <Setter Property="Background" Value="#2B2B2B" />
+                                            <Setter Property="BorderBrush" Value="#2B2B2B" />
+                                            <Setter Property="Foreground" Value="#F2F2F0" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="{loc:T Theme_Light}" Padding="14,5" Margin="0,0,8,0"
+                                Command="{Binding SetThemeCommand}" CommandParameter="Light">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentTheme}" Value="Light">
+                                            <Setter Property="Background" Value="#2B2B2B" />
+                                            <Setter Property="BorderBrush" Value="#2B2B2B" />
+                                            <Setter Property="Foreground" Value="#F2F2F0" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="{loc:T Theme_Midnight}" Padding="14,5"
+                                Command="{Binding SetThemeCommand}" CommandParameter="Midnight">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentTheme}" Value="Midnight">
+                                            <Setter Property="Background" Value="#2B2B2B" />
+                                            <Setter Property="BorderBrush" Value="#2B2B2B" />
+                                            <Setter Property="Foreground" Value="#F2F2F0" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </StackPanel>
 
                 </StackPanel>
