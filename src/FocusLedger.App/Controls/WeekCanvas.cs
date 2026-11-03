@@ -199,6 +199,12 @@ public sealed class WeekCanvas : FrameworkElement
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         var typeface = new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal,
             FontWeights.Normal, FontStretches.Normal);
+
+        // 先铺一层全透明矩形。
+        // FrameworkElement 只在「画过像素」的地方可命中：不铺这一层的话，
+        // 没有底纹的列（周一/三/四/五）空白处点下去会直接穿透到背后的卡片，
+        // 表现为「只有今天和周末那两列能拖」。Transparent 参与命中测试，null 不参与。
+        dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, width, height));
         var labelBrush = Res("TextDim", Colors.Gray);
         var textBrush = Res("Text", Colors.Black);
         var accent = Res("StateActive", Color.FromRgb(0x2C, 0x7A, 0x52));
