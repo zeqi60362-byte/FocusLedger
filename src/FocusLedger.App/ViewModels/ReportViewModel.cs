@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -39,9 +39,6 @@ public sealed partial class ReportViewModel : ObservableObject
 
     [ObservableProperty]
     private string secondaryRow = string.Empty;
-
-    [ObservableProperty]
-    private string statsRow = string.Empty;
 
     [ObservableProperty]
     private string emptyHint = string.Empty;
@@ -192,7 +189,6 @@ public sealed partial class ReportViewModel : ObservableObject
             Band = string.Empty;
             PrimaryRow = string.Empty;
             SecondaryRow = string.Empty;
-            StatsRow = string.Empty;
             EmptyHint = Loc.T("Report_Empty");
             DonutSlices = Array.Empty<BarSlice>();
             DonutValue = "—";
@@ -220,10 +216,6 @@ public sealed partial class ReportViewModel : ObservableObject
                 new StateChip(Loc.T("State_AwayFull"), Fmt.Duration(summary.AwaySeconds), Brush("StateIdle")),
                 new StateChip(Loc.T("State_SilentFull"), Fmt.Duration(summary.SilentSeconds), Brush("StateSilent"))
             };
-            StatsRow = Loc.T("Report_StatLine",
-                summary.FocusBlocks,
-                (summary.LongestFocusBlockSeconds / 60).ToString("F0"),
-                summary.AppSwitches);
 
             DonutSlices = new[]
             {
