@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace FocusLedger.Core;
 
@@ -63,6 +63,11 @@ public static class RulePacks
         }
 
         string key = profile.Trim().ToLowerInvariant();
+        if (key == "custom")
+        {
+            return "custom";
+        }
+
         return Packs.ContainsKey(key) ? key : "general";
     }
 

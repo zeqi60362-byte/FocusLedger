@@ -212,6 +212,7 @@ public sealed class Localization : INotifyPropertyChanged
         ["Profile_code"] = ("编程", "Software"),
         ["Profile_writing"] = ("写作", "Writing"),
         ["Profile_admin"] = ("办公", "Office"),
+        ["Profile_custom"] = ("自定义", "Custom"),
         ["Settings_Holidays"] = ("节假日", "Holidays"),
         ["Settings_HolidaysDesc"] = ("导入自己地区的节假日，格式：日期,名称（2026-01-01,元旦）", "Import your region's holidays as date,name"),
         ["Holiday_Import"] = ("导入 CSV", "Import CSV"),

@@ -19,10 +19,20 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Style="{StaticResource GhostButton}" Padding="14,5" Margin="0,0,8,8"
+                                <Button Content="{Binding Label}" Padding="14,5" Margin="0,0,8,8"
                                         Command="{Binding DataContext.SetProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding Id}">
-                                    <TextBlock Text="{Binding Label}" FontSize="12.5" />
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="Background" Value="#2B2B2B" />
+                                                    <Setter Property="BorderBrush" Value="#2B2B2B" />
+                                                    <Setter Property="Foreground" Value="#F2F2F0" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
                                 </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

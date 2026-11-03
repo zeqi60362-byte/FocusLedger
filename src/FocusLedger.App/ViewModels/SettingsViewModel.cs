@@ -13,12 +13,35 @@ using FocusLedger.Storage;
 namespace FocusLedger.App.ViewModels;
 
 
-public sealed record ProfileOption(string Id, string Label);
+public sealed partial class ProfileOption : ObservableObject
+{
+    public ProfileOption(string id, string label)
+    {
+        Id = id;
+        Label = label;
+    }
+
+    public string Id { get; }
+
+    public string Label { get; }
+
+    [ObservableProperty]
+    private bool isSelected;
+}
 
 public sealed partial class SettingsViewModel : ObservableObject
 {
+    private void SyncSelection()
+    {
+        foreach (var option in Profiles)
+        {
+            option.IsSelected = string.Equals(option.Id, Profile, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
     public IReadOnlyList<ProfileOption> Profiles { get; } = RulePacks.All
         .Select(p => new ProfileOption(p.Id, Loc.T("Profile_" + p.Id)))
+        .Concat(new[] { new ProfileOption("custom", Loc.T("Profile_custom")) })
         .ToList();
 
     [ObservableProperty]
@@ -32,7 +55,12 @@ public sealed partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        Profile = RulePacks.Normalize(id);
+        Profile = id == "custom" ? "custom" : RulePacks.Normalize(id);
+        foreach (var option in Profiles)
+        {
+            option.IsSelected = string.Equals(option.Id, Profile, StringComparison.OrdinalIgnoreCase);
+        }
+
         _settings.Profile = Profile;
         _settings.Save();
         _rules.SetProfile(Profile);
@@ -87,6 +115,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         _store = store;
         _recording = recording;
         _rules = rules;
+
+        Profile = RulePacks.Normalize(_settings.Profile);
+        SyncSelection();
 
         StartWithWindows = AutoStart.IsEnabled();
         RetentionDays = settings.RetentionDays;
