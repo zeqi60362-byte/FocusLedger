@@ -9,7 +9,7 @@
             <!-- 顶栏 -->
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{loc:T Report_Title}" Style="{StaticResource H2}" />
+                    <TextBlock Text="{loc:T Report_Title}" Style="{StaticResource PageTitle}" />
                     <TextBlock Text="{Binding DateText}" Style="{StaticResource Caption}" Margin="10,2,0,0" VerticalAlignment="Bottom" />
                 </StackPanel>
 

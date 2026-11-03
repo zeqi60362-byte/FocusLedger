@@ -29,6 +29,15 @@
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
+    <!-- 页面级大标题（今日专注 / 专注统计 / 预期计划 / 规则安排 / 系统设置）：
+         比卡片里的 H2 再大一档、再粗一档，让每个页面的顶端有明确的层级。 -->
+    <Style x:Key="PageTitle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource UiFont}" />
+        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
     <!-- ========== 卡片 ========== -->
     <Style x:Key="Card" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource Surface}" />

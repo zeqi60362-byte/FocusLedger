@@ -18,7 +18,7 @@
         <!-- 顶栏 -->
         <Grid Grid.Row="0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="{loc:T Today_Title}" Style="{StaticResource H2}" />
+                <TextBlock Text="{loc:T Today_Title}" Style="{StaticResource PageTitle}" />
                 <TextBlock Text="{Binding DateLabel}" Style="{StaticResource Caption}" Margin="10,2,0,0" VerticalAlignment="Bottom" />
             </StackPanel>
 
