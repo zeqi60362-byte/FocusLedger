@@ -59,7 +59,7 @@ public sealed partial class IntentViewModel : ObservableObject
     public IReadOnlyList<MusicOption> MusicOptions => FocusAudio.Options;
 
     [ObservableProperty]
-    private string selectedMusic = "none";
+    private MusicOption selectedMusicOption = FocusAudio.Options[0];
 
     public IReadOnlyList<int> Durations { get; } = new[] { 25, 50, 90 };
 
@@ -120,7 +120,7 @@ public sealed partial class IntentViewModel : ObservableObject
         long end = now + PlannedMinutes * 60_000L;
         string text = string.IsNullOrWhiteSpace(Label) ? Loc.T("Intent_DefaultLabel") : Label.Trim();
 
-        FocusAudio.Play(SelectedMusic);
+        FocusAudio.Play(SelectedMusicOption?.Id ?? "none");
 
         long id = _store.CreateIntent(now, end, text);
 
