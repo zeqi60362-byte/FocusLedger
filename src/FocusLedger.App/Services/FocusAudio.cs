@@ -18,8 +18,84 @@ public static class FocusAudio
     {
         new("none", "无"),
         new("white", "白噪音"),
-        new("rain", "雨声")
+        new("rain", "雨声"),
+        new("folder", "本地音乐")
     };
+
+    /// <summary>本地音乐文件夹，启动时从设置注入。</summary>
+    public static string Folder = string.Empty;
+
+    private static System.Windows.Media.MediaPlayer? _media;
+    private static List<string> _playlist = new();
+    private static int _index;
+
+    /// <summary>当前曲目文件名（不含扩展名），没有播放时为空。</summary>
+    public static string CurrentTrack { get; private set; } = string.Empty;
+
+    public static event EventHandler? TrackChanged;
+
+    /// <summary>播放指定文件夹里的音频，播完自动下一首，列表循环。</summary>
+    public static void PlayFolder(string folder)
+    {
+        Stop();
+
+        if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
+        {
+            return;
+        }
+
+        _playlist = Directory
+            .EnumerateFiles(folder)
+            .Where(f => f.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase)
+                     || f.EndsWith(".wav", StringComparison.OrdinalIgnoreCase)
+                     || f.EndsWith(".m4a", StringComparison.OrdinalIgnoreCase)
+                     || f.EndsWith(".flac", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (_playlist.Count == 0)
+        {
+            return;
+        }
+
+        _index = 0;
+        _media = new System.Windows.Media.MediaPlayer { Volume = 0.35 };
+        _media.MediaEnded += (_, _) => NextTrack();
+        _media.MediaFailed += (_, _) => { };
+        PlayCurrent();
+    }
+
+    private static void NextTrack()
+    {
+        if (_playlist.Count == 0)
+        {
+            return;
+        }
+
+        _index = (_index + 1) % _playlist.Count;
+        PlayCurrent();
+    }
+
+    private static void PlayCurrent()
+    {
+        if (_media is null || _index >= _playlist.Count)
+        {
+            return;
+        }
+
+        string path = _playlist[_index];
+        CurrentTrack = System.IO.Path.GetFileNameWithoutExtension(path);
+        TrackChanged?.Invoke(null, EventArgs.Empty);
+
+        try
+        {
+            _media.Open(new Uri(path));
+            _media.Play();
+        }
+        catch (Exception)
+        {
+        }
+    }
 
     public static void Play(string mode)
     {
@@ -48,6 +124,23 @@ public static class FocusAudio
 
     public static void Stop()
     {
+        try
+        {
+            _media?.Stop();
+            _media?.Close();
+        }
+        catch (Exception)
+        {
+        }
+
+        _media = null;
+        _playlist = new List<string>();
+        if (CurrentTrack.Length > 0)
+        {
+            CurrentTrack = string.Empty;
+            TrackChanged?.Invoke(null, EventArgs.Empty);
+        }
+
         try
         {
             _player?.Stop();

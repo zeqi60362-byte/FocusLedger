@@ -127,6 +127,9 @@
                         <TextBlock Text="{Binding ActiveLabel}" FontSize="16" FontWeight="SemiBold" />
                         <TextBlock Text="{loc:T Intent_Running}" Style="{StaticResource Caption}"
                                    Margin="10,3,0,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ActiveTrack}" Style="{StaticResource Caption}" FontSize="11"
+                                   Margin="10,3,0,0" VerticalAlignment="Center" Opacity="0.75"
+                                   TextTrimming="CharacterEllipsis" MaxWidth="180" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">

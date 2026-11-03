@@ -122,6 +122,7 @@ public partial class App : System.Windows.Application
                 : AppLanguage.Chinese);
 
         ThemeService.Apply(ThemeService.Parse(_settings.Theme), null);
+        FocusAudio.Folder = _settings.MusicFolder;
 
         _store = new FocusLedgerStore(FocusLedgerStore.DefaultDatabasePath);
         _store.Initialize();

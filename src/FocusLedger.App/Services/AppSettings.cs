@@ -23,6 +23,9 @@ public sealed class AppSettings
     /// <summary>身份包：general / research / design / code / writing / admin。</summary>
     public string Profile { get; set; } = "general";
 
+    /// <summary>本地背景音乐文件夹。</summary>
+    public string MusicFolder { get; set; } = string.Empty;
+
     /// <summary>皮肤：Dark / Light / Midnight。</summary>
     public string Theme { get; set; } = "Dark";
 

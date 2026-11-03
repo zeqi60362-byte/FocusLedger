@@ -48,6 +48,11 @@ public sealed partial class IntentViewModel : ObservableObject
     private string timeProgressText = string.Empty;
 
     [ObservableProperty]
+    private string activeTrack = string.Empty;
+
+    private static string MusicFolder => FocusAudio.Folder;
+
+    [ObservableProperty]
     private bool hasResult;
 
     [ObservableProperty]
@@ -120,7 +125,16 @@ public sealed partial class IntentViewModel : ObservableObject
         long end = now + PlannedMinutes * 60_000L;
         string text = string.IsNullOrWhiteSpace(Label) ? Loc.T("Intent_DefaultLabel") : Label.Trim();
 
-        FocusAudio.Play(SelectedMusicOption?.Id ?? "none");
+        string musicId = SelectedMusicOption?.Id ?? "none";
+        if (musicId == "folder")
+        {
+            FocusAudio.PlayFolder(MusicFolder);
+            ActiveTrack = FocusAudio.CurrentTrack;
+        }
+        else
+        {
+            FocusAudio.Play(musicId);
+        }
 
         long id = _store.CreateIntent(now, end, text);
 
