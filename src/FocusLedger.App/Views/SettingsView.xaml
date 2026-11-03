@@ -14,7 +14,8 @@
                     <TextBlock Text="{loc:T Settings_Theme}" Style="{StaticResource H2}" FontSize="13.5" />
                     <TextBlock Text="{loc:T Settings_ThemeDesc}" Style="{StaticResource Caption}" Margin="0,4,0,10" />
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                    <!-- 卡片底部留白统一交给 Card 的 padding，这里不再自己加 12 -->
+                    <StackPanel Orientation="Horizontal">
                         <!-- 当前生效的那一档要看得出来：选中态用深底白字 -->
                         <Button Content="{loc:T Theme_Dark}" Padding="14,5" Margin="0,0,8,0"
                                 Command="{Binding SetThemeCommand}" CommandParameter="Dark">
@@ -74,7 +75,19 @@
                         <Button Content="{loc:T Holiday_Import}" Style="{StaticResource GhostButton}" Padding="14,5" Margin="10,0,0,0"
                                 Command="{Binding ImportHolidaysCommand}" />
                     </StackPanel>
-                    <TextBlock Text="{Binding HolidayStatus}" Style="{StaticResource Caption}" Margin="0,8,0,0" />
+                    <!-- 平时是空串：不折叠的话会一直占着 8px 边距 + 一行高度，把卡片撑高 -->
+                    <TextBlock Text="{Binding HolidayStatus}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
+                                <Setter Property="Margin" Value="0,8,0,0" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HolidayStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </Border>
             <!-- 语言 -->
@@ -157,8 +170,19 @@
                                 Foreground="{DynamicResource Danger}" Command="{Binding DeleteAllCommand}" />
                     </StackPanel>
 
-                    <TextBlock Text="{Binding Status}" Style="{StaticResource Caption}" Margin="0,12,0,0"
-                               TextWrapping="Wrap" Foreground="{DynamicResource Accent}" />
+                    <TextBlock Text="{Binding Status}" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
+                                <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+                                <Setter Property="Margin" Value="0,12,0,0" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </Border>
         </StackPanel>
