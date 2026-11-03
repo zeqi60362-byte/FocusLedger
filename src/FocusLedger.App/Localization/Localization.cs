@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -78,7 +78,7 @@ public sealed class Localization : INotifyPropertyChanged
         ["Today_NoTitle"] = ("(无标题)", "(no title)"),
 
         // 意图
-        ["Intent_Title"] = ("意图声明", "Focus pledge"),
+        ["Intent_Title"] = ("设定今日专注任务", "Set today's focus task"),
         ["Intent_Start"] = ("开始一段专注", "Start a session"),
         ["Intent_WhatNext"] = ("接下来做什么？", "What are you working on?"),
         ["Intent_Duration"] = ("时长", "Duration"),
