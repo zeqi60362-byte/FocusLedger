@@ -69,24 +69,36 @@ public static class FocusAudio
         var random = new Random(20261103);
         for (int i = 0; i < n; i++)
         {
-            data[i] = (float)(random.NextDouble() * 2 - 1) * 0.18f;
+            data[i] = (float)(random.NextDouble() * 2 - 1) * 0.12f;
         }
 
         FadeEnds(data, rate);
         return data;
     }
 
-    /// <summary>棕噪音：白噪音做低频累积，听感接近雨声。</summary>
+    /// <summary>
+    /// 雨声：白噪音过一阶低通再叠一点高频颗粒，加缓慢的音量起伏，
+    /// 比原始棕噪音柔和，不会有刺耳的嘶声。
+    /// </summary>
     private static float[] BrownNoise(int seconds, int rate = 22050)
     {
         var white = WhiteNoise(seconds, rate);
         var data = new float[white.Length];
-        float last = 0;
+        var random = new Random(77);
+        float low = 0;
 
         for (int i = 0; i < white.Length; i++)
         {
-            last = (last + 0.02f * white[i] * 6f) * 0.998f;
-            data[i] = Math.Clamp(last, -0.25f, 0.25f);
+            // 一阶低通：系数越小越闷
+            low += 0.06f * (white[i] - low);
+
+            // 缓慢起伏（0.15Hz），模拟雨势强弱
+            float swell = 0.75f + 0.25f * (float)Math.Sin(i / (double)rate * 0.15 * 2 * Math.PI);
+
+            // 少量随机颗粒，模拟雨滴打在物体上的细碎声
+            float drop = random.NextDouble() < 0.0006 ? (float)(random.NextDouble() * 0.5) : 0f;
+
+            data[i] = Math.Clamp(low * 1.6f + drop, -0.22f, 0.22f) * swell;
         }
 
         FadeEnds(data, rate);
