@@ -5,7 +5,7 @@
              xmlns:views="clr-namespace:FocusLedger.App.Views"
              xmlns:loc="clr-namespace:FocusLedger.App.Localization">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

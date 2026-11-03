@@ -97,7 +97,7 @@
             ScrollViewer 会用无限宽去量 WeekCanvas，最右一列又会被切掉。
         -->
         <ScrollViewer x:Name="PageScroll" Grid.Row="1" Margin="0,14,0,0"
-                      VerticalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Hidden"
                       HorizontalScrollBarVisibility="Disabled">
 
             <StackPanel>

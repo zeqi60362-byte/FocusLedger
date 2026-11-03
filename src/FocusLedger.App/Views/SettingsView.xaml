@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:FocusLedger.App.Localization">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <ScrollViewer VerticalScrollBarVisibility="Hidden">
         <StackPanel>
             <TextBlock Text="{loc:T Settings_Title}" Style="{StaticResource H2}" />
             <TextBlock Text="{loc:T Settings_Desc}" Style="{StaticResource Caption}" Margin="0,4,0,16" />
