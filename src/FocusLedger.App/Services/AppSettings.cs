@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -19,6 +19,9 @@ public sealed class AppSettings
 
     /// <summary>界面语言：zh / en。</summary>
     public string Language { get; set; } = "zh";
+
+    /// <summary>身份包：general / research / design / code / writing / admin。</summary>
+    public string Profile { get; set; } = "general";
 
     /// <summary>皮肤：Dark / Light / Midnight。</summary>
     public string Theme { get; set; } = "Dark";

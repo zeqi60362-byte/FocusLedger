@@ -1,4 +1,4 @@
-using FocusLedger.Core;
+﻿using FocusLedger.Core;
 using FocusLedger.Storage;
 
 namespace FocusLedger.App.Services;
@@ -11,9 +11,27 @@ public sealed class RuleService
 {
     private readonly FocusLedgerStore _store;
 
-    public RuleService(FocusLedgerStore store)
+    private string _profile;
+
+    public RuleService(FocusLedgerStore store, string profile = "general")
     {
         _store = store;
+        _profile = RulePacks.Normalize(profile);
+        Reload();
+    }
+
+    public string Profile => _profile;
+
+    /// <summary>切换身份后重算规则；界面刷新与历史重算都靠这个事件。</summary>
+    public void SetProfile(string profile)
+    {
+        string normalized = RulePacks.Normalize(profile);
+        if (string.Equals(normalized, _profile, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _profile = normalized;
         Reload();
     }
 
@@ -36,6 +54,7 @@ public sealed class RuleService
 
         EffectiveRules = BuiltinRules.All
             .Where(r => !DisabledBuiltin.Contains(r.Id))
+            .Concat(RulePacks.BuildRules(_profile))
             .Concat(UserRules)
             .OrderBy(r => r.Priority)
             .ThenBy(r => r.Id)

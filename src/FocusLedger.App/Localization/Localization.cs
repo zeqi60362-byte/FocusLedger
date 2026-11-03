@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -203,6 +203,15 @@ public sealed class Localization : INotifyPropertyChanged
         ["Settings_Storage"] = ("数据库：{0}\n样本总数：{1:N0} 条", "Database: {0}\nSamples: {1:N0}"),
         ["Settings_Language"] = ("语言", "Language"),
         ["Settings_LanguageDesc"] = ("切换界面语言，立即生效。", "Switch the interface language. Applies immediately."),
+        ["Settings_Profile"] = ("身份", "Profile"),
+        ["Settings_ProfileDesc"] = ("选择你的身份，只启用对应的软件规则包；改完历史数据会重算。", "Pick your profile; only its app pack is enabled. History is recomputed."),
+        ["Settings_ProfileSaved"] = ("身份已更新，历史数据已重算", "Profile updated, history recomputed"),
+        ["Profile_general"] = ("通用", "General"),
+        ["Profile_research"] = ("科研/研究生", "Research"),
+        ["Profile_design"] = ("设计/建筑", "Design"),
+        ["Profile_code"] = ("编程", "Software"),
+        ["Profile_writing"] = ("写作", "Writing"),
+        ["Profile_admin"] = ("办公", "Office"),
         ["Settings_Holidays"] = ("节假日", "Holidays"),
         ["Settings_HolidaysDesc"] = ("导入自己地区的节假日，格式：日期,名称（2026-01-01,元旦）", "Import your region's holidays as date,name"),
         ["Holiday_Import"] = ("导入 CSV", "Import CSV"),

@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.Core;
@@ -126,7 +126,7 @@ public partial class App : System.Windows.Application
         _store = new FocusLedgerStore(FocusLedgerStore.DefaultDatabasePath);
         _store.Initialize();
 
-        _rules = new RuleService(_store);
+        _rules = new RuleService(_store, _settings.Profile);
         _recording = new RecordingService(_store, _settings, _rules);
         await _recording.InitializeAsync();
 

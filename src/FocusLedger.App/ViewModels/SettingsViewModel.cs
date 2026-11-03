@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,6 +12,8 @@ using FocusLedger.Storage;
 
 namespace FocusLedger.App.ViewModels;
 
+
+public sealed record ProfileOption(string Id, string Label);
 
 public sealed partial class SettingsViewModel : ObservableObject
 {
