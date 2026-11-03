@@ -220,10 +220,11 @@ public sealed class WeekCanvas : FrameworkElement
         }
 
         // 今天那一列重点标出来
+        // 今天那一列重点标出来。底色用主题里的 AccentSoft——
+        // 和月历里选中日的那格是同一个色，两处看起来才是一套。
         if (TodayIndex is >= 0 and <= 6)
         {
-            var todayBrush = accent as SolidColorBrush ?? new SolidColorBrush(Color.FromRgb(0x2C, 0x7A, 0x52));
-            var tint = new SolidColorBrush(todayBrush.Color) { Opacity = 0.07 };
+            var tint = Res("AccentSoft", Color.FromRgb(0xED, 0xF5, 0xF1));
             double tx = GutterWidth + ColumnWidth * TodayIndex;
             dc.DrawRectangle(tint, null, new Rect(tx, HeaderHeight, ColumnWidth, PlotHeight));
         }
