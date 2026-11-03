@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using FocusLedger.Core;
 using Microsoft.Data.Sqlite;
 
@@ -512,7 +512,7 @@ public sealed class FocusLedgerStore : IDisposable
     public IReadOnlyList<PlanRow> LoadPlans(DateOnly date)
         => _connection.Query<PlanRow>(
                 """
-                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind
+                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind, location, url, remind
                 FROM plans WHERE date_local = @d ORDER BY start_min, id;
                 """,
                 new { d = date.ToString("yyyy-MM-dd") })
@@ -521,7 +521,7 @@ public sealed class FocusLedgerStore : IDisposable
     public IReadOnlyList<PlanRow> LoadPlansInRange(DateOnly from, DateOnly to)
         => _connection.Query<PlanRow>(
                 """
-                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind
+                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind, location, url, remind
                 FROM plans WHERE date_local >= @a AND date_local <= @b
                 ORDER BY date_local, hour, id;
                 """,
@@ -724,6 +724,16 @@ public sealed class FocusLedgerStore : IDisposable
             _connection.Execute("ALTER TABLE plans ADD COLUMN remind INTEGER NOT NULL DEFAULT 1;");
         }
 
+        if (!columns.Contains("location"))
+        {
+            _connection.Execute("ALTER TABLE plans ADD COLUMN location TEXT NOT NULL DEFAULT '");
+        }
+
+        if (!columns.Contains("url"))
+        {
+            _connection.Execute("ALTER TABLE plans ADD COLUMN url TEXT NOT NULL DEFAULT '");
+        }
+
         _connection.Execute(
             "UPDATE plans SET start_min = hour * 60, end_min = (hour + 1) * 60 WHERE start_min < 0 OR end_min <= start_min;");
     }
@@ -852,6 +862,9 @@ public sealed class FocusLedgerStore : IDisposable
             date_local  TEXT    NOT NULL,
             hour        INTEGER NOT NULL,
             title       TEXT    NOT NULL,
+            location    TEXT    NOT NULL DEFAULT '',
+            url         TEXT    NOT NULL DEFAULT '',
+            remind      INTEGER NOT NULL DEFAULT 1,
             location    TEXT    NOT NULL DEFAULT '',
             url         TEXT    NOT NULL DEFAULT '',
             remind      INTEGER NOT NULL DEFAULT 1,
