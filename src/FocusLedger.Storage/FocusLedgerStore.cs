@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using FocusLedger.Core;
 using Microsoft.Data.Sqlite;
 
@@ -699,40 +699,25 @@ public sealed class FocusLedgerStore : IDisposable
     {
         var columns = _connection.Query<string>("SELECT name FROM pragma_table_info('plans');").ToList();
 
-        if (!columns.Contains("start_min"))
+        // 每列只判一次，加完立刻记进 columns。
+        // 用本地快照时要特别小心：同一列若被判断两次，第二次会照着过期快照再 ALTER 一遍，
+        // 直接抛 "duplicate column name"（v0.5 就是这么崩的）。
+        void Ensure(string name, string definition)
         {
-            _connection.Execute("ALTER TABLE plans ADD COLUMN start_min INTEGER NOT NULL DEFAULT -1;");
+            if (columns.Contains(name))
+            {
+                return;
+            }
+
+            _connection.Execute($"ALTER TABLE plans ADD COLUMN {definition};");
+            columns.Add(name);
         }
 
-        if (!columns.Contains("end_min"))
-        {
-            _connection.Execute("ALTER TABLE plans ADD COLUMN end_min INTEGER NOT NULL DEFAULT -1;");
-        }
-
-        if (!columns.Contains("location"))
-        {
-            _connection.Execute("ALTER TABLE plans ADD COLUMN location TEXT NOT NULL DEFAULT '';");
-        }
-
-        if (!columns.Contains("url"))
-        {
-            _connection.Execute("ALTER TABLE plans ADD COLUMN url TEXT NOT NULL DEFAULT '';");
-        }
-
-        if (!columns.Contains("remind"))
-        {
-            _connection.Execute("ALTER TABLE plans ADD COLUMN remind INTEGER NOT NULL DEFAULT 1;");
-        }
-
-        if (!columns.Contains("location"))
-        {
-            _connection.Execute("ALTER TABLE plans ADD COLUMN location TEXT NOT NULL DEFAULT '");
-        }
-
-        if (!columns.Contains("url"))
-        {
-            _connection.Execute("ALTER TABLE plans ADD COLUMN url TEXT NOT NULL DEFAULT '");
-        }
+        Ensure("start_min", "start_min INTEGER NOT NULL DEFAULT -1");
+        Ensure("end_min", "end_min INTEGER NOT NULL DEFAULT -1");
+        Ensure("location", "location TEXT NOT NULL DEFAULT ''");
+        Ensure("url", "url TEXT NOT NULL DEFAULT ''");
+        Ensure("remind", "remind INTEGER NOT NULL DEFAULT 1");
 
         _connection.Execute(
             "UPDATE plans SET start_min = hour * 60, end_min = (hour + 1) * 60 WHERE start_min < 0 OR end_min <= start_min;");
@@ -862,9 +847,6 @@ public sealed class FocusLedgerStore : IDisposable
             date_local  TEXT    NOT NULL,
             hour        INTEGER NOT NULL,
             title       TEXT    NOT NULL,
-            location    TEXT    NOT NULL DEFAULT '',
-            url         TEXT    NOT NULL DEFAULT '',
-            remind      INTEGER NOT NULL DEFAULT 1,
             location    TEXT    NOT NULL DEFAULT '',
             url         TEXT    NOT NULL DEFAULT '',
             remind      INTEGER NOT NULL DEFAULT 1,
