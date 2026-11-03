@@ -1,4 +1,4 @@
-﻿using System.Windows.Threading;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FocusLedger.App.Controls;
@@ -82,6 +82,9 @@ public sealed partial class TodayViewModel : ObservableObject
 
     private Segment? _selected;
 
+    /// <summary>用户手动点过时间轴上的某一段。没点过就一直跟着「现在」走。</summary>
+    private bool _manualSelection;
+
     public IntentViewModel Intent { get; }
 
     public TodayViewModel(RecordingService recording, RuleService rules, IntentViewModel intent)
@@ -164,6 +167,13 @@ public sealed partial class TodayViewModel : ObservableObject
             ? Loc.T("Today_Waiting")
             : $"{currentSample.App}  ·  {Trim(currentSample.Title, 60)}";
 
+        // 没手动点过时间轴，就把最新的一段（也就是现在正在用的应用）直接铺在下面，
+        // 不用先点一下才看得到内容。
+        if (!_manualSelection)
+        {
+            _selected = segments.Count > 0 ? segments[segments.Count - 1] : null;
+        }
+
         Detail = RenderDetail();
 
         if (Zoom is "hour" or "six")
@@ -184,12 +194,14 @@ public sealed partial class TodayViewModel : ObservableObject
     public void ShowDetail(Segment segment)
     {
         _selected = segment;
+        _manualSelection = true;
         Detail = RenderDetail();
     }
 
     public void ResetDetail()
     {
         _selected = null;
+        _manualSelection = false;
         Detail = RenderDetail();
     }
 

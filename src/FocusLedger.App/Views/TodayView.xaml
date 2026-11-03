@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="FocusLedger.App.Views.TodayView"
+<UserControl x:Class="FocusLedger.App.Views.TodayView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:FocusLedger.App.Controls"
@@ -149,9 +149,10 @@
             </Grid>
         </Border>
 
-        <!-- 下钻 -->
-        <Border Grid.Row="4" Style="{StaticResource Card}" Margin="0,14,0,0">
-            <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" FontSize="12.5" LineHeight="21" />
+        <!-- 下钻：始终占住三行的高度，点不点时间轴都不会让页面跟着跳 -->
+        <Border Grid.Row="4" Style="{StaticResource Card}" Margin="0,14,0,0" MinHeight="100">
+            <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" FontSize="12.5" LineHeight="21"
+                       VerticalAlignment="Center" />
         </Border>
     </Grid>
     </ScrollViewer>
