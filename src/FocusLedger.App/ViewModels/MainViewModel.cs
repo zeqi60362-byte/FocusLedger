@@ -61,8 +61,8 @@ public sealed partial class MainViewModel : ObservableObject
         Entries.Clear();
         Entries.Add(new NavEntry(Loc.T("Nav_Today"), Loc.T("Nav_TodayHint"), _today));
         Entries.Add(new NavEntry(Loc.T("Nav_Report"), Loc.T("Nav_ReportHint"), _report));
-        Entries.Add(new NavEntry(Loc.T("Nav_Rules"), Loc.T("Nav_RulesHint"), _rules));
         Entries.Add(new NavEntry(Loc.T("Nav_Plan"), Loc.T("Nav_PlanHint"), _calendar));
+        Entries.Add(new NavEntry(Loc.T("Nav_Rules"), Loc.T("Nav_RulesHint"), _rules));
         Entries.Add(new NavEntry(Loc.T("Nav_Settings"), Loc.T("Nav_SettingsHint"), _settings));
 
         Selected = Entries[Math.Clamp(selectedIndex, 0, Entries.Count - 1)];
@@ -90,7 +90,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void ShowReport() => Selected = Entries[1];
 
-    public void ShowRules() => Selected = Entries[2];
+    /// <summary>规则页排在预期计划之后，索引跟着走。</summary>
+    public void ShowRules() => Selected = Entries[3];
 
     public void UpdateStatus()
     {
