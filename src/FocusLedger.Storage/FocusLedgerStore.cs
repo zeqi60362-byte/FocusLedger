@@ -512,7 +512,7 @@ public sealed class FocusLedgerStore : IDisposable
     public IReadOnlyList<PlanRow> LoadPlans(DateOnly date)
         => _connection.Query<PlanRow>(
                 """
-                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind, location, url, remind
+                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind, repeat
                 FROM plans WHERE date_local = @d ORDER BY start_min, id;
                 """,
                 new { d = date.ToString("yyyy-MM-dd") })
@@ -521,7 +521,7 @@ public sealed class FocusLedgerStore : IDisposable
     public IReadOnlyList<PlanRow> LoadPlansInRange(DateOnly from, DateOnly to)
         => _connection.Query<PlanRow>(
                 """
-                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind, location, url, remind
+                SELECT id, date_local, hour, title, done, start_min, end_min, location, url, remind, repeat
                 FROM plans WHERE date_local >= @a AND date_local <= @b
                 ORDER BY date_local, hour, id;
                 """,
@@ -561,12 +561,14 @@ public sealed class FocusLedgerStore : IDisposable
             });
 
     /// <summary>一次写入完整信息。地点/网址留空存空串，避免 NULL 让上层到处判空。</summary>
+    /// <param name="repeat">周期规则标记（daily / weekday / weekend / weekly:1,3,5），空串表示不重复。</param>
     public long AddPlanFull(
-        DateOnly date, int startMin, int endMin, string title, string? location, string? url, bool remind)
+        DateOnly date, int startMin, int endMin, string title, string? location, string? url, bool remind,
+        string? repeat = null)
         => _connection.ExecuteScalar<long>(
             """
-            INSERT INTO plans (date_local, hour, title, done, created_utc, start_min, end_min, location, url, remind)
-            VALUES (@d, @h, @t, 0, @now, @s, @e, @loc, @url, @r);
+            INSERT INTO plans (date_local, hour, title, done, created_utc, start_min, end_min, location, url, remind, repeat)
+            VALUES (@d, @h, @t, 0, @now, @s, @e, @loc, @url, @r, @rep);
             SELECT last_insert_rowid();
             """,
             new
@@ -579,7 +581,8 @@ public sealed class FocusLedgerStore : IDisposable
                 e = endMin,
                 loc = location ?? string.Empty,
                 url = url ?? string.Empty,
-                r = remind ? 1 : 0
+                r = remind ? 1 : 0,
+                rep = repeat ?? string.Empty
             });
 
     public void UpdatePlanDetails(long id, string title, string? location, string? url, bool remind)
@@ -645,6 +648,7 @@ public sealed class FocusLedgerStore : IDisposable
         public string? location { get; set; }
         public string? url { get; set; }
         public long remind { get; set; }
+        public string? repeat { get; set; }
 
         public bool Remind => remind != 0;
     }
@@ -718,6 +722,7 @@ public sealed class FocusLedgerStore : IDisposable
         Ensure("location", "location TEXT NOT NULL DEFAULT ''");
         Ensure("url", "url TEXT NOT NULL DEFAULT ''");
         Ensure("remind", "remind INTEGER NOT NULL DEFAULT 1");
+        Ensure("repeat", "repeat TEXT NOT NULL DEFAULT ''");
 
         _connection.Execute(
             "UPDATE plans SET start_min = hour * 60, end_min = (hour + 1) * 60 WHERE start_min < 0 OR end_min <= start_min;");
@@ -850,6 +855,7 @@ public sealed class FocusLedgerStore : IDisposable
             location    TEXT    NOT NULL DEFAULT '',
             url         TEXT    NOT NULL DEFAULT '',
             remind      INTEGER NOT NULL DEFAULT 1,
+            repeat      TEXT    NOT NULL DEFAULT '',
             done        INTEGER NOT NULL DEFAULT 0,
             created_utc INTEGER NOT NULL
         );

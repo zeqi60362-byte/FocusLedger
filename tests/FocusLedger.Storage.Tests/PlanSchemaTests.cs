@@ -70,11 +70,29 @@ public sealed class PlanSchemaTests : IDisposable
         Assert.Equal("旧计划", plan.title);
         Assert.Equal(string.Empty, plan.location);
         Assert.Equal(string.Empty, plan.url);
+        Assert.Equal(string.Empty, plan.repeat);
         Assert.True(plan.Remind);
 
         // 同一轮迁移里，旧数据还要被补成「整点开始、一小时长」
         Assert.Equal(9 * 60, plan.start_min);
         Assert.Equal(10 * 60, plan.end_min);
+    }
+
+    [Fact]
+    public void AddPlanFull_StoresRepeatToken()
+    {
+        using var store = new FocusLedgerStore(NewDatabasePath());
+        store.Initialize();
+
+        var date = new DateOnly(2026, 11, 3);
+        store.AddPlanFull(date, 9 * 60, 10 * 60, "晨跑", null, null, true, "weekly:1,3,5");
+        store.AddPlanFull(date.AddDays(1), 20 * 60, 21 * 60, "读书", null, null, false);
+
+        var weekly = Assert.Single(store.LoadPlans(date));
+        Assert.Equal("weekly:1,3,5", weekly.repeat);
+
+        var single = Assert.Single(store.LoadPlans(date.AddDays(1)));
+        Assert.Equal(string.Empty, single.repeat);
     }
 
     [Fact]

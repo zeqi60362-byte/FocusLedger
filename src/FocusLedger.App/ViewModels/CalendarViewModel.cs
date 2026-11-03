@@ -64,8 +64,45 @@ public sealed partial class PlanPreset : ObservableObject
     private bool isActive;
 }
 
+/// <summary>自定义周期里的一枚星期开关。</summary>
+public sealed partial class RepeatDay : ObservableObject
+{
+    public RepeatDay(string label, DayOfWeek day)
+    {
+        Label = label;
+        Day = day;
+    }
+
+    public string Label { get; }
+
+    public DayOfWeek Day { get; }
+
+    [ObservableProperty]
+    private bool isActive;
+}
+
+/// <summary>编辑器里的一枚周期预设（不重复 / 每天 / 工作日 / 休息日）。</summary>
+public sealed partial class RepeatOption : ObservableObject
+{
+    public RepeatOption(string label, string mode)
+    {
+        Label = label;
+        Mode = mode;
+    }
+
+    public string Label { get; }
+
+    public string Mode { get; }
+
+    [ObservableProperty]
+    private bool isActive;
+}
+
 public sealed partial class CalendarViewModel : ObservableObject
 {
+    /// <summary>周期任务一次铺多远。八周足够看清规律，再远用户也不会提前排。</summary>
+    private const int RepeatHorizonDays = 56;
+
     private readonly FocusLedgerStore _store;
     private readonly Dictionary<string, string> _holidays;
     private readonly Dictionary<long, FocusLedgerStore.PlanRow> _planDetails = new();
@@ -82,8 +119,9 @@ public sealed partial class CalendarViewModel : ObservableObject
     [ObservableProperty]
     private string planCountText = string.Empty;
 
+    /// <summary>顶栏右侧的临时提示（周期任务建了几条、跳过了几天）。</summary>
     [ObservableProperty]
-    private string holidaySourceText = string.Empty;
+    private string statusText = string.Empty;
 
     private DateOnly _month = new(DateOnly.FromDateTime(DateTime.Now).Year, DateOnly.FromDateTime(DateTime.Now).Month, 1);
     private DateOnly _selected = DateOnly.FromDateTime(DateTime.Now);
@@ -93,6 +131,12 @@ public sealed partial class CalendarViewModel : ObservableObject
     public ObservableCollection<WeekBlock> WeekBlocks { get; } = new();
 
     public ObservableCollection<PlanPreset> Presets { get; } = new();
+
+    /// <summary>自定义周期用的七个星期开关。</summary>
+    public ObservableCollection<RepeatDay> RepeatDays { get; } = new();
+
+    /// <summary>周期预设：不重复 / 每天 / 工作日 / 休息日。</summary>
+    public ObservableCollection<RepeatOption> RepeatOptions { get; } = new();
 
     private DateOnly _weekStart;
     private DateOnly _pendingDate;
@@ -119,6 +163,15 @@ public sealed partial class CalendarViewModel : ObservableObject
     /// <summary>保存被拒绝时显示在弹窗里的提示（时间冲突、标题为空）。空串表示没有错误。</summary>
     [ObservableProperty]
     private string editorError = string.Empty;
+
+    /// <summary>周期规则：none / daily / weekday / weekend / custom（自定义星期）。</summary>
+    [ObservableProperty]
+    private string editorRepeat = "none";
+
+    /// <summary>「重复」只对新建有意义；改重复等于在原日期上再铺一批，容易重复建。</summary>
+    public bool IsNewPlan => !IsExistingPlan;
+
+    partial void OnIsExistingPlanChanged(bool value) => OnPropertyChanged(nameof(IsNewPlan));
 
     [ObservableProperty]
     private bool editorRemind = true;
@@ -149,7 +202,34 @@ public sealed partial class CalendarViewModel : ObservableObject
         _holidays = new Dictionary<string, string>(store.LoadHolidays(Holidays.DefaultRegion), StringComparer.Ordinal);
 
         BuildPresets();
+        BuildRepeatDays();
         Reload();
+    }
+
+    private void BuildRepeatDays()
+    {
+        RepeatDays.Clear();
+        RepeatDays.Add(new RepeatDay("一", DayOfWeek.Monday));
+        RepeatDays.Add(new RepeatDay("二", DayOfWeek.Tuesday));
+        RepeatDays.Add(new RepeatDay("三", DayOfWeek.Wednesday));
+        RepeatDays.Add(new RepeatDay("四", DayOfWeek.Thursday));
+        RepeatDays.Add(new RepeatDay("五", DayOfWeek.Friday));
+        RepeatDays.Add(new RepeatDay("六", DayOfWeek.Saturday));
+        RepeatDays.Add(new RepeatDay("日", DayOfWeek.Sunday));
+
+        RepeatOptions.Clear();
+        RepeatOptions.Add(new RepeatOption(Loc.T("Repeat_None"), "none") { IsActive = true });
+        RepeatOptions.Add(new RepeatOption(Loc.T("Repeat_Daily"), "daily"));
+        RepeatOptions.Add(new RepeatOption(Loc.T("Repeat_Weekday"), "weekday"));
+        RepeatOptions.Add(new RepeatOption(Loc.T("Repeat_Weekend"), "weekend"));
+    }
+
+    partial void OnEditorRepeatChanged(string value)
+    {
+        foreach (var option in RepeatOptions)
+        {
+            option.IsActive = string.Equals(option.Mode, value, StringComparison.Ordinal);
+        }
     }
 
     private void BuildPresets()
@@ -249,10 +329,7 @@ public sealed partial class CalendarViewModel : ObservableObject
             ? Loc.T("Plan_Holiday", holiday)
             : string.Empty;
 
-        HolidaySourceText = _holidays.Count == 0
-            ? Loc.T("Plan_NoHoliday")
-            : Loc.T("Plan_HolidaySource", _holidays.Count);
-
+        StatusText = string.Empty;
         LoadWeek();
     }
 
@@ -380,6 +457,33 @@ public sealed partial class CalendarViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void SetRepeat(string? mode)
+    {
+        EditorRepeat = string.IsNullOrWhiteSpace(mode) ? "none" : mode;
+
+        // 选了预设规律就清掉自定义的那几个星期，避免两套状态同时生效
+        if (EditorRepeat != "custom")
+        {
+            foreach (var day in RepeatDays)
+            {
+                day.IsActive = false;
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleRepeatDay(RepeatDay? day)
+    {
+        if (day is null)
+        {
+            return;
+        }
+
+        day.IsActive = !day.IsActive;
+        EditorRepeat = RepeatDays.Any(d => d.IsActive) ? "custom" : "none";
+    }
+
+    [RelayCommand]
     private void CancelEditor() => IsEditorOpen = false;
 
     [RelayCommand]
@@ -404,6 +508,7 @@ public sealed partial class CalendarViewModel : ObservableObject
 
         string location = EditorLocation.Trim();
         string url = EditorUrl.Trim();
+        string repeatMessage = string.Empty;
 
         if (_editingPlanId is { } id)
         {
@@ -412,7 +517,30 @@ public sealed partial class CalendarViewModel : ObservableObject
         }
         else
         {
-            _store.AddPlanFull(_pendingDate, _pendingStart, _pendingEnd, title, location, url, EditorRemind);
+            // 周期任务：从这一天起往后铺到 RepeatHorizonDays，
+            // 碰上已被占用的时段就跳过（不覆盖别人，也不整批失败）。
+            string token = RepeatToken();
+            int created = 0;
+            int skipped = 0;
+
+            foreach (var date in ExpandRepeatDates(_pendingDate))
+            {
+                if (FindConflict(date, _pendingStart, _pendingEnd, null) is not null)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                _store.AddPlanFull(date, _pendingStart, _pendingEnd, title, location, url, EditorRemind, token);
+                created++;
+            }
+
+            if (EditorRepeat != "none")
+            {
+                repeatMessage = skipped > 0
+                    ? Loc.T("Plan_RepeatDoneSkipped", created, skipped)
+                    : Loc.T("Plan_RepeatDone", created);
+            }
         }
 
         EditorError = string.Empty;
@@ -428,7 +556,51 @@ public sealed partial class CalendarViewModel : ObservableObject
         }
 
         Reload();
+
+        // Reload 会清空提示，所以放在它后面写
+        StatusText = repeatMessage;
     }
+
+    /// <summary>按当前周期规则展开这一批日期；「不重复」时只返回起始那一天。</summary>
+    private IEnumerable<DateOnly> ExpandRepeatDates(DateOnly start)
+    {
+        if (EditorRepeat == "none")
+        {
+            yield return start;
+            yield break;
+        }
+
+        for (int i = 0; i < RepeatHorizonDays; i++)
+        {
+            var date = start.AddDays(i);
+            if (MatchesRepeat(date))
+            {
+                yield return date;
+            }
+        }
+    }
+
+    private bool MatchesRepeat(DateOnly date) => EditorRepeat switch
+    {
+        "daily" => true,
+        "weekday" => date.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday),
+        "weekend" => date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday,
+        "custom" => RepeatDays.Any(d => d.IsActive && d.Day == date.DayOfWeek),
+        _ => false
+    };
+
+    /// <summary>落到库里的规则标记：daily / weekday / weekend / weekly:1,3,5（ISO，周一=1）。</summary>
+    private string RepeatToken() => EditorRepeat switch
+    {
+        "daily" => "daily",
+        "weekday" => "weekday",
+        "weekend" => "weekend",
+        "custom" => "weekly:" + string.Join(",", RepeatDays
+            .Where(d => d.IsActive)
+            .Select(d => ((int)d.Day + 6) % 7 + 1)
+            .OrderBy(d => d)),
+        _ => string.Empty
+    };
 
     /// <summary>同一天里与 [start, end) 相交的另一条计划；编辑自己时要把自己排除掉。</summary>
     private FocusLedgerStore.PlanRow? FindConflict(DateOnly date, int start, int end, long? ignoreId)
