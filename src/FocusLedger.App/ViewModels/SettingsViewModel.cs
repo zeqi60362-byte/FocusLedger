@@ -17,6 +17,27 @@ public sealed record ProfileOption(string Id, string Label);
 
 public sealed partial class SettingsViewModel : ObservableObject
 {
+    public IReadOnlyList<ProfileOption> Profiles { get; } = RulePacks.All
+        .Select(p => new ProfileOption(p.Id, Loc.T("Profile_" + p.Id)))
+        .ToList();
+
+    [ObservableProperty]
+    private string profile = "general";
+
+    [RelayCommand]
+    private void SetProfile(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return;
+        }
+
+        Profile = RulePacks.Normalize(id);
+        _settings.Profile = Profile;
+        _settings.Save();
+        _rules.SetProfile(Profile);
+        Status = Loc.T("Settings_ProfileSaved");
+    }
     private readonly AppSettings _settings;
     private readonly FocusLedgerStore _store;
     private readonly RecordingService _recording;

@@ -21,8 +21,8 @@
                             <DataTemplate>
                                 <Button Style="{StaticResource GhostButton}" Padding="14,5" Margin="0,0,8,8"
                                         Command="{Binding DataContext.SetProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}">
-                                    <TextBlock Text="{Binding Converter={StaticResource ProfileName}}" FontSize="12.5" />
+                                        CommandParameter="{Binding Id}">
+                                    <TextBlock Text="{Binding Label}" FontSize="12.5" />
                                 </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -167,7 +167,7 @@
                                     <TextBlock Grid.Column="0" Text="{Binding}" FontSize="12.5" VerticalAlignment="Center" />
                                     <Button Grid.Column="1" Content="{loc:T Settings_Remove}" Style="{StaticResource GhostButton}" Padding="8,3"
                                             Command="{Binding DataContext.RemoveExclusionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}" />
+                                            CommandParameter="{Binding Id}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
