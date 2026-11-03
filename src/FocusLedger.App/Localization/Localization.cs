@@ -242,6 +242,8 @@ public sealed class Localization : INotifyPropertyChanged
         ["Plan_Conflict"] = ("和「{0}」（{1}）时间重叠了，换一段时间吧。",
             "That overlaps \"{0}\" ({1}) — pick another slot."),
         ["Plan_Repeat"] = ("重复", "Repeat"),
+        ["Plan_RepeatWeeks"] = ("持续", "For"),
+        ["Repeat_Weeks"] = ("{0} 周", "{0} wk"),
         ["Repeat_None"] = ("不重复", "Once"),
         ["Repeat_Daily"] = ("每天", "Daily"),
         ["Repeat_Weekday"] = ("工作日", "Weekdays"),

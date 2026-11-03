@@ -98,11 +98,25 @@ public sealed partial class RepeatOption : ObservableObject
     private bool isActive;
 }
 
+/// <summary>「持续几周」的一枚选项。</summary>
+public sealed partial class RepeatWeekOption : ObservableObject
+{
+    public RepeatWeekOption(string label, int weeks)
+    {
+        Label = label;
+        Weeks = weeks;
+    }
+
+    public string Label { get; }
+
+    public int Weeks { get; }
+
+    [ObservableProperty]
+    private bool isActive;
+}
+
 public sealed partial class CalendarViewModel : ObservableObject
 {
-    /// <summary>周期任务一次铺多远。八周足够看清规律，再远用户也不会提前排。</summary>
-    private const int RepeatHorizonDays = 56;
-
     private readonly FocusLedgerStore _store;
     private readonly Dictionary<string, string> _holidays;
     private readonly Dictionary<long, FocusLedgerStore.PlanRow> _planDetails = new();
@@ -138,6 +152,9 @@ public sealed partial class CalendarViewModel : ObservableObject
     /// <summary>周期预设：不重复 / 每天 / 工作日 / 休息日。</summary>
     public ObservableCollection<RepeatOption> RepeatOptions { get; } = new();
 
+    /// <summary>持续几周的可选项。</summary>
+    public ObservableCollection<RepeatWeekOption> RepeatWeekOptions { get; } = new();
+
     private DateOnly _weekStart;
     private DateOnly _pendingDate;
     private long? _editingPlanId;
@@ -167,6 +184,13 @@ public sealed partial class CalendarViewModel : ObservableObject
     /// <summary>周期规则：none / daily / weekday / weekend / custom（自定义星期）。</summary>
     [ObservableProperty]
     private string editorRepeat = "none";
+
+    /// <summary>这批周期任务持续几周；铺的天数就是它的 7 倍。</summary>
+    [ObservableProperty]
+    private int repeatWeeks = 8;
+
+    /// <summary>选了重复才显示「持续几周」。</summary>
+    public bool HasRepeat => EditorRepeat != "none";
 
     /// <summary>「重复」只对新建有意义；改重复等于在原日期上再铺一批，容易重复建。</summary>
     public bool IsNewPlan => !IsExistingPlan;
@@ -222,6 +246,15 @@ public sealed partial class CalendarViewModel : ObservableObject
         RepeatOptions.Add(new RepeatOption(Loc.T("Repeat_Daily"), "daily"));
         RepeatOptions.Add(new RepeatOption(Loc.T("Repeat_Weekday"), "weekday"));
         RepeatOptions.Add(new RepeatOption(Loc.T("Repeat_Weekend"), "weekend"));
+
+        RepeatWeekOptions.Clear();
+        foreach (int weeks in new[] { 1, 2, 4, 8, 12 })
+        {
+            RepeatWeekOptions.Add(new RepeatWeekOption(Loc.T("Repeat_Weeks", weeks), weeks)
+            {
+                IsActive = weeks == RepeatWeeks
+            });
+        }
     }
 
     partial void OnEditorRepeatChanged(string value)
@@ -229,6 +262,17 @@ public sealed partial class CalendarViewModel : ObservableObject
         foreach (var option in RepeatOptions)
         {
             option.IsActive = string.Equals(option.Mode, value, StringComparison.Ordinal);
+        }
+
+        // 「持续几周」只在真的要重复时才有意义
+        OnPropertyChanged(nameof(HasRepeat));
+    }
+
+    partial void OnRepeatWeeksChanged(int value)
+    {
+        foreach (var option in RepeatWeekOptions)
+        {
+            option.IsActive = option.Weeks == value;
         }
     }
 
@@ -472,6 +516,15 @@ public sealed partial class CalendarViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void SetRepeatWeeks(RepeatWeekOption? option)
+    {
+        if (option is not null)
+        {
+            RepeatWeeks = option.Weeks;
+        }
+    }
+
+    [RelayCommand]
     private void ToggleRepeatDay(RepeatDay? day)
     {
         if (day is null)
@@ -570,7 +623,9 @@ public sealed partial class CalendarViewModel : ObservableObject
             yield break;
         }
 
-        for (int i = 0; i < RepeatHorizonDays; i++)
+        // 铺的天数 = 周数 × 7，从起始日算起（含当天）
+        int horizon = Math.Max(1, RepeatWeeks) * 7;
+        for (int i = 0; i < horizon; i++)
         {
             var date = start.AddDays(i);
             if (MatchesRepeat(date))
