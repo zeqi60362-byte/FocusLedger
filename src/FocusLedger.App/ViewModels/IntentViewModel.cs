@@ -56,6 +56,11 @@ public sealed partial class IntentViewModel : ObservableObject
     [ObservableProperty]
     private string activeLabel = string.Empty;
 
+    public IReadOnlyList<(string Id, string Label)> MusicOptions => FocusAudio.Options;
+
+    [ObservableProperty]
+    private string selectedMusic = "none";
+
     public IReadOnlyList<int> Durations { get; } = new[] { 25, 50, 90 };
 
     /// <summary>
@@ -115,6 +120,8 @@ public sealed partial class IntentViewModel : ObservableObject
         long end = now + PlannedMinutes * 60_000L;
         string text = string.IsNullOrWhiteSpace(Label) ? Loc.T("Intent_DefaultLabel") : Label.Trim();
 
+        FocusAudio.Play(SelectedMusic);
+
         long id = _store.CreateIntent(now, end, text);
 
         _active = new FocusIntent((int)id, now, end, text, IntentStatus.Running, null);
@@ -137,6 +144,7 @@ public sealed partial class IntentViewModel : ObservableObject
             return;
         }
 
+        FocusAudio.Stop();
         _store.FinishIntent(_active.Id, IntentStatus.Abandoned, 0);
         HasResult = true;
         ResultText = Loc.T("Intent_Abandoned", _active.Label);

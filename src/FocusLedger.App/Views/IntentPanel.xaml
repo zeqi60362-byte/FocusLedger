@@ -99,6 +99,12 @@
                     <TextBlock Text="min" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="6,0,0,0" />
                 </StackPanel>
 
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock Text="背景音" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <ComboBox Width="90" ItemsSource="{Binding MusicOptions}" DisplayMemberPath="Label"
+                              SelectedValuePath="Id" SelectedValue="{Binding SelectedMusic, Mode=TwoWay}" />
+                </StackPanel>
+
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                     <Button Content="{loc:T Intent_Begin}" Style="{StaticResource PrimaryButton}" Padding="16,6"
                             Command="{Binding StartCommand}" />
@@ -126,10 +132,9 @@
                     </StackPanel>
                 </Grid>
 
-                <controls:ProportionBar Height="6" Margin="0,14,0,0"
+                <controls:ProportionBar Height="9" Margin="0,14,0,0"
                                         Track="{DynamicResource TrackBg}" Slices="{Binding TimeSlices}" />
-                <TextBlock Text="{Binding TimeProgressText}" Style="{StaticResource Caption}" FontSize="11.5" Margin="0,6,0,0"
-                           Foreground="{DynamicResource StateSilent}" />
+                <TextBlock Text="{Binding TimeProgressText}" Style="{StaticResource Caption}" FontSize="12.5" Margin="0,8,0,0" />
 
                 <controls:ProportionBar Height="9" Margin="0,12,0,0"
                                         Track="{DynamicResource TrackBg}" Slices="{Binding ProgressSlices}" />
