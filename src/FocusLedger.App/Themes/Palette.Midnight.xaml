@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- 板岩灰：比石墨黑略冷的深灰，带极轻微的蓝灰倾向 -->
-    <FontFamily x:Key="UiFont">Microsoft YaHei UI</FontFamily>
+    <FontFamily x:Key="UiFont">Noto Sans SC, Microsoft YaHei UI, Segoe UI</FontFamily>
 
     <SolidColorBrush x:Key="Bg" Color="#0C0D10" />
     <SolidColorBrush x:Key="Surface" Color="#14161A" />

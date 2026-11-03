@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- 混凝土浅灰：暖灰底 + 纯白卡片 + 墨黑强调，图纸般的干净 -->
-    <FontFamily x:Key="UiFont">Microsoft YaHei UI</FontFamily>
+    <FontFamily x:Key="UiFont">Noto Sans SC, Microsoft YaHei UI, Segoe UI</FontFamily>
 
     <SolidColorBrush x:Key="Bg" Color="#EFEFED" />
     <SolidColorBrush x:Key="Surface" Color="#FFFFFF" />

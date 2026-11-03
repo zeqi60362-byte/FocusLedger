@@ -196,7 +196,7 @@ public sealed class WeekCanvas : FrameworkElement
         }
 
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-        var typeface = new Typeface(new FontFamily("Microsoft YaHei UI"), FontStyles.Normal,
+        var typeface = new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal,
             FontWeights.Normal, FontStretches.Normal);
         var labelBrush = Res("TextDim", Colors.Gray);
         var textBrush = Res("Text", Colors.Black);
@@ -248,7 +248,7 @@ public sealed class WeekCanvas : FrameworkElement
         for (int i = 0; i < 7; i++)
         {
             bool isToday = i == TodayIndex;
-            var tf = new Typeface(new FontFamily("Microsoft YaHei UI"), FontStyles.Normal,
+            var tf = new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal,
                 isToday ? FontWeights.SemiBold : FontWeights.Normal, FontStretches.Normal);
             var text = new FormattedText(names[i], CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                 tf, 11.5, isToday ? accent : labelBrush, dpi);

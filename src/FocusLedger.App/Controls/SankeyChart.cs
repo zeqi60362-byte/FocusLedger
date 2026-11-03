@@ -46,7 +46,7 @@ public sealed class SankeyChart : FrameworkElement
         }
 
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-        var typeface = new Typeface(new FontFamily("Microsoft YaHei UI"), FontStyles.Normal,
+        var typeface = new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal,
             FontWeights.Normal, FontStretches.Normal);
         var labelBrush = Res("Text", Colors.Black);
         var dimBrush = Res("TextDim", Colors.Gray);
@@ -191,7 +191,7 @@ public sealed class SankeyChart : FrameworkElement
 
     private void DrawCentered(DrawingContext dc, string message, double width, double height)
     {
-        var typeface = new Typeface(new FontFamily("Microsoft YaHei UI"), FontStyles.Normal,
+        var typeface = new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal,
             FontWeights.Normal, FontStretches.Normal);
         var text = new FormattedText(message, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
             typeface, 12, Res("TextDim", Colors.Gray), VisualTreeHelper.GetDpi(this).PixelsPerDip);

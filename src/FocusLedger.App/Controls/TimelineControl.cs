@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -158,7 +158,7 @@ public sealed class TimelineControl : FrameworkElement
         var tickBrush = Res("TimelineGrid", Color.FromArgb(0x28, 0xFF, 0xFF, 0xFF));
         var pen = new Pen(tickBrush, 1);
         var labelBrush = Res("TimelineLabel", Color.FromRgb(0x7A, 0x7A, 0x84));
-        var typeface = new Typeface(new FontFamily("Microsoft YaHei UI, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        var typeface = new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
         var cursor = new DateTime(localStart.Year, localStart.Month, localStart.Day, localStart.Hour, 0, 0);
@@ -213,7 +213,7 @@ public sealed class TimelineControl : FrameworkElement
             return;
         }
 
-        var typeface = new Typeface(new FontFamily("Microsoft YaHei UI, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        var typeface = new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
         var local = DateTimeOffset.FromUnixTimeMilliseconds(_hover.StartUtcMs).ToLocalTime();
@@ -234,7 +234,7 @@ public sealed class TimelineControl : FrameworkElement
 
     private void DrawCentered(DrawingContext dc, string message, double width, double height)
     {
-        var typeface = new Typeface(new FontFamily("Microsoft YaHei UI, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        var typeface = new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         var text = new FormattedText(
             message, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,

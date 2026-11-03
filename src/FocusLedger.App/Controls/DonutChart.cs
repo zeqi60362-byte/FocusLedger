@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 
@@ -60,7 +60,7 @@ public sealed class DonutChart : FrameworkElement
         }
 
         var center = new Point(width / 2, height / 2);
-        var typeface = new Typeface(new FontFamily("Microsoft YaHei UI"), FontStyles.Normal,
+        var typeface = new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal,
             FontWeights.SemiBold, FontStretches.Normal);
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
@@ -118,7 +118,7 @@ public sealed class DonutChart : FrameworkElement
         double valueSize = radius * 0.52;
         var valueText = new FormattedText(
             CenterValue, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-            new Typeface(new FontFamily("Microsoft YaHei UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal),
+            new Typeface(new FontFamily("Noto Sans SC, Microsoft YaHei UI, Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal),
             valueSize, Res("Text", Colors.White), dpi);
 
         double labelSize = Math.Max(10, radius * 0.17);
