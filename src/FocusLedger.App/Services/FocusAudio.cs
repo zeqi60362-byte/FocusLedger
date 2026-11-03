@@ -17,8 +17,6 @@ public static class FocusAudio
     public static readonly MusicOption[] Options =
     {
         new("none", "无"),
-        new("white", "白噪音"),
-        new("rain", "雨声"),
         new("folder", "本地音乐")
     };
 

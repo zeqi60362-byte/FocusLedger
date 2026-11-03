@@ -41,7 +41,7 @@
             <StackPanel Visibility="{Binding ShowEditor, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="{loc:T Intent_WhatNext}" FontSize="14" FontWeight="SemiBold" />
 
-                <TextBox Width="360" Margin="0,10,0,0" HorizontalAlignment="Left"
+                <TextBox Height="34" Padding="10,4" Margin="0,10,0,0" HorizontalAlignment="Left" Width="360"
                          Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" />
 
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">

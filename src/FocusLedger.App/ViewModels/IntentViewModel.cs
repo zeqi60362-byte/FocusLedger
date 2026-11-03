@@ -219,6 +219,8 @@ public sealed partial class IntentViewModel : ObservableObject
 
     private void Complete(bool automatic)
     {
+        FocusAudio.Stop();
+        ActiveTrack = string.Empty;
         if (_active is null)
         {
             return;
