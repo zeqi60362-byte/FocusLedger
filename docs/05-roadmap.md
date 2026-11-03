@@ -119,6 +119,17 @@
 - GitHub Actions：构建 + 测试 + 发布
 - 许可证：MPL-2.0（见 ADR-003）
 
+**进度清单**
+
+- [x] 隐私政策（[PRIVACY.md](../PRIVACY.md)）
+- [x] 安全策略（[SECURITY.md](../SECURITY.md)）
+- [x] 中英文 README（[README.md](../README.md) / [README.en.md](../README.en.md)）
+- [x] 单文件发布脚本（`tools/dev.ps1 publish`）
+- [ ] 代码签名
+- [ ] Velopack 安装器
+- [ ] GitHub Actions（构建 + 测试 + 发布）
+- [ ] 商标（名称与 logo 的权利声明与注册）
+
 **验收**
 1. 找一台没装过 .NET 的电脑，双击安装包能装能跑
 2. 断网状态下功能完整

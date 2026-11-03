@@ -1,158 +1,148 @@
 # FocusLedger · 专注账本
 
-> 一个本地优先的注意力审计工具：自动记录你在电脑上的每一分钟，用多源证据判断你是否真的在投入，
-> 并每天给你一份「声称 vs 实证」的对账报告。
+> **专注账本 · 每一分钟都对得上**
+>
+> Focus ledger · every minute accounted for
 
-**当前状态**：**M3 完成** —— 判定引擎、采集器、存储、命令行、桌面界面（托盘 / 时间轴 / 日报 / 对账 / 规则 / 设置）
-已跑通，**45 个测试全绿**。
+你自报今天专注了 6 小时，账本上只有 3 小时，而且你说不清另外 3 小时去了哪里。
+计时器只记得你按过开始；FocusLedger 记录你实际面对哪个窗口、画面有没有变化、有没有键鼠输入、
+媒体在不在播放，把时间判成四种状态，再把你**声称的**和证据支持的**实证**摆在一起对账。
+记录回答「多久」，判定回答「值不值」，对账回答「差在哪」。
 
-两条主线都已闭环：
-- **事后对账**：导入番茄钟 CSV，看到「声称 42m / 实证 10m / 差额 32m」及五项归因
-- **事前承诺**：声明「接下来 25 分钟写论文」，结束时拿到遵守率回执
+**当前状态**：v0.9 开发版（2026-11-03）。源码可构建运行；尚未提供签名安装包。
 
-规则改动会**立即重算历史数据**：判定不信任采集时的分类快照，而是每次按当前规则重新推导。
+## 关键特性
 
-![今日](docs/images/today.png)
+| 能力 | 说明 |
+|---|---|
+| 本地优先 | 应用进程不发起任何网络请求；无账号、无遥测、无崩溃上报（ADR-010） |
+| 四态判定 | 深度 / 静默 / 分心 / 离席；没有正面证据一律算离席 |
+| 对账 | 导入计时器 CSV，把「声称的专注区间」与「实证状态」按时间轴对齐，差额拆成离席、分心、未采集、打折 |
+| 计划页 | 周视图拖拽新建；月历、重复规律、时间冲突拒绝、地点与链接备注 |
+| 中英双语 | 界面即时切换，偏好保存在本机 |
 
----
+## 和同类工具的区别
 
-## 为什么做这个
-
-番茄钟会骗你。计时器一开，你就"在学习"——哪怕你已经去泡咖啡、在刷手机、在发呆。
-于是你每天自报 6 小时专注，实际可能只有 3 小时，而你**不知道差的 3 小时去了哪里**。
-
-FocusLedger 不信任任何一个单一信号：
-
-- 计时器会骗人（人走了没停表）
-- 前台窗口会骗人（Stata 开着，人在刷手机）
-- 键鼠活动会骗人（无意义晃鼠标、机械翻页）
-- 屏幕变化会骗人（视频在播但人在做饭）
-- 无输入也不等于没学习（读一页 PDF、盯着代码思考五分钟）
-
-它做的事情是：**采集多源弱信号 → 推断状态与置信度 → 把"你声称的"和"证据支持的"并排摆出来**。
-
----
-
-## 和同类产品的区别
-
-| | 记录了什么 | 判断是否投入 | 声称 vs 实证对账 |
+| 工具 | 记录了什么 | 判断是否投入 | 声称 vs 实证 |
 |---|---|---|---|
-| RescueTime | 应用 / 网站用时 | 无，只有分类 | 无 |
-| Toggl | 你手动宣称的时间 | 无 | 无 |
-| ActivityWatch | 应用 / 窗口 / 键鼠空闲 | 部分，仅 AFK | 无 |
-| 番茄 Todo | 你按下的计时器 | 无（这正是痛点） | 无 |
-| **FocusLedger** | 应用 + 窗口 + 画面变化 + 媒体播放 + 键鼠 + 锁屏 | **七状态 + 置信度区间** | **有，且可归因** |
+| RescueTime | 应用 / 网站用时 | 按应用分类推测，不判断实际投入 | 无 |
+| Toggl | 你手动按下的计时 | 无 | 无 |
+| ActivityWatch | 应用 / 窗口 / 键鼠空闲 | 只区分是否 AFK | 无 |
+| **FocusLedger** | 应用 + 窗口标题 + 画面变化 + 媒体播放 + 键鼠 + 锁屏 | **四态判定，带置信区间** | **有，且能拆分差额** |
 
-护城河不在"记录"，在"判定"和"对账"。记录层永远会被开源项目做平，判定层不会。
+护城河不在记录。记录层会被开源项目做平；判定与对账不会。
 
----
+## 四种状态
 
-## 七个状态
-
-| 状态 | 含义 | 计权 |
+| 状态 | 判据 | 统计方式 |
 |---|---|---|
-| `active_focus` | 有输入、前台属任务类、画面在变 | 1.0 |
-| `passive_focus` | 无输入但在消费任务内容（网课、长文） | 0.7–0.85 |
-| `silent_focus` | 无输入无变化，但在任务应用里（思考/阅读） | 0.3–0.7，低置信 |
-| `off_task` | 在娱乐/社交/购物，或主动分心 | 0，另计"分心时长" |
-| `idle_away` | 人不在，无媒体播放 | 0，另计"离席时长" |
-| `locked` / `asleep` | 锁屏、睡眠、关机 | 不进入任何统计 |
-| `ambiguous` | 信号冲突或不足 | 0.5，进入日终复核队列 |
+| 深度专注 | 有键鼠输入，且前台是工作类应用 | 计入有效专注 |
+| 静默专注 | 手不动，但在看 / 听学习内容（媒体在播或画面在变） | 计入有效专注 |
+| 分心 | 娱乐、社交、购物等 | 单列分心时长 |
+| 离席 | 无输入、无画面变化、无媒体；含锁屏与睡眠 | 单列离席时长 |
 
-日报永远写成 `有效专注 4.2h [3.8–4.6]`，不写假精确的 `4.2h`。
+规则很简单：**没有正面证据，就算离席。** 宁可少算，也不把「人不在」算成「在思考」——
+那正是番茄钟高估的老路。
 
----
+有效专注按**原始时长**计入（深度 + 静默，不再乘权重）；每个数字都能点开，看到它由哪几段时间、哪条规则得来。
 
-## 杀手级功能：对账
+## 对账
 
-导入番茄 Todo 的 CSV，把它记录的"专注区间"和 FocusLedger 的"实证状态"在时间轴上对齐：
+先把计时器导出的 CSV 导入本机，再按时间轴对齐。差额不是一句「效率不高」，而是拆开的三四项：
 
 ```
-你声称     ████████████████████████████  6.0h
-实证支持   ████████████░░░░░░            3.1h
-差额 2.9h  =  离席 1.4h  +  分心 0.9h  +  存疑 0.6h
+声称    6.0h
+实证    3.1h
+差额    2.9h  =  离席 1.4h  +  分心 0.9h  +  未采集 0.4h  +  打折 0.2h
 ```
 
-这张图像体检报告，能截图、能分享、能让人第一次看清自己的时间去哪了。
+（示意数字。）「打折」指确实在看 / 听学习内容，但属于被动或静默，按权重折算，不与离席混为一谈。
 
----
+```powershell
+$cli = ".\src\FocusLedger.Cli\bin\Debug\net8.0-windows10.0.19041.0\focusledger.exe"
 
-## 技术栈
+& $cli import --file .\toggl.csv
+& $cli reconcile
+```
 
-- **.NET 8 + WPF**（Windows 优先；托盘常驻 + 单文件发布 + Velopack 自动更新）
-- **SQLite**（`Microsoft.Data.Sqlite` + Dapper），全部本地
-- 采集层直调 **Win32 / WinRT**（前景窗口、空闲、画面哈希、媒体播放、会话锁屏）
-- 判定引擎是**纯 C#、零系统依赖**，可脱离 Windows 单独跑单元测试
+## 安装与运行
 
-> 为什么不是 Tauri：本机没有 Rust 与 MSVC 构建工具链，安装成本约 3–4 GB 且可能需要管理员权限。
-> 详见 [docs/04-architecture.md](docs/04-architecture.md)。
+目前只有源码构建，没有安装包。
 
----
+**环境**
+
+- Windows 10 2004（19041）或更高
+- .NET 8 SDK
+
+**注意本机有两个 dotnet**：`C:\Program Files\dotnet` 在 PATH 中抢先，且没有 SDK。
+不要直接敲 `dotnet`，统一走 `tools\dev.ps1`；脚本会优先使用 `%USERPROFILE%\.dotnet` 下的 SDK。
+
+```powershell
+git clone <repo-url>
+cd FocusLedger
+
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 build
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 run
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 test
+```
+
+发布单文件（self-contained，输出到 `dist\`）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 publish
+```
+
+## 命令行
+
+```powershell
+$cli = ".\src\FocusLedger.Cli\bin\Debug\net8.0-windows10.0.19041.0\focusledger.exe"
+
+& $cli report                                  # 今天的日报
+& $cli capture --minutes 60                    # 采集 1 小时后立刻出报告
+& $cli import --file .\toggl.csv               # 导入计时器记录（按内容哈希去重）
+& $cli reconcile                               # 声称 vs 实证
+& $cli report --range 30d --export md --out report-30d.md
+```
+
+`report --range 30d --export md` 生成可发布的 Markdown 报告：总体、逐日、周内节律、软件用时与分心 Top。
+导出内容只有汇总与应用名，**不含窗口标题**。不传 `--out` 时输出到终端。
+
+## 隐私
+
+- **不联网**：应用进程没有出站网络代码；无账号、无遥测、无崩溃上报。
+- **不记录内容**：键盘只计数，不存键码；鼠标只计数，不存坐标；不读剪贴板、文件内容、浏览器历史。
+- **画面只留哈希**：每 5 秒把前景窗口缩成 9×8 灰度图，算一个 64 位哈希；图像缓冲用完即弃，不落盘。
+- **数据在本机**：`%LOCALAPPDATA%\FocusLedger\data.db`。原始样本默认保留 14 天，可在设置页调整。
+- **标题只存本机**：窗口标题用于分类，可能包含文件名或邮件主题；导出默认不带标题。
+- **随时可控**：托盘一键暂停、按进程排除、设置页「删除全部数据」。
+
+这个品类里，信任只能靠可验证的设计，不能靠声明。完整说明见 [PRIVACY.md](PRIVACY.md)；
+安全问题见 [SECURITY.md](SECURITY.md)。
 
 ## 文档
 
 | 文档 | 内容 |
 |---|---|
-| [docs/00-vision.md](docs/00-vision.md) | 定位、用户、差异化、商业模式、命名 |
-| [docs/01-spec.md](docs/01-spec.md) | 完整产品规格（要做什么） |
-| [docs/02-state-machine.md](docs/02-state-machine.md) | 状态判定模型、阈值、验收场景矩阵 |
-| [docs/03-data-model.md](docs/03-data-model.md) | SQLite 表结构、保留策略、导出格式 |
-| [docs/04-architecture.md](docs/04-architecture.md) | 架构、技术选型、模块边界、线程模型 |
-| [docs/05-roadmap.md](docs/05-roadmap.md) | M0–M4 里程碑与验收方式 |
+| [docs/00-vision.md](docs/00-vision.md) | 定位、用户、差异化、商业模式 |
+| [docs/01-spec.md](docs/01-spec.md) | 产品规格（要做什么） |
+| [docs/02-state-machine.md](docs/02-state-machine.md) | 判定模型、阈值、验收场景 |
+| [docs/04-architecture.md](docs/04-architecture.md) | 架构、技术选型、模块边界 |
+| [docs/05-roadmap.md](docs/05-roadmap.md) | M0–M4 里程碑与发布清单 |
 | [docs/06-decisions.md](docs/06-decisions.md) | 决策记录（ADR） |
-| [docs/07-privacy.md](docs/07-privacy.md) | 隐私红线、合规、安全设计 |
-| [docs/m0-findings.md](docs/m0-findings.md) | M0 信号探针实测记录 |
-| [docs/m1-report.md](docs/m1-report.md) | M1 完成报告与已知缺口 |
-| [docs/m2-report.md](docs/m2-report.md) | M2 界面完成报告与已知缺口 |
-| [docs/m3-report.md](docs/m3-report.md) | M3 对账完成报告与差额归因模型 |
-| [AGENTS.md](AGENTS.md) | 给实现型 AI 的工作契约（怎么干） |
-
----
-
-## 快速开始
-
-```powershell
-# 构建并跑测试
-powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 build
-powershell -ExecutionPolicy Bypass -File .\tools\dev.ps1 test
-
-# 采集 1 小时（写入 %LOCALAPPDATA%\FocusLedger\data.db）
-.\src\FocusLedger.Cli\bin\Debug\net8.0-windows10.0.19041.0\focusledger.exe capture --minutes 60
-
-# 出报告
-.\src\FocusLedger.Cli\bin\Debug\net8.0-windows10.0.19041.0\focusledger.exe report
-```
-
-样例输出：
-
-```
-2026-11-01   有效专注 4.2h [3.8–4.6]
-
-  深度 3.1h  |  被动 1.1h  |  静默 0.6h
-  分心 0.9h  |  离席 1.4h  |  锁屏 2.1h  |  存疑 0.0h
-
-  深度工作块 5 次，最长 52 分钟
-  应用切换 87 次
-```
-
----
-
-## 隐私立场
-
-默认 100% 本地、零网络请求。不记录按键内容、不记录剪贴板、不记录文件内容、默认不落盘任何截图。
-托盘常驻可见，一键暂停，一键排除。详见 [docs/07-privacy.md](docs/07-privacy.md)。
-
-这个品类里**信任就是产品**。任何一条越界，项目就死了。
-
----
+| [docs/07-privacy.md](docs/07-privacy.md) | 隐私红线、威胁模型、合规 |
+| [PRIVACY.md](PRIVACY.md) | 对外隐私说明 |
+| [SECURITY.md](SECURITY.md) | 漏洞上报与支持范围 |
+| [AGENTS.md](AGENTS.md) | 实现契约（给编码代理） |
 
 ## 许可证
 
-[Mozilla Public License 2.0](LICENSE)。文件级 copyleft：允许被更大的商业产品引用，
-但 FocusLedger 自身的修改必须保持开源，且不允许把本项目私有化后再分发。
+[Mozilla Public License 2.0](LICENSE)，选择理由见 ADR-003。MPL 是文件级 copyleft：
+修改 FocusLedger 的源文件必须以 MPL 公开；它也可以被更大或闭源的产品引用。
 
----
+**名称与 logo 不在许可范围内。** 「FocusLedger」「专注账本」、应用图标与 logo 的商标权由作者保留。
+fork 或再分发时请更换名称与图标，避免用户混淆。
 
-## 状态徽章（开源后启用）
+## 参与
 
-`build` · `tests` · `license` · `platform: windows`
+问题与建议走 GitHub Issues；安全漏洞不要开公开 issue，见 [SECURITY.md](SECURITY.md)。
+本项目不做员工监控版：使用者必须是被记录者本人。
