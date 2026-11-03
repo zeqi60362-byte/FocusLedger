@@ -1,4 +1,4 @@
-using System.Windows.Media;
+﻿using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FocusLedger.App.Controls;
@@ -39,6 +39,13 @@ public sealed partial class IntentViewModel : ObservableObject
 
     [ObservableProperty]
     private IReadOnlyList<BarSlice> progressSlices = Array.Empty<BarSlice>();
+
+    /// <summary>时间进度（已过时间 / 计划时长），蓝色。</summary>
+    [ObservableProperty]
+    private IReadOnlyList<BarSlice> timeSlices = Array.Empty<BarSlice>();
+
+    [ObservableProperty]
+    private string timeProgressText = string.Empty;
 
     [ObservableProperty]
     private bool hasResult;
@@ -155,6 +162,17 @@ public sealed partial class IntentViewModel : ObservableObject
         long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         long remainingMs = _active.PlannedEndUtcMs - now;
 
+        long totalMs = Math.Max(1, _active.PlannedEndUtcMs - _active.StartUtcMs);
+        long elapsedMs = Math.Clamp(now - _active.StartUtcMs, 0, totalMs);
+        int percent = (int)Math.Round(elapsedMs * 100.0 / totalMs);
+
+        TimeSlices = new[]
+        {
+            new BarSlice(elapsedMs, BrushOf("StateSilent")),
+            new BarSlice(Math.Max(1, totalMs - elapsedMs), Brushes.Transparent)
+        };
+        TimeProgressText = Loc.T("Intent_TimeProgress", percent);
+
         Remaining = remainingMs <= 0
             ? Loc.T("Intent_TimeUp")
             : Loc.T("Intent_Remaining", FormatRemaining(remainingMs));
@@ -229,4 +247,7 @@ public sealed partial class IntentViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowIdle));
         OnPropertyChanged(nameof(ShowActive));
     }
+
+    private Brush BrushOf(string key) =>
+        System.Windows.Application.Current?.TryFindResource(key) as Brush ?? Brushes.Gray;
 }

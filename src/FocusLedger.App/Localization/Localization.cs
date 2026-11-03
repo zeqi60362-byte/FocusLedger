@@ -82,6 +82,7 @@ public sealed class Localization : INotifyPropertyChanged
         ["Intent_Title"] = ("设定今日专注任务", "Set today's focus task"),
         ["Intent_Start"] = ("开始一段专注", "Start a session"),
         ["Intent_WhatNext"] = ("接下来做什么？", "What are you working on?"),
+        ["Intent_TimeProgress"] = ("进度占比 {0}%", "{0}% elapsed"),
         ["Intent_Duration"] = ("时长", "Duration"),
         ["Intent_Custom"] = ("自定义", "Custom"),
         ["Intent_Minutes"] = ("{0} 分钟", "{0} min"),
