@@ -49,8 +49,13 @@ public sealed partial class TodayViewModel : ObservableObject
     [ObservableProperty]
     private string current = string.Empty;
 
+    /// <summary>下钻卡第一行：时间 / 状态 / 时长（加粗显示）。</summary>
     [ObservableProperty]
-    private string detail = string.Empty;
+    private string detailHeadline = string.Empty;
+
+    /// <summary>下钻卡第二块：应用与标题。</summary>
+    [ObservableProperty]
+    private string detailBody = string.Empty;
 
     [ObservableProperty]
     private string coverage = string.Empty;
@@ -174,7 +179,7 @@ public sealed partial class TodayViewModel : ObservableObject
             _selected = segments.Count > 0 ? segments[segments.Count - 1] : null;
         }
 
-        Detail = RenderDetail();
+        RenderDetail();
 
         if (Zoom is "hour" or "six")
         {
@@ -195,28 +200,32 @@ public sealed partial class TodayViewModel : ObservableObject
     {
         _selected = segment;
         _manualSelection = true;
-        Detail = RenderDetail();
+        RenderDetail();
     }
 
     public void ResetDetail()
     {
         _selected = null;
         _manualSelection = false;
-        Detail = RenderDetail();
+        RenderDetail();
     }
 
-    private string RenderDetail()
+    private void RenderDetail()
     {
         if (_selected is null)
         {
-            return Loc.T("Today_DetailPlaceholder");
+            DetailHeadline = string.Empty;
+            DetailBody = Loc.T("Today_DetailPlaceholder");
+            return;
         }
 
-        return Loc.T("Today_Detail",
+        DetailHeadline = Loc.T("Today_DetailHead",
             Fmt.Clock(_selected.StartUtcMs),
             Fmt.Clock(_selected.EndUtcMs),
             TimelineControl.StateName(_selected.State),
-            Fmt.Duration(_selected.DurationSeconds),
+            Fmt.Duration(_selected.DurationSeconds));
+
+        DetailBody = Loc.T("Today_DetailBody",
             _selected.App,
             Trim(_selected.Title, 90));
     }

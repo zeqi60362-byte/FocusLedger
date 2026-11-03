@@ -33,10 +33,10 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="{loc:T Today_Effective}" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="0,0,8,7" />
                     <TextBlock Text="{Binding Headline}" Style="{StaticResource H1}" />
-                    <TextBlock Text="+" Style="{StaticResource Caption}" FontSize="18" VerticalAlignment="Bottom" Margin="16,0,16,9" />
+                    <TextBlock Text="+" Style="{StaticResource Caption}" FontSize="18" VerticalAlignment="Center" Margin="16,3,16,0" />
                     <TextBlock Text="{loc:T Today_DistractedAway}" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="0,0,8,7" />
                     <TextBlock Text="{Binding DistractedText}" Style="{StaticResource H1}" />
-                    <TextBlock Text="=" Style="{StaticResource Caption}" FontSize="18" VerticalAlignment="Bottom" Margin="16,0,16,9" />
+                    <TextBlock Text="=" Style="{StaticResource Caption}" FontSize="18" VerticalAlignment="Center" Margin="16,3,16,0" />
                     <TextBlock Text="{loc:T Today_TotalWork}" Style="{StaticResource Caption}" VerticalAlignment="Bottom" Margin="0,0,8,7" />
                     <TextBlock Text="{Binding TotalText}" Style="{StaticResource H1}" />
                 </StackPanel>
@@ -149,10 +149,15 @@
             </Grid>
         </Border>
 
-        <!-- 下钻：始终占住三行的高度，点不点时间轴都不会让页面跟着跳 -->
+        <!-- 下钻：始终占住三行的高度，点不点时间轴都不会让页面跟着跳。
+             第一行（时间 + 状态 + 时长）加粗，方便一眼扫到。 -->
         <Border Grid.Row="4" Style="{StaticResource Card}" Margin="0,14,0,0" MinHeight="100">
-            <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" FontSize="12.5" LineHeight="21"
-                       VerticalAlignment="Center" />
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{Binding DetailHeadline}" TextWrapping="Wrap"
+                           FontSize="13.5" FontWeight="Bold" LineHeight="21" />
+                <TextBlock Text="{Binding DetailBody}" TextWrapping="Wrap"
+                           FontSize="12.5" LineHeight="21" Margin="0,2,0,0" />
+            </StackPanel>
         </Border>
     </Grid>
     </ScrollViewer>
