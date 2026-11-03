@@ -21,10 +21,7 @@
                 <TextBlock Text="{loc:T Today_Title}" Style="{StaticResource H2}" />
                 <TextBlock Text="{Binding DateLabel}" Style="{StaticResource Caption}" Margin="10,2,0,0" VerticalAlignment="Bottom" />
             </StackPanel>
-            <Button HorizontalAlignment="Right"
-                    Style="{StaticResource PrimaryButton}"
-                    Content="{Binding RecordButtonText}"
-                    Command="{Binding ToggleRecordingCommand}" />
+
         </Grid>
 
         <!-- 意图声明 -->
