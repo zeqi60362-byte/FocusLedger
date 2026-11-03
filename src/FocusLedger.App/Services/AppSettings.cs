@@ -28,6 +28,9 @@ public sealed class AppSettings
 
     public int RetentionDays { get; set; } = 14;
 
+    /// <summary>计划页使用的节假日地区代码，例如 HK / CN；导入 CSV 时也写到这里。</summary>
+    public string HolidayRegion { get; set; } = Holidays.DefaultRegion;
+
     public bool ApplyRetentionOnStartup { get; set; } = true;
 
     /// <summary>排除列表：命中进程名的样本不落库（FR-A8）。默认排除自身，否则会记录自己在记录。</summary>

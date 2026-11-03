@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -42,6 +42,17 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string currentTheme = "Dark";
 
+    /// <summary>节假日地区代码，导入 CSV 时写入这个地区。</summary>
+    [ObservableProperty]
+    private string holidayRegion = Holidays.DefaultRegion;
+
+    /// <summary>节假日导入的结果提示。</summary>
+    [ObservableProperty]
+    private string holidayStatus = string.Empty;
+
+    /// <summary>节假日数据被替换后通知计划页重新读一遍。</summary>
+    public event EventHandler? HolidaysChanged;
+
 
     public event EventHandler? LanguageChanged;
 
@@ -58,6 +69,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         RetentionDays = settings.RetentionDays;
         IsEnglish = string.Equals(settings.Language, "en", StringComparison.OrdinalIgnoreCase);
         CurrentTheme = settings.Theme;
+        HolidayRegion = string.IsNullOrWhiteSpace(settings.HolidayRegion)
+            ? Holidays.DefaultRegion
+            : settings.HolidayRegion;
 
         foreach (var app in settings.ExcludedApps)
         {
@@ -156,6 +170,59 @@ public sealed partial class SettingsViewModel : ObservableObject
         if (Exclusions.Remove(app))
         {
             PersistExclusions();
+        }
+    }
+
+    partial void OnHolidayRegionChanged(string value)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        _settings.HolidayRegion = string.IsNullOrWhiteSpace(value) ? Holidays.DefaultRegion : value.Trim();
+        _settings.Save();
+        HolidaysChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// 导入节假日 CSV（日期,名称）。分隔符支持逗号/制表符/分号，
+    /// 表头和坏行跳过；整批替换该地区已有的数据。
+    /// </summary>
+    [RelayCommand]
+    private void ImportHolidays()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "CSV",
+            Filter = "CSV / TXT|*.csv;*.txt|All files|*.*"
+        };
+
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var parsed = HolidayCsvParser.Parse(File.ReadAllText(dialog.FileName));
+            if (parsed.Days.Count == 0)
+            {
+                HolidayStatus = Loc.T("Holiday_Empty");
+                return;
+            }
+
+            string region = string.IsNullOrWhiteSpace(HolidayRegion)
+                ? Holidays.DefaultRegion
+                : HolidayRegion.Trim().ToUpperInvariant();
+
+            _store.ReplaceHolidays(region, parsed.Days);
+            HolidayStatus = Loc.T("Holiday_Imported", parsed.Days.Count, parsed.Skipped);
+            HolidaysChanged?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            HolidayStatus = Loc.T("Settings_ExportFailed", ex.Message);
         }
     }
 

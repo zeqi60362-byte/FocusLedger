@@ -134,11 +134,14 @@ public partial class App : System.Windows.Application
         var today = new TodayViewModel(_recording, _rules, intent);
         var report = new ReportViewModel(_store, _rules);
         var rulesView = new RulesViewModel(_rules, _recording);
-        var calendar = new CalendarViewModel(_store);
+        var calendar = new CalendarViewModel(_store, _settings.HolidayRegion);
         var settingsView = new SettingsViewModel(_settings, _store, _recording, _rules);
         _main = new MainViewModel(today, report, rulesView, calendar, settingsView, _recording);
 
         settingsView.LanguageChanged += (_, _) => _main?.RebuildForLanguage();
+
+        // 节假日被导入或换了地区：计划页要重新读一遍，否则还标着旧数据
+        settingsView.HolidaysChanged += (_, _) => calendar.ReloadHolidays(settingsView.HolidayRegion);
 
         // 规则一变，所有页面重算。用 BeginInvoke 避免在绑定更新中途重建列表。
         _rules.Changed += (_, _) => Dispatcher.BeginInvoke(

@@ -118,7 +118,8 @@ public sealed partial class RepeatWeekOption : ObservableObject
 public sealed partial class CalendarViewModel : ObservableObject
 {
     private readonly FocusLedgerStore _store;
-    private readonly Dictionary<string, string> _holidays;
+    private Dictionary<string, string> _holidays;
+    private string _holidayRegion;
     private readonly Dictionary<long, FocusLedgerStore.PlanRow> _planDetails = new();
 
     [ObservableProperty]
@@ -210,17 +211,21 @@ public sealed partial class CalendarViewModel : ObservableObject
     [ObservableProperty]
     private int todayIndex = -1;
 
-    public CalendarViewModel(FocusLedgerStore store)
+    public CalendarViewModel(FocusLedgerStore store, string? holidayRegion = null)
     {
         _store = store;
+        _holidayRegion = string.IsNullOrWhiteSpace(holidayRegion)
+            ? Holidays.DefaultRegion
+            : holidayRegion.Trim().ToUpperInvariant();
 
-        // 首次运行：播种香港 2026 法定假期
-        if (store.CountHolidays(Holidays.DefaultRegion) == 0)
+        // 首次运行：只有默认地区才播种香港 2026 法定假期；
+        // 用户切到别的地区又没导入过数据时，宁可不标节假日，也不要错标成香港的。
+        if (_holidayRegion == Holidays.DefaultRegion && store.CountHolidays(_holidayRegion) == 0)
         {
-            store.ReplaceHolidays(Holidays.DefaultRegion, Holidays.HongKong2026);
+            store.ReplaceHolidays(_holidayRegion, Holidays.HongKong2026);
         }
 
-        _holidays = new Dictionary<string, string>(store.LoadHolidays(Holidays.DefaultRegion), StringComparer.Ordinal);
+        _holidays = LoadHolidays();
 
         BuildPresets();
         BuildRepeatDays();
@@ -271,6 +276,21 @@ public sealed partial class CalendarViewModel : ObservableObject
         {
             option.IsActive = option.Weeks == value;
         }
+    }
+
+    private Dictionary<string, string> LoadHolidays() =>
+        new(_store.LoadHolidays(_holidayRegion), StringComparer.Ordinal);
+
+    /// <summary>设置页导入或切换地区后重新读一遍，并把页面刷新一次。</summary>
+    public void ReloadHolidays(string? region = null)
+    {
+        if (!string.IsNullOrWhiteSpace(region))
+        {
+            _holidayRegion = region.Trim().ToUpperInvariant();
+        }
+
+        _holidays = LoadHolidays();
+        Reload();
     }
 
     private void BuildPresets()
