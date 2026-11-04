@@ -289,4 +289,29 @@ public sealed partial class RulesViewModel : ObservableObject
         string.IsNullOrEmpty(value) ? Loc.T("Today_NoTitle")
         : value.Length <= max ? value
         : value[..(max - 1)] + "…";
+    /// <summary>从窗口标题里取一个能代表当前页面的关键词：去掉浏览器后缀与「和另外 N 个页面」。</summary>
+    private static string ExtractionKeyword(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return string.Empty;
+        }
+
+        string text = title.Trim();
+
+        int extra = text.IndexOf(" 和另外", StringComparison.Ordinal);
+        if (extra > 4)
+        {
+            text = text[..extra];
+        }
+
+        int dash = text.LastIndexOf(" - ", StringComparison.Ordinal);
+        if (dash > 6)
+        {
+            text = text[..dash];
+        }
+
+        text = text.Trim();
+        return text.Length > 40 ? text[..40] : text;
+    }
 }
