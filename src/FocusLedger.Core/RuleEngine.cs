@@ -187,7 +187,11 @@ public static class BuiltinRules
                  {
                      "哔哩哔哩", "bilibili", "YouTube", "Netflix", "爱奇艺", "腾讯视频",
                      "优酷", "Twitch", "抖音", "微博", "知乎", "小红书", "Reddit", "Twitter",
-                     "淘宝", "京东", "斗鱼", "虎牙"
+                     "淘宝", "京东", "斗鱼", "虎牙", "快手", "陌陌", "soul",
+                     // 直播与游戏赛事：直播页标题里常常不带站名，只写节目名
+                     "直播", "王者荣耀", "英雄联盟", "和平精英", "原神", "绝地求生",
+                     "KPL", "LPL", "S赛", "电竞赛事", "游戏直播", "赛事直播",
+                     "抖音直播", "b站直播", "B站直播", "虎牙直播", "斗鱼直播"
                  })
         {
             Add(RuleMatchType.TitleContains, k, ContextLevel.Distraction, AppClass.Media, 55, "分心·娱乐站点");
