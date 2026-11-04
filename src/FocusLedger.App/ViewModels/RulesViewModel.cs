@@ -177,9 +177,35 @@ public sealed partial class RulesViewModel : ObservableObject
         }
 
         var existing = _rules.FindProcessRule(current.App);
-        if (existing is { IsBuiltin: false })
+
+        // 这个应用已经有进程级规则时，改成按标题关键词建一条，否则同一款浏览器
+        // 只能整体设成分心（看视频和查文献会被一锅端）。
+        if (existing is not null)
         {
-            Status = Loc.T("Rules_Exists", current.App);
+            string keyword = ExtractionKeyword(current.Title);
+            if (keyword.Length < 2)
+            {
+                Status = Loc.T("Rules_Exists", current.App);
+                return;
+            }
+
+            if (_rules.EffectiveRules.Any(r => r.MatchType == RuleMatchType.TitleContains
+                    && string.Equals(r.Pattern, keyword, StringComparison.OrdinalIgnoreCase)))
+            {
+                Status = Loc.T("Rules_Exists", keyword);
+                return;
+            }
+
+            _rules.AddRule(
+                RuleMatchType.TitleContains,
+                keyword,
+                ContextLevel.Distraction,
+                AppClass.Other,
+                priority: 4,
+                label: keyword);
+
+            Status = Loc.T("Rules_Created", keyword);
+            Reload();
             return;
         }
 
