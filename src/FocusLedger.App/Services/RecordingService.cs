@@ -1,4 +1,4 @@
-using FocusLedger.Collector.Windows;
+﻿using FocusLedger.Collector.Windows;
 using FocusLedger.Core;
 using FocusLedger.Storage;
 
@@ -41,6 +41,25 @@ public sealed class RecordingService : IAsyncDisposable
     public ActivityState? CurrentState { get; private set; }
 
     public event EventHandler? Changed;
+
+    /// <summary>最近若干分钟内出现过的不同窗口，按时间倒序。</summary>
+    public IReadOnlyList<Sample> RecentWindows(int minutes = 30, int max = 12)
+    {
+        long cut = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - minutes * 60_000L;
+        List<Sample> snapshot;
+        lock (_gate)
+        {
+            snapshot = _today.ToList();
+        }
+
+        return snapshot
+            .Where(s => s.TsUtcMs >= cut && !string.IsNullOrEmpty(s.App))
+            .GroupBy(s => s.App + "|" + s.Title, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderByDescending(s => s.TsUtcMs).First())
+            .OrderByDescending(s => s.TsUtcMs)
+            .Take(max)
+            .ToList();
+    }
 
     public async Task InitializeAsync()
     {

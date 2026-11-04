@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -128,16 +128,48 @@ public sealed partial class RulesViewModel : ObservableObject
             Rows.Add(new RuleRow(rule, OnEnabledChanged, OnCategoryChanged));
         }
 
+        RefreshRecents();
         var current = _recording.Current;
         CurrentApp = current is null
             ? Loc.T("Today_Waiting")
             : $"{current.App}  ·  {Trim(current.Title, 50)}";
     }
 
+    public ObservableCollection<string> Recents { get; } = new();
+
+    [ObservableProperty]
+    private string selectedRecent = string.Empty;
+
+    private readonly Dictionary<string, Sample> _recentMap = new(StringComparer.Ordinal);
+
+    private void RefreshRecents()
+    {
+        Recents.Clear();
+        _recentMap.Clear();
+
+        foreach (var sample in _recording.RecentWindows())
+        {
+            string label = $"{sample.App}  ·  {Trim(sample.Title, 46)}";
+            if (_recentMap.ContainsKey(label))
+            {
+                continue;
+            }
+
+            _recentMap[label] = sample;
+            Recents.Add(label);
+        }
+
+        if (Recents.Count > 0 && !Recents.Contains(SelectedRecent))
+        {
+            SelectedRecent = Recents[0];
+        }
+    }
+
     [RelayCommand]
     private void NewRuleFromCurrent()
     {
-        var current = _recording.Current;
+        _recentMap.TryGetValue(SelectedRecent ?? string.Empty, out var picked);
+        var current = picked ?? _recording.Current;
         if (current is null || string.IsNullOrEmpty(current.App))
         {
             Status = Loc.T("Rules_NoSample");
