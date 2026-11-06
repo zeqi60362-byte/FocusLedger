@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using FocusLedger.App.Localization;
 using FocusLedger.App.Services;
 using FocusLedger.Core;
@@ -239,23 +239,42 @@ public partial class App : System.Windows.Application
 
     private void UpdateTrayState()
     {
+        // 退出流程里不再碰托盘：NotifyIcon.Dispose() 内部会把 Icon 置空并再触发一次
+        // UpdateIcon，此时对象已经半销毁，会抛 NRE。
+        if (_exiting)
+        {
+            return;
+        }
+
         if (!Dispatcher.CheckAccess())
         {
             Dispatcher.BeginInvoke(UpdateTrayState);
             return;
         }
 
-        if (_tray is null || _recording is null)
+        if (_tray is null || _recording is null || _exiting)
         {
             return;
         }
 
-        bool recording = _recording.IsRecording;
-        var state = _recording.CurrentState;
-        string suffix = recording ? StateName(state) : Loc.T("Status_Paused").TrimStart('○', ' ');
+        // 托盘图标只是界面装饰，更新失败绝不能让进程退出（AGENTS.md §3.3）。
+        // 出问题时照样写 crash.log，但不再把 DispatcherUnhandledException 拖下水。
+        try
+        {
+            bool recording = _recording.IsRecording;
+            var state = _recording.CurrentState;
+            string suffix = recording ? StateName(state) : Loc.T("Status_Paused").TrimStart('○', ' ');
 
-        _tray.Text = recording ? $"FocusLedger · {suffix}" : "FocusLedger · paused";
-        _tray.Icon = TrayIcon.Build(recording, state);
+            _tray.Text = recording ? $"FocusLedger · {suffix}" : "FocusLedger · paused";
+            _tray.Icon = TrayIcon.Build(recording, state);
+        }
+        catch (Exception ex)
+        {
+            WriteCrash("UpdateTrayState", ex);
+            return;
+        }
+
+        bool isRecording = _recording.IsRecording;
 #if DEBUG
         try
         {
@@ -263,7 +282,7 @@ public partial class App : System.Windows.Application
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "FocusLedger", "state-debug.log");
             System.IO.File.AppendAllText(log,
-                $"{DateTime.Now:HH:mm:ss}   -> tray icon set: rec={recording} state={state?.ToString() ?? "null"}{Environment.NewLine}");
+                $"{DateTime.Now:HH:mm:ss}   -> tray icon set: rec={isRecording} state={_recording.CurrentState?.ToString() ?? "null"}{Environment.NewLine}");
         }
         catch
         {
@@ -273,7 +292,7 @@ public partial class App : System.Windows.Application
 
         if (_pauseItem is not null)
         {
-            _pauseItem.Text = recording ? Loc.T("Today_Pause") : Loc.T("Today_Resume");
+            _pauseItem.Text = isRecording ? Loc.T("Today_Pause") : Loc.T("Today_Resume");
         }
 
         _main?.UpdateStatus();
@@ -352,8 +371,17 @@ public partial class App : System.Windows.Application
 
         if (_tray is not null)
         {
-            _tray.Visible = false;
-            _tray.Dispose();
+            // NotifyIcon.Dispose() 内部会把 Icon 置空再触发一次 UpdateIcon，偶尔抛 NRE。
+            // 退出路径上不该因为一个托盘图标崩掉（数据此时已经 flush 过了）。
+            try
+            {
+                _tray.Visible = false;
+                _tray.Dispose();
+            }
+            catch (Exception ex)
+            {
+                WriteCrash("ExitApplication.Tray", ex);
+            }
         }
 
         _store?.Dispose();
