@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -19,6 +19,10 @@ public sealed partial class RuleRow : ObservableObject
 
     [ObservableProperty]
     private ContextLevel category;
+
+    /// <summary>刚创建、还没被点过的那条规则：列表里显示一个绿点。</summary>
+    [ObservableProperty]
+    private bool isNew;
 
     public RuleRow(Rule rule, Action<RuleRow> enabledChanged, Action<RuleRow> categoryChanged)
     {
@@ -128,6 +132,15 @@ public sealed partial class RulesViewModel : ObservableObject
             Rows.Add(new RuleRow(rule, OnEnabledChanged, OnCategoryChanged));
         }
 
+        if (_newRule is { } target)
+        {
+            foreach (var row in Rows)
+            {
+                row.IsNew = row.Rule.MatchType == target.Type
+                    && string.Equals(row.Rule.Pattern, target.Pattern, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
         RefreshRecents();
         var current = _recording.Current;
         CurrentApp = current is null
@@ -141,6 +154,9 @@ public sealed partial class RulesViewModel : ObservableObject
     private string selectedRecent = string.Empty;
 
     private readonly Dictionary<string, Sample> _recentMap = new(StringComparer.Ordinal);
+
+    /// <summary>刚建的规则；Reload() 会重建列表，靠它把绿点标回去。</summary>
+    private (RuleMatchType Type, string Pattern)? _newRule;
 
     private void RefreshRecents()
     {
@@ -204,6 +220,7 @@ public sealed partial class RulesViewModel : ObservableObject
                 priority: 4,
                 label: keyword);
 
+            _newRule = (RuleMatchType.TitleContains, keyword);
             Status = Loc.T("Rules_Created", keyword);
             Reload();
             return;
@@ -217,8 +234,33 @@ public sealed partial class RulesViewModel : ObservableObject
             priority: 5,
             label: current.App);
 
+        _newRule = (RuleMatchType.Process, current.App);
         Status = Loc.T("Rules_Created", current.App);
         Reload();
+    }
+
+    /// <summary>重新读一遍「刚才在用的窗口」，下拉框里的选项不会自己更新。</summary>
+    [RelayCommand]
+    private void RefreshWindowList()
+    {
+        RefreshRecents();
+        CurrentApp = _recording.Current is { } current
+            ? $"{current.App}  ·  {Trim(current.Title, 50)}"
+            : Loc.T("Today_Waiting");
+        Status = Loc.T("Rules_Refreshed", Recents.Count);
+    }
+
+    /// <summary>点一下刚建的规则，绿点消失，之后和别的规则一样。</summary>
+    [RelayCommand]
+    private void ClearNew(RuleRow? row)
+    {
+        if (row is null || !row.IsNew)
+        {
+            return;
+        }
+
+        row.IsNew = false;
+        _newRule = null;
     }
 
     [RelayCommand]

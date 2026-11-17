@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
@@ -143,6 +143,10 @@ public sealed class Localization : INotifyPropertyChanged
         ["Rules_Desc"] = ("决定每个应用算「任务 / 中性 / 分心」。改完立即生效，历史数据也会一起重算。",
             "Decides whether an app counts as work, neutral, or distraction. Changes apply retroactively."),
         ["Rules_LastWindow"] = ("刚才在用的窗口", "Last window"),
+        ["Rules_Refresh"] = ("刷新", "Refresh"),
+        ["Rules_RefreshHint"] = ("重新读取最近 30 分钟出现过的窗口", "Re-read the windows seen in the last 30 minutes"),
+        ["Rules_NewBadge"] = ("这条是刚建的，点一下确认", "Just created — click to confirm"),
+        ["Rules_Refreshed"] = ("已刷新，最近 30 分钟有 {0} 个窗口", "Refreshed — {0} windows in the last 30 minutes"),
         ["Rules_New"] = ("用当前窗口新建规则", "New rule from last window"),
         ["Rules_Match"] = ("匹配", "Match"),
         ["Rules_Source"] = ("来源", "Source"),
