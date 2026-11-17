@@ -124,7 +124,10 @@ public partial class App : System.Windows.Application
         ThemeService.Apply(ThemeService.Parse(_settings.Theme), null);
         FocusAudio.Folder = _settings.MusicFolder;
 
-        _store = new FocusLedgerStore(FocusLedgerStore.DefaultDatabasePath);
+        // --db 让程序跑在指定的数据库上：拍界面截图、演示、或多套数据并存时用，
+        // 不会碰到 %LOCALAPPDATA% 下那份真实账本。
+        string? customDb = ArgValue(e.Args, "--db");
+        _store = new FocusLedgerStore(customDb ?? FocusLedgerStore.DefaultDatabasePath);
         _store.Initialize();
 
         _rules = new RuleService(_store, _settings.Profile);
@@ -296,6 +299,13 @@ public partial class App : System.Windows.Application
         }
 
         _main?.UpdateStatus();
+    }
+
+    /// <summary>取形如 <c>--name value</c> 的命令行参数值；没给返回 null。</summary>
+    private static string? ArgValue(string[] args, string name)
+    {
+        int index = Array.IndexOf(args, name);
+        return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
     }
 
     private static string StateName(ActivityState? state) => state switch
