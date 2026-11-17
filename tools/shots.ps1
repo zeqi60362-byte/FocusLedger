@@ -89,6 +89,12 @@ if (-not (Test-Path -LiteralPath (Join-Path $repo 'FocusLedger.sln'))) {
     throw "Cannot find FocusLedger.sln under '$repo'. Keep this script in the repository's tools folder."
 }
 
+# Windows PowerShell 5.1 does not auto-load System.Drawing, so the
+# [System.Drawing.Imaging.PixelFormat] literals used further down would fail
+# with "Unable to find type" without these two lines.
+Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms
+
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
