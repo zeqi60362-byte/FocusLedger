@@ -27,7 +27,23 @@ counted*; reconciliation answers *where the gap went*.
 | RescueTime | App / site time | Infers from app category | No |
 | Toggl | Time you start manually | No | No |
 | ActivityWatch | App / window / idle | AFK only | No |
-| **FocusLedger** | App + window title + visual change + media + input + lock | **Four states with confidence intervals** | **Yes, with an attributed gap** |
+| **FocusLedger** | App + window title + visual change + media + input + lock | **Four states, every segment traceable** | **Yes, with an attributed gap** |
+
+## Screenshots
+
+> Captured with demo data. No real usage is shown.
+
+![Today](docs/images/today.png)
+
+**Today**: effective focus = deep + silent. The band is coloured by state; click any segment to see why it was classified that way.
+
+![Report](docs/images/report.png)
+
+**Report**: four-state composition, time per app, where the distraction went, and how often you jumped between apps.
+
+![Plan](docs/images/plan.png)
+
+**Plan**: drag on an empty slot to create; supports recurrence, time-conflict rejection, month view with holidays.
 
 ## Privacy (short version)
 
