@@ -1,7 +1,8 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using FocusLedger.App.Localization;
 using FocusLedger.Core;
 
 namespace FocusLedger.App.Controls;
@@ -93,7 +94,7 @@ public sealed class TimelineControl : FrameworkElement
         var segments = Segments;
         if (segments is null || segments.Count == 0)
         {
-            DrawCentered(dc, "今天还没有数据", width, height);
+            DrawCentered(dc, Loc.T("Timeline_Empty"), width, height);
             return;
         }
 
@@ -254,7 +255,13 @@ public sealed class TimelineControl : FrameworkElement
     private Brush Res(string key, Color fallback) =>
         TryFindResource(key) as Brush ?? new SolidColorBrush(fallback);
 
-    public static string StateName(ActivityState state) => StateNames.Chinese(state);
+    public static string StateName(ActivityState state) => state switch
+    {
+        ActivityState.ActiveFocus => Loc.T("State_ActiveFull"),
+        ActivityState.SilentFocus => Loc.T("State_SilentFull"),
+        ActivityState.OffTask => Loc.T("State_OffTaskFull"),
+        _ => Loc.T("State_AwayFull")
+    };
 
     protected override void OnMouseMove(MouseEventArgs e)
     {

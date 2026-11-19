@@ -133,6 +133,7 @@ public sealed class Localization : INotifyPropertyChanged
         ["Report_PeriodYear"] = ("近 5 年", "last 5 years"),
         ["Report_StatsTotal"] = ("{0}合计有效 {1}", "{0}: {1} effective"),
         ["Report_Empty"] = ("这一天还没有数据。", "No data for this day."),
+        ["Timeline_Empty"] = ("今天还没有数据", "No data yet today"),
         ["Report_StatLine"] = ("深度工作块 {0} 次（最长 {1} 分钟）    应用切换 {2} 次",
             "Deep blocks {0} (longest {1} min)    App switches {2}"),
         ["Report_StatDetail"] = ("深度 {0}   静默 {1}   分心 {2}",
